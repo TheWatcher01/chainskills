@@ -1,0 +1,59 @@
+{
+  "name": "chainskills",
+  "version": "0.1.0",
+  "description": "Compose, share, and run AI agent workflows written in natural language",
+  "type": "module",
+  "bin": {
+    "chainskills": "./bin/cli.mjs"
+  },
+  "exports": {
+    ".": { "import": "./dist/index.mjs", "types": "./dist/index.d.mts" },
+    "./parser": { "import": "./dist/parser.mjs", "types": "./dist/parser.d.mts" },
+    "./runtime": { "import": "./dist/runtime.mjs", "types": "./dist/runtime.d.mts" }
+  },
+  "files": ["dist", "bin", "templates", "README.md"],
+  "engines": { "node": ">=20" },
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "build": "obuild",
+    "dev": "vitest",
+    "test": "vitest run",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "workflow",
+    "cli",
+    "natural-language",
+    "dag",
+    "mcp",
+    "mastra",
+    "skills",
+    "orchestration"
+  ],
+  "author": "TheWatcher01",
+  "license": "MIT",
+  "devDependencies": {
+    "obuild": "^0.4.22",
+    "prettier": "^3.8.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "@mastra/core": "latest",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "citty": "^0.2.1",
+    "gray-matter": "^4.0.3",
+    "picocolors": "^1.1.0",
+    "remark-directive": "^4.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.0",
+    "unist-util-visit": "^5.0.0",
+    "zod": "^3.25.0"
+  }
+}
