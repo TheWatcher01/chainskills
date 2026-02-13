@@ -6,14 +6,16 @@
 
 ## Versions planifiées
 
-| Version | Phase    | Contenu                                           | Statut      |
-| ------- | -------- | ------------------------------------------------- | ----------- |
-| v0.1.0  | MVP      | Parse + Run séquentiel + Shell tools + CLI        | ✅ Complété |
-| v0.2.0  | DAG      | Orchestration DAG (Mastra), `@parallel` réel      | ⏳ Planifié |
-| v0.3.0  | MCP      | MCP client/server, `@agent` LLM, Result monadique | ⏳ Planifié |
-| v0.4.0  | Registry | npm-like registry, `@use` résolution distante/git | ⏳ Planifié |
-| v0.5.0  | IDE      | Copilot ACP, agents IDE                           | ⏳ Planifié |
-| v1.0.0  | Prod     | Production & scale (SQLite, Redis, rate limiting) | ⏳ Planifié |
+| Version | Phase    | Contenu                                                           | Statut      |
+| ------- | -------- | ----------------------------------------------------------------- | ----------- |
+| v0.1.0  | MVP      | Parse + Run séquentiel + Shell tools + CLI                        | ✅ Complété |
+| v0.2.0  | DAG      | Orchestration DAG (Mastra), full control flow, inspect, streaming | 🔄 En cours |
+| v0.3.0  | MCP      | MCP client/server, `@agent` LLM, Result monadique                 | ⏳ Planifié |
+| v0.4.0  | Registry | npm-like registry, `@use` résolution distante/git                 | ⏳ Planifié |
+| v0.5.0  | IDE      | Copilot ACP, agents IDE                                           | ⏳ Planifié |
+| v1.0.0  | Prod     | Production & scale (SQLite, Redis, rate limiting)                 | ⏳ Planifié |
+
+> Voir aussi : [AGENTS.md](../AGENTS.md) — architecture agentique complète, structure projet, stack technique.
 
 ---
 
@@ -170,3 +172,117 @@
 | 2026-02-13 | 11    | Tests CLI                                 | `tests/cli/commands.test.ts`                      |
 | 2026-02-13 | 12    | Root export + 4 templates                 | `src/index.ts` + `templates/**/*.workflow.md`     |
 | 2026-02-13 | 13    | Build, typecheck, E2E, fix build pipeline | `build.config.mjs`, `bin/cli.mjs`, `package.json` |
+
+---
+
+## v0.2.0 — DAG Orchestration & Full Control Flow
+
+### Décisions actées v0.2.0
+
+| Décision                  | Choix                                                        | Raison                                                            |
+| ------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Executor strategy         | Coexistence `SimpleExecutor` + `MastraExecutor` via DI       | Strategy pattern SOTA — switch via env var, fallback offline/test |
+| Schémas Mastra dynamiques | `z.record(z.unknown())` pour input/output                    | chainskills dynamiquement typé — variables résolues au runtime    |
+| Directive handlers        | Module partagé `directive-handlers.ts` entre les 2 executors | DRY, testable indépendamment, un seul endroit à maintenir         |
+| Events d'exécution        | Port Observer (core) + adapter EventEmitter (Node.js)        | Découplage CLI/executor, streaming temps réel                     |
+| DAG auto-parallélisation  | Analyse de dépendances de variables ($capture → $consumer)   | Steps sans lien = parallélisables automatiquement — power feature |
+| Parser blocs structurés   | `containerDirective` de remark-directive + `Step.children`   | API existante dans remark-directive, zéro nouvelle dépendance     |
+| CLI streaming             | `@clack/prompts` (spinners, progress, log)                   | Déjà installé, UX moderne, non-blocking                           |
+| Env var executor          | `CHAINSKILLS_EXECUTOR=simple\|mastra` (default: `mastra`)    | Config externalisée, fail-fast validation                         |
+
+### Phase 1 — Core : DAG intelligent + analyse de dépendances
+
+- [ ] Enrichir `DAGNode` — ajouter `type`, `condition`, `iterable`, `children`
+- [ ] Implémenter l'analyse de dépendances de variables (`@call → $capture` → consommateurs)
+- [ ] Détecter les groupes `@parallel` → nœuds parallèles
+- [ ] Détecter les branches `@if/@else` → nœuds `type: 'branch'`
+- [ ] Détecter les boucles `@for` / `@repeat` → nœuds `type: 'loop'`
+- [ ] Détecter les blocs `@try/@on-error` → nœuds `type: 'try-catch'`
+- [ ] Détecter les sub-workflows `@workflow` → nœud composite
+- [ ] Détection de cycles → `ValidationError`
+
+### Phase 2 — Parser : support des blocs structurés
+
+- [ ] Enrichir le remark plugin — gérer les `containerDirective` pour `@parallel:`, `@if:`, `@for:`, `@repeat:`, `@try:`, `@workflow:`
+- [ ] Peupler `Step.children` — walk récursif des enfants de container
+- [ ] Ajouter le parsing `@else` — association au `@if` précédent
+- [ ] Parser les arguments `@for` — `variable`, `iterable`, `concurrency` optionnel
+- [ ] Parser les arguments `@repeat` — `max`, `until`/`while`
+
+### Phase 3 — SimpleExecutor : enrichir le control flow séquentiel
+
+- [ ] `@if/@else` réel — évaluer condition, exécuter le bon bloc
+- [ ] `@for` réel — itérer sur la liste, exécuter enfants par élément
+- [ ] `@repeat` réel — boucler avec condition `until`/`while` + compteur `max`
+- [ ] `@try/@on-error` réel — wrapper try/catch, exécuter `@on-error` sur erreur
+- [ ] `@parallel` séquentiel — marqué parallèle mais exécuté séquentiellement
+- [ ] `@workflow` réel — résoudre et exécuter le sub-workflow récursivement
+- [ ] Wirer `resolveImports` dans le pipeline CLI (`run.ts`)
+
+### Phase 4 — MastraExecutor : adapter DAG avec orchestration réelle
+
+- [ ] Créer `src/adapters/executor/mastra-executor.ts`
+- [ ] Fonction `translateToMastra(dag, workflow)` → DAG chainskills → Mastra workflow
+- [ ] Créer les `createStep` dynamiques (schémas lâches, délégation aux handlers)
+- [ ] Gestion du state workflow — mapper `StateStore` ↔ Mastra `state`/`setState`
+- [ ] Gestion des erreurs + retries — mapper vers modèle Mastra (`bail()`, `retryConfig`)
+- [ ] Mode dry-run via Mastra
+
+### Phase 5 — Config : Strategy pattern pour l'executor
+
+- [ ] Enrichir `AppConfig` — `executor: 'simple' | 'mastra'`
+- [ ] Ajouter `CHAINSKILLS_EXECUTOR` dans `env.ts`
+- [ ] Mettre à jour le DI container — switch `config.executor`
+- [ ] Mettre à jour `.env.example`
+
+### Phase 6 — Factorisation : extraire les handlers de directives
+
+- [ ] Créer `src/adapters/executor/directive-handlers.ts` — handlers par type
+- [ ] Injecter les handlers dans `SimpleExecutor` et `MastraExecutor`
+
+### Phase 7 — CLI : inspect + streaming + commandes
+
+- [ ] Créer `src/cli/inspect.ts` — DAG ASCII art + `--json`
+- [ ] Créer `src/cli/list.ts` — lister les `.workflow.md` locaux
+- [ ] Streaming dans `run.ts` — `@clack/prompts` spinners, progression step-by-step
+- [ ] Mettre à jour le router CLI — ajouter `inspect`, `list`, bump version `0.2.0`
+
+### Phase 8 — Événements d'exécution (port Observer)
+
+- [ ] Créer `src/core/ports/execution-events.port.ts` — événements typés
+- [ ] Adapter observer — `EventEmitter` Node.js dans `src/adapters/executor/`
+
+### Phase 9 — Tests
+
+- [ ] `tests/runtime/build-dag.test.ts` — DAG enrichi, auto-parallélisation, cycles
+- [ ] `tests/runtime/control-flow.test.ts` — `@if/@else`, `@for`, `@repeat`, `@try`, `@parallel`, `@workflow`
+- [ ] `tests/runtime/mastra-executor.test.ts` — intégration Mastra (parallel, branch, foreach)
+- [ ] `tests/parser/container-directives.test.ts` — directives container + `Step.children`
+- [ ] Étendre `tests/cli/commands.test.ts` — `inspect`, `list`, streaming events
+- [ ] `tests/runtime/execution-events.test.ts` — ordre des events, events parallèles
+
+### Phase 10 — Templates enrichis
+
+- [ ] Mettre à jour `templates/dev/code-review.workflow.md` — ajouter `@parallel`
+- [ ] Créer `templates/dev/tdd-cycle.workflow.md` — `@repeat` (red → green → refactor)
+- [ ] Créer `templates/cybersec/vuln-scan.workflow.md` — `@for` + `@if` seuil
+- [ ] Enrichir `templates/ess/grant-application.workflow.md` — `@try/@on-error` + `@parallel`
+
+### Phase 11 — Documentation & exports
+
+- [ ] Mettre à jour `src/index.ts` — exporter nouveaux types
+- [ ] Mettre à jour `build.config.mjs` — éventuelle nouvelle entrée
+- [ ] Bump `package.json` version → `0.2.0`
+- [ ] Mettre à jour `ROADMAP.md` — checkboxes + changelog
+- [ ] Mettre à jour `README.md` — nouvelles directives, mode DAG, `inspect`, streaming
+
+### Vérification finale v0.2.0
+
+- [ ] `pnpm typecheck` — 0 erreurs
+- [ ] `pnpm test` — objectif ~140+ tests (vs 86 en v0.1.0)
+- [ ] `pnpm build` — build propre
+- [ ] E2E `chainskills run ... --dry-run` avec DAG parallèle
+- [ ] E2E `chainskills inspect workflow.md` — DAG ASCII
+- [ ] E2E `chainskills list` — workflows listés
+- [ ] E2E `CHAINSKILLS_EXECUTOR=simple` — fallback séquentiel
+- [ ] Core compile sans `@mastra/core` (imports uniquement dans adapters)

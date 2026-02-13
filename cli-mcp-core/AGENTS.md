@@ -6,19 +6,19 @@
 
 **chainskills** est un CLI open source TypeScript qui permet de définir, composer, partager et exécuter des workflows d'agents IA écrits en langage naturel (`.workflow.md`). Il combine le modèle de distribution de skills.sh (npm-like registry), le moteur d'orchestration DAG de Mastra, et un format de workflow en Markdown enrichi de directives légères (`@use`, `@call`, `@if`, `@for`). C'est le "shadcn/ui des workflows IA".
 
-| Clé                 | Valeur                                                                   |
-| ------------------- | ------------------------------------------------------------------------ |
-| **Langage**         | TypeScript (strict) — Node.js ≥ 20                                      |
-| **CLI framework**   | Citty ^0.2.1                                                            |
-| **Orchestration**   | Mastra (DAG : `.then()`, `.parallel()`, `.branch()`, `.foreach()`)       |
-| **Parsing**         | unified + remark-parse + remark-directive + gray-matter                  |
-| **Interop**         | MCP SDK (Model Context Protocol) — client + server                       |
-| **Validation**      | Zod ^3.25                                                                |
-| **Tests**           | Vitest ^4.0                                                              |
-| **Build**           | obuild ^0.4.22 (Rolldown)                                                |
-| **Package manager** | pnpm                                                                     |
-| **Architecture**    | Hexagonal (Ports & Adapters) — core pur, zéro dépendance                |
-| **License**         | MIT                                                                      |
+| Clé                 | Valeur                                                             |
+| ------------------- | ------------------------------------------------------------------ |
+| **Langage**         | TypeScript (strict) — Node.js ≥ 20                                 |
+| **CLI framework**   | Citty ^0.2.1                                                       |
+| **Orchestration**   | Mastra (DAG : `.then()`, `.parallel()`, `.branch()`, `.foreach()`) |
+| **Parsing**         | unified + remark-parse + remark-directive + gray-matter            |
+| **Interop**         | MCP SDK (Model Context Protocol) — client + server                 |
+| **Validation**      | Zod ^3.25                                                          |
+| **Tests**           | Vitest ^4.0                                                        |
+| **Build**           | obuild ^0.4.22 (Rolldown)                                          |
+| **Package manager** | pnpm                                                               |
+| **Architecture**    | Hexagonal (Ports & Adapters) — core pur, zéro dépendance           |
+| **License**         | MIT                                                                |
 
 ---
 
@@ -108,21 +108,21 @@ chainskills/
 
 ## Format `.workflow.md` — Directives @
 
-| Directive    | Sémantique                           | Syntaxe                                        |
-| ------------ | ------------------------------------ | ---------------------------------------------- |
-| `@use`       | Importer un skill, tool, agent       | `@use pdf-processing`                          |
-| `@call`      | Appeler un outil avec capture        | `@call tool.method($input) → $output`          |
-| `@if/@else`  | Branchement conditionnel             | `@if $score > 50:` ... `@else:`                |
-| `@for`       | Itération bornée                     | `@for $item in $list:`                         |
-| `@repeat`    | Boucle avec condition d'arrêt        | `@repeat max:5 until $valid == true:`          |
-| `@parallel`  | Exécution parallèle                  | `@parallel:`                                   |
-| `@try`       | Gestion d'erreurs                    | `@try:` ... `@on-error: log and continue`      |
-| `@assert`    | Checkpoint de validation             | `@assert $budget.total == $budget.charges`     |
-| `@output`    | Déclarer la sortie du workflow       | `@output: $report, $score`                     |
-| `@workflow`  | Sub-workflow inline                  | `@workflow validate-budget:`                   |
-| `@env`       | Variable d'environnement             | `@env API_KEY`                                 |
-| `@agent`     | Déléguer à un agent                  | `@agent copilot: "Fix this bug"`               |
-| `@handoff`   | Transférer à un autre agent          | `@handoff review-agent: "Review the changes"`  |
+| Directive   | Sémantique                     | Syntaxe                                       |
+| ----------- | ------------------------------ | --------------------------------------------- |
+| `@use`      | Importer un skill, tool, agent | `@use pdf-processing`                         |
+| `@call`     | Appeler un outil avec capture  | `@call tool.method($input) → $output`         |
+| `@if/@else` | Branchement conditionnel       | `@if $score > 50:` ... `@else:`               |
+| `@for`      | Itération bornée               | `@for $item in $list:`                        |
+| `@repeat`   | Boucle avec condition d'arrêt  | `@repeat max:5 until $valid == true:`         |
+| `@parallel` | Exécution parallèle            | `@parallel:`                                  |
+| `@try`      | Gestion d'erreurs              | `@try:` ... `@on-error: log and continue`     |
+| `@assert`   | Checkpoint de validation       | `@assert $budget.total == $budget.charges`    |
+| `@output`   | Déclarer la sortie du workflow | `@output: $report, $score`                    |
+| `@workflow` | Sub-workflow inline            | `@workflow validate-budget:`                  |
+| `@env`      | Variable d'environnement       | `@env API_KEY`                                |
+| `@agent`    | Déléguer à un agent            | `@agent copilot: "Fix this bug"`              |
+| `@handoff`  | Transférer à un autre agent    | `@handoff review-agent: "Review the changes"` |
 
 ---
 
@@ -154,28 +154,34 @@ chainskills serve [--port 3001]
 
 ### Custom — Copilot (2)
 
-| Skill            | Fonction                                       | Fichier                                 |
-| ---------------- | ---------------------------------------------- | --------------------------------------- |
-| **smart**        | Auto-apprentissage à partir des échecs         | `.github/skills/smart/SKILL.md`         |
-| **smart-commit** | Commits Git groupés, audit sécurité            | `.github/skills/smart-commit/SKILL.md`  |
+| Skill            | Fonction                               | Fichier                                |
+| ---------------- | -------------------------------------- | -------------------------------------- |
+| **smart**        | Auto-apprentissage à partir des échecs | `.github/skills/smart/SKILL.md`        |
+| **smart-commit** | Commits Git groupés, audit sécurité    | `.github/skills/smart-commit/SKILL.md` |
+
+### Externes — Workflows DAG (1)
+
+| Skill                | Fonction                                                                                              | Source                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **mastra-workflows** | Orchestration DAG avec Mastra 1.x (`createStep`, `.then()`, `.parallel()`, `.branch()`, `.foreach()`) | `~/.agents/skills/mastra-workflows/SKILL.md` |
 
 ---
 
 ## Prompts
 
-| Prompt           | Usage                              | Fichier                                    |
-| ---------------- | ---------------------------------- | ------------------------------------------ |
-| **smart-commit** | Commits groupés par feature        | `.github/prompts/smart-commit.prompt.md`   |
-| **smart-review** | Revue de code automatisée          | `.github/prompts/smart-review.prompt.md`   |
+| Prompt           | Usage                       | Fichier                                  |
+| ---------------- | --------------------------- | ---------------------------------------- |
+| **smart-commit** | Commits groupés par feature | `.github/prompts/smart-commit.prompt.md` |
+| **smart-review** | Revue de code automatisée   | `.github/prompts/smart-review.prompt.md` |
 
 ---
 
 ## Instructions Path-Specific
 
-| Pattern       | Fichier                                                                 | Description                        |
-| ------------- | ----------------------------------------------------------------------- | ---------------------------------- |
-| `src/core/**` | [core.instructions.md](.github/instructions/core.instructions.md)       | Domaine pur, zéro dépendance       |
-| `src/cli/**`  | [cli.instructions.md](.github/instructions/cli.instructions.md)         | Conventions CLI Citty               |
+| Pattern       | Fichier                                                           | Description                  |
+| ------------- | ----------------------------------------------------------------- | ---------------------------- |
+| `src/core/**` | [core.instructions.md](.github/instructions/core.instructions.md) | Domaine pur, zéro dépendance |
+| `src/cli/**`  | [cli.instructions.md](.github/instructions/cli.instructions.md)   | Conventions CLI Citty        |
 
 ---
 
@@ -215,6 +221,7 @@ npx chainskills run workflow.md
 ### v0.1.0 — MVP Complété
 
 **Fonctionnalités :**
+
 - Architecture Hexagonal complète (core pur + 6 ports + 7 adapters)
 - Parser Markdown (frontmatter YAML + directives `@`)
 - Moteur d'exécution séquentiel avec gestion d'état
@@ -227,6 +234,7 @@ npx chainskills run workflow.md
 - Node.js subpath imports (`#core/*`, `#adapters/*`, etc.)
 
 **Métriques :**
+
 - ~40 fichiers TypeScript
 - 7 fichiers de tests (Vitest)
 - 0 erreurs typecheck

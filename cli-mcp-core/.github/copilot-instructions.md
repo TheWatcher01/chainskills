@@ -70,6 +70,10 @@
 | Tests | `vitest` | Unit + integration |
 | Formatting | `prettier` | Code formatting |
 
+## Skills Externes
+
+- **mastra-workflows** : Utilisez ce skill pour implémenter l'orchestration DAG avec Mastra 1.x. Couvre `createStep()`, `createWorkflow()`, `.then()`, `.parallel()`, `.branch()`, `.foreach()`, `.dountil()`, `.dowhile()`, `.map()`, state management, error handling, suspend/resume, streaming.
+
 ## Conventions
 
 - **Naming** : kebab-case pour fichiers et dossiers, PascalCase pour classes/interfaces, camelCase pour fonctions/variables
