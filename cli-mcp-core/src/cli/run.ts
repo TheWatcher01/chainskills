@@ -8,13 +8,14 @@
  */
 
 import { defineCommand } from 'citty';
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
 import { createContainer } from '#config/container.js';
+import { runWorkflow } from '#core/use-cases/run-workflow.js';
 import { parseWorkflow } from '#core/use-cases/parse-workflow.js';
 import { validateWorkflow } from '#core/use-cases/validate-workflow.js';
 import type { ExecutionEvent } from '#core/ports/execution-events.port.js';
+import { readFileSync } from 'node:fs';
 
 export const runCommand = defineCommand({
     meta: {
@@ -37,10 +38,22 @@ export const runCommand = defineCommand({
             description: 'Simulate execution without side effects',
             default: false,
         },
+        json: {
+            type: 'boolean',
+            description: 'Output result as JSON (machine-readable)',
+            default: false,
+        },
+        format: {
+            type: 'string',
+            description: 'Output format: human | json | vscode (VS Code Problem Matcher)',
+            default: 'human',
+        },
     },
     async run({ args }) {
         const workflowPath = resolve(args.workflow);
         const dryRun = args['dry-run'];
+        const jsonMode = args.json || args.format === 'json';
+        const vscodeMode = args.format === 'vscode';
 
         // Parse inputs
         const inputs: Record<string, string> = {};
@@ -58,6 +71,71 @@ export const runCommand = defineCommand({
             }
         }
 
+        // ── JSON mode — delegate to SDK API ─────────────────────────────
+        if (jsonMode && !vscodeMode) {
+            const container = await createContainer();
+            const result = await runWorkflow(workflowPath, container, {
+                inputs,
+                dryRun,
+            });
+
+            if (result.ok) {
+                console.log(
+                    JSON.stringify({
+                        ok: true,
+                        workflow: result.value.workflow,
+                        duration: result.value.duration,
+                        steps: result.value.execution.steps,
+                        outputs: result.value.execution.outputs,
+                    }),
+                );
+            } else {
+                console.log(
+                    JSON.stringify({
+                        ok: false,
+                        error: {
+                            code: result.error.code,
+                            message: result.error.message,
+                            phase: result.error.phase,
+                            details: result.error.details,
+                        },
+                    }),
+                );
+                process.exit(1);
+            }
+            return;
+        }
+
+        // ── VS Code Problem Matcher format ────────────────────────────────
+        if (vscodeMode) {
+            const container = await createContainer();
+            const result = await runWorkflow(workflowPath, container, {
+                inputs,
+                dryRun,
+            });
+
+            if (result.ok) {
+                // Success — optionally print outputs in VS Code format
+                const exec = result.value.execution;
+                for (const step of exec.steps) {
+                    if (step.status === 'failure' && step.error) {
+                        console.error(
+                            `${workflowPath}:1:1: error: Step ${step.stepId} failed: ${step.error}`,
+                        );
+                    }
+                }
+            } else {
+                const err = result.error;
+                console.error(
+                    `${workflowPath}:1:1: error: ${err.message}`,
+                );
+                process.exit(1);
+            }
+            return;
+        }
+
+        // ── Interactive mode — original human-readable output ────────────
+
         // Read file
         let source: string;
         try {
@@ -68,7 +146,7 @@ export const runCommand = defineCommand({
         }
 
         // Create container
-        const container = createContainer();
+        const container = await createContainer();
 
         // Parse
         console.log(pc.cyan('⟫ Parsing workflow...'));

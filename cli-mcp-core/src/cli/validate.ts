@@ -13,6 +13,7 @@ import pc from 'picocolors';
 import { createContainer } from '#config/container.js';
 import { parseWorkflow } from '#core/use-cases/parse-workflow.js';
 import { validateWorkflow } from '#core/use-cases/validate-workflow.js';
+import { describeWorkflow } from '#core/use-cases/run-workflow.js';
 
 export const validateCommand = defineCommand({
     meta: {
@@ -25,9 +26,110 @@ export const validateCommand = defineCommand({
             description: 'Path to the .workflow.md file',
             required: true,
         },
+        json: {
+            type: 'boolean',
+            description: 'Output result as JSON (machine-readable)',
+            default: false,
+        },
+        format: {
+            type: 'string',
+            description: 'Output format: human | json | vscode (VS Code Problem Matcher)',
+            default: 'human',
+        },
     },
     async run({ args }) {
         const workflowPath = resolve(args.workflow);
+        const jsonMode = args.json || args.format === 'json';
+        const vscodeMode = args.format === 'vscode';
+
+        // ── JSON mode — delegate to SDK API ─────────────────────────────
+        if (jsonMode && !vscodeMode) {
+            const container = await createContainer();
+            const result = await describeWorkflow(workflowPath, container);
+
+            if (result.ok) {
+                const desc = result.value;
+                console.log(
+                    JSON.stringify({
+                        valid: desc.validation.valid,
+                        workflow: {
+                            name: desc.name,
+                            version: desc.version,
+                            steps: desc.steps.length,
+                            inputs: desc.inputs.length,
+                            outputs: desc.outputs.length,
+                            env: desc.env.length,
+                            tags: desc.tags,
+                        },
+                        diagnostics: desc.validation.diagnostics,
+                    }),
+                );
+                if (!desc.validation.valid) process.exit(1);
+            } else {
+                console.log(
+                    JSON.stringify({
+                        valid: false,
+                        error: {
+                            code: result.error.code,
+                            message: result.error.message,
+                            phase: result.error.phase,
+                        },
+                        diagnostics: [],
+                    }),
+                );
+                process.exit(1);
+            }
+            return;
+        }
+
+        // ── VS Code Problem Matcher format ────────────────────────────────
+        if (vscodeMode) {
+            let source: string;
+            try {
+                source = readFileSync(workflowPath, 'utf-8');
+            } catch {
+                console.error(`${workflowPath}:1:1: error: Cannot read file`);
+                process.exit(1);
+            }
+
+            const container = await createContainer();
+            const parseResult = parseWorkflow(source, container.parser);
+
+            if (!parseResult.ok) {
+                const line = parseResult.error.line ?? 1;
+                console.error(
+                    `${workflowPath}:${line}:1: error: ${parseResult.error.message}`,
+                );
+                process.exit(1);
+            }
+
+            const workflow = parseResult.value;
+            const validationResult = validateWorkflow(workflow);
+
+            if (!validationResult.ok) {
+                console.error(
+                    `${workflowPath}:1:1: error: ${validationResult.error.message}`,
+                );
+                process.exit(1);
+            }
+
+            const report = validationResult.value;
+            let hasErrors = false;
+
+            for (const diagnostic of report.diagnostics) {
+                const severity = diagnostic.severity === 'error' ? 'error' : 'warning';
+                const line = 1; // TODO: Extract line numbers from stepId if available
+                console.log(
+                    `${workflowPath}:${line}:1: ${severity}: ${diagnostic.message}`,
+                );
+                if (diagnostic.severity === 'error') hasErrors = true;
+            }
+
+            if (hasErrors) process.exit(1);
+            return;
+        }
+
+        // ── Interactive mode — original human-readable output ────────────
 
         // Read file
         let source: string;
@@ -38,7 +140,7 @@ export const validateCommand = defineCommand({
             process.exit(1);
         }
 
-        const container = createContainer();
+        const container = await createContainer();
 
         // Parse
         console.log(pc.cyan('⟫ Parsing...'));
