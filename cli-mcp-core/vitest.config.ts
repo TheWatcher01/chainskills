@@ -13,11 +13,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '#core': './src/core',
-      '#adapters': './src/adapters',
-      '#cli': './src/cli',
-      '#config': './src/config',
-      '#infra': './src/infrastructure',
+      '#core/': './src/core/',
+      '#adapters/': './src/adapters/',
+      '#cli/': './src/cli/',
+      '#config/': './src/config/',
+      '#infra/': './src/infrastructure/',
     },
   },
 });

@@ -3,7 +3,12 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ],
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
@@ -22,13 +27,29 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "#core/*": ["./src/core/*"],
-      "#adapters/*": ["./src/adapters/*"],
-      "#cli/*": ["./src/cli/*"],
-      "#config/*": ["./src/config/*"],
-      "#infra/*": ["./src/infrastructure/*"]
+      "#core/*": [
+        "./src/core/*"
+      ],
+      "#adapters/*": [
+        "./src/adapters/*"
+      ],
+      "#cli/*": [
+        "./src/cli/*"
+      ],
+      "#config/*": [
+        "./src/config/*"
+      ],
+      "#infra/*": [
+        "./src/infrastructure/*"
+      ]
     }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
 }

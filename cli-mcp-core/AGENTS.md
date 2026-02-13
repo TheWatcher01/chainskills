@@ -203,11 +203,31 @@ npx chainskills run workflow.md
 
 ## Roadmap
 
-| Phase | Version | Contenu                                    |
-| ----- | ------- | ------------------------------------------ |
-| 1     | v0.1.0  | MVP — Parse + Run séquentiel               |
-| 2     | v0.2.0  | Orchestration DAG (Mastra)                 |
-| 3     | v0.3.0  | Intégration MCP + Skills                   |
-| 4     | v0.4.0  | Registry & Distribution                    |
-| 5     | v0.5.0  | Copilot + Agents IDE (ACP)                 |
-| 6     | v1.0.0  | Production & Scale                         |
+| Phase | Version | Contenu                                       | Statut      | Date       |
+| ----- | ------- | --------------------------------------------- | ----------- | ---------- |
+| 1     | v0.1.0  | MVP — Parse + Run séquentiel + CLI + Tests    | ✅ Complété | 2026-02-13 |
+| 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel  | ⏳ Planifié | Q1 2026    |
+| 3     | v0.3.0  | MCP client/server, `@agent` LLM, Result monad | ⏳ Planifié | Q2 2026    |
+| 4     | v0.4.0  | Registry npm-like, résolution distante/git    | ⏳ Planifié | Q2 2026    |
+| 5     | v0.5.0  | Copilot ACP, agents IDE                       | ⏳ Planifié | Q3 2026    |
+| 6     | v1.0.0  | Production & Scale (SQLite, Redis, limits)    | ⏳ Planifié | Q4 2026    |
+
+### v0.1.0 — MVP Complété
+
+**Fonctionnalités :**
+- Architecture Hexagonal complète (core pur + 6 ports + 7 adapters)
+- Parser Markdown (frontmatter YAML + directives `@`)
+- Moteur d'exécution séquentiel avec gestion d'état
+- Shell tool provider réel (`@call shell.*`)
+- Résolution locale de skills (`@use ./path`)
+- CLI fonctionnel : `run`, `validate`, `init`
+- 86 tests unitaires et d'intégration (100% passing)
+- 4 templates pré-packagés (dev, cybersec, osint, ess)
+- Build optimisé (obuild/Rolldown) — 252 kB
+- Node.js subpath imports (`#core/*`, `#adapters/*`, etc.)
+
+**Métriques :**
+- ~40 fichiers TypeScript
+- 7 fichiers de tests (Vitest)
+- 0 erreurs typecheck
+- Architecture prête pour extension (DAG, MCP, Registry)

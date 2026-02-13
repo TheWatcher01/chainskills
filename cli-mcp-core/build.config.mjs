@@ -1,15 +1,10 @@
-import { defineBuildConfig } from 'obuild';
+import { defineBuildConfig } from 'obuild/config';
 
 export default defineBuildConfig({
   entries: [
-    { input: 'src/index.ts', name: 'index' },
-    { input: 'src/cli/index.ts', name: 'cli' },
-    { input: 'src/adapters/parser/markdown-parser.ts', name: 'parser' },
-    { input: 'src/adapters/executor/simple-executor.ts', name: 'runtime' },
+    { type: 'bundle', input: 'src/index.ts', dts: true },
+    { type: 'bundle', input: 'src/cli/index.ts', dts: false },
+    { type: 'bundle', input: 'src/adapters/parser/markdown-parser.ts', dts: true },
+    { type: 'bundle', input: 'src/adapters/executor/simple-executor.ts', dts: true },
   ],
-  declaration: true,
-  clean: true,
-  rollup: {
-    emitCJS: false,
-  },
 });

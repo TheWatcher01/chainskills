@@ -7,12 +7,36 @@
     "chainskills": "./bin/cli.mjs"
   },
   "exports": {
-    ".": { "import": "./dist/index.mjs", "types": "./dist/index.d.mts" },
-    "./parser": { "import": "./dist/parser.mjs", "types": "./dist/parser.d.mts" },
-    "./runtime": { "import": "./dist/runtime.mjs", "types": "./dist/runtime.d.mts" }
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./parser": {
+      "import": "./dist/adapters/parser/markdown-parser.mjs",
+      "types": "./dist/adapters/parser/markdown-parser.d.mts"
+    },
+    "./runtime": {
+      "import": "./dist/adapters/executor/simple-executor.mjs",
+      "types": "./dist/adapters/executor/simple-executor.d.mts"
+    }
   },
-  "files": ["dist", "bin", "templates", "README.md"],
-  "engines": { "node": ">=20" },
+  "files": [
+    "dist",
+    "bin",
+    "templates",
+    "!templates/ess",
+    "README.md"
+  ],
+  "imports": {
+    "#core/*": "./src/core/*",
+    "#adapters/*": "./src/adapters/*",
+    "#cli/*": "./src/cli/*",
+    "#config/*": "./src/config/*",
+    "#infra/*": "./src/infrastructure/*"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "packageManager": "pnpm@10.17.1",
   "scripts": {
     "build": "obuild",
@@ -38,6 +62,8 @@
   "author": "TheWatcher01",
   "license": "MIT",
   "devDependencies": {
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^25.2.3",
     "obuild": "^0.4.22",
     "prettier": "^3.8.0",
     "typescript": "^5.9.0",
@@ -54,6 +80,7 @@
     "remark-parse": "^11.0.0",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0",
+    "vfile": "^6.0.3",
     "zod": "^3.25.0"
   }
 }
