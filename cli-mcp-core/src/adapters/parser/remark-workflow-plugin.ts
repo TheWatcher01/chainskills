@@ -167,6 +167,11 @@ function parseDirectiveArgs(
             args['expression'] = assertion;
             break;
         }
+        case 'breakpoint': {
+            const condition = raw.replace(/^@breakpoint(?:\s+|$)/, '').trim();
+            args['condition'] = condition || 'true'; // Default to unconditional breakpoint
+            break;
+        }
         case 'output': {
             const outputs = raw
                 .replace(/^@output:\s*/, '')

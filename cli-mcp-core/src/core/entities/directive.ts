@@ -22,6 +22,7 @@ import type { Step } from './step.js';
  * - `@try`      → error handling block
  * - `@on-error` → error handler within `@try`
  * - `@assert`   → validation checkpoint
+ * - `@breakpoint` → conditional pause for debugging
  * - `@output`   → declare workflow output
  * - `@workflow`  → inline sub-workflow
  * - `@env`      → environment variable reference
@@ -39,6 +40,7 @@ export type DirectiveType =
     | 'try'
     | 'on-error'
     | 'assert'
+    | 'breakpoint'
     | 'output'
     | 'workflow'
     | 'env'
@@ -57,6 +59,7 @@ export const DIRECTIVE_TYPES: ReadonlySet<string> = new Set<DirectiveType>([
     'try',
     'on-error',
     'assert',
+    'breakpoint',
     'output',
     'workflow',
     'env',

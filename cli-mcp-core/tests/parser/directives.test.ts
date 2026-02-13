@@ -21,6 +21,7 @@ describe('DirectiveType', () => {
         'try',
         'on-error',
         'assert',
+        'breakpoint',
         'output',
         'workflow',
         'env',
@@ -28,8 +29,8 @@ describe('DirectiveType', () => {
         'handoff',
     ];
 
-    it('should contain all 15 directive types', () => {
-        expect(DIRECTIVE_TYPES.size).toBe(15);
+    it('should contain all 16 directive types', () => {
+        expect(DIRECTIVE_TYPES.size).toBe(16);
     });
 
     it.each(ALL_TYPES)('should recognize "%s" as a valid directive type', (type) => {
