@@ -21,3 +21,21 @@ export type {
     RegistryEntry,
     RegistrySearchResult,
 } from './workflow-registry.port.js';
+export type {
+    ExecutionEventEmitter,
+    ExecutionEventHandler,
+    ExecutionEvent,
+    ExecutionEventType,
+    WorkflowStartEvent,
+    WorkflowEndEvent,
+    StepStartEvent,
+    StepEndEvent,
+    StepSkipEvent,
+    DirectiveStartEvent,
+    DirectiveEndEvent,
+    ParallelStartEvent,
+    ParallelEndEvent,
+    LoopIterationEvent,
+    ErrorEvent,
+} from './execution-events.port.js';
+export { createEventEmitter } from './execution-events.port.js';
