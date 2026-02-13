@@ -1,13 +1,11 @@
 /**
- * Simple sequential executor adapter — build entry point for `./runtime` export.
+ * Simple sequential executor adapter — runs workflow steps in order.
  *
- * Implements the `WorkflowExecutor` port with sequential step execution:
- * - Iterates steps in order
- * - Substitutes `$variables` via the template engine
- * - Evaluates `@if` conditions via the condition parser
- * - Executes `@call` directives via the `ToolProvider`
- * - Stores results in the `StateStore`
- * - Supports `--dry-run` mode
+ * Implements the `WorkflowExecutor` port with sequential step execution
+ * and full control flow support (@if/@else, @for, @repeat, @try/@on-error,
+ * @parallel in sequential fallback mode, @workflow sub-workflows).
+ *
+ * Uses shared directive handlers from `directive-handlers.ts`.
  *
  * @module adapters/executor/simple-executor
  */
@@ -30,8 +28,13 @@ import type {
 } from '#core/ports/workflow-executor.port.js';
 import type { StateStore } from '#core/ports/state-store.port.js';
 import type { ToolProvider } from '#core/ports/tool-provider.port.js';
-import { substituteVariables } from '#core/services/template-engine.js';
-import { evaluateCondition } from '#core/services/condition-parser.js';
+import type { SkillResolver } from '#core/ports/skill-resolver.port.js';
+import type { WorkflowParser } from '#core/ports/workflow-parser.port.js';
+import type { ExecutionEventEmitter } from '#core/ports/execution-events.port.js';
+import {
+    executeDirective,
+    type DirectiveHandlerContext,
+} from './directive-handlers.js';
 import type { Logger } from '#infra/logger.js';
 
 /** Dependencies injected into the executor. */
@@ -39,18 +42,21 @@ export interface SimpleExecutorDeps {
     readonly store: StateStore;
     readonly tools: ToolProvider;
     readonly logger?: Logger;
+    readonly emitter?: ExecutionEventEmitter;
+    readonly resolver?: SkillResolver;
+    readonly parser?: WorkflowParser;
 }
 
 /**
  * Create a sequential `WorkflowExecutor`.
  *
  * @param deps - Injected dependencies (state store, tool provider, logger).
- * @returns A `WorkflowExecutor` that runs steps sequentially.
+ * @returns A `WorkflowExecutor` that runs steps sequentially with full control flow.
  */
 export function createSimpleExecutor(
     deps: SimpleExecutorDeps,
 ): WorkflowExecutor {
-    const { store, tools, logger } = deps;
+    const { store, tools, logger, emitter, resolver, parser } = deps;
 
     return {
         async execute(
@@ -72,14 +78,28 @@ export function createSimpleExecutor(
                 dryRun,
             });
 
+            emitter?.emit({
+                type: 'workflow:start',
+                timestamp: Date.now(),
+                workflowName: workflow.name,
+                totalSteps: workflow.steps.length,
+                dryRun,
+            });
+
             // Execute each step sequentially
-            for (const step of workflow.steps) {
+            for (let i = 0; i < workflow.steps.length; i++) {
+                const step = workflow.steps[i]!;
                 const stepResult = await executeStep(
                     step,
+                    i,
+                    workflow.steps.length,
                     store,
                     tools,
                     logger,
                     dryRun,
+                    emitter,
+                    resolver,
+                    parser,
                 );
                 stepResults.push(stepResult);
 
@@ -88,6 +108,15 @@ export function createSimpleExecutor(
                     logger?.error(`Step "${step.id}" failed`, {
                         error: stepResult.error,
                     });
+
+                    emitter?.emit({
+                        type: 'workflow:end',
+                        timestamp: Date.now(),
+                        workflowName: workflow.name,
+                        success: false,
+                        duration: Date.now() - startTime,
+                    });
+
                     return err(
                         executionError(
                             'STEP_FAILED',
@@ -107,30 +136,152 @@ export function createSimpleExecutor(
             const duration = Date.now() - startTime;
             logger?.info(`Workflow completed in ${duration}ms`, { outputs });
 
+            emitter?.emit({
+                type: 'workflow:end',
+                timestamp: Date.now(),
+                workflowName: workflow.name,
+                success: true,
+                duration,
+                outputs,
+            });
+
             return ok({ outputs, steps: stepResults, duration });
         },
     };
 }
 
 /**
- * Execute a single step.
+ * Execute child directives recursively — used by block handlers.
+ */
+async function executeChildDirectives(
+    directives: readonly Directive[],
+    ctx: DirectiveHandlerContext,
+): Promise<void> {
+    // We need a dummy step for the dispatcher — use an inline one
+    const dummyStep: Step = {
+        id: ctx.stepId,
+        title: '',
+        description: '',
+        directives,
+    };
+
+    for (const directive of directives) {
+        const result = await executeDirective(directive, dummyStep, ctx, {
+            executeChildDirectives,
+        });
+        if (!result.continue) break;
+    }
+}
+
+/**
+ * Execute a single step with full control flow support.
  */
 async function executeStep(
     step: Step,
+    stepIndex: number,
+    totalSteps: number,
     store: StateStore,
     tools: ToolProvider,
     logger: Logger | undefined,
     dryRun: boolean,
+    emitter?: ExecutionEventEmitter,
+    resolver?: SkillResolver,
+    parser?: WorkflowParser,
 ): Promise<StepResult> {
     const startTime = Date.now();
 
     logger?.info(`Step: ${step.title}`, { id: step.id, dryRun });
 
+    emitter?.emit({
+        type: 'step:start',
+        timestamp: Date.now(),
+        stepId: step.id,
+        stepTitle: step.title,
+        stepIndex,
+        totalSteps,
+    });
+
+    const ctx: DirectiveHandlerContext = {
+        store,
+        tools,
+        logger,
+        emitter,
+        resolver,
+        parser,
+        dryRun,
+        stepId: step.id,
+    };
+
     try {
-        // Process each directive in order
-        for (const directive of step.directives) {
-            await executeDirective(directive, store, tools, logger, dryRun);
+        let skipRemaining = false;
+        let conditionResult: boolean | undefined;
+
+        for (let i = 0; i < step.directives.length; i++) {
+            const directive = step.directives[i]!;
+
+            // Handle @if/@else branching
+            if (directive.type === 'if') {
+                const ifResult = await executeDirective(directive, step, ctx, {
+                    executeChildDirectives,
+                });
+                conditionResult = ifResult.conditionResult;
+
+                if (conditionResult === false) {
+                    // Skip directives until @else or next block directive
+                    const elseIdx = step.directives.findIndex(
+                        (d, idx) => idx > i && d.type === 'else',
+                    );
+                    if (elseIdx >= 0) {
+                        // Skip to after @else — execute remaining after @else
+                        i = elseIdx;
+                    } else if (step.children) {
+                        // Skip children
+                        skipRemaining = false;
+                    } else {
+                        skipRemaining = true;
+                    }
+                } else {
+                    // Condition true — execute children if present
+                    if (step.children && step.children.length > 0) {
+                        for (const child of step.children) {
+                            await executeChildDirectives(child.directives, {
+                                ...ctx,
+                                stepId: child.id,
+                            });
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Handle @else — only execute if previous @if was false
+            if (directive.type === 'else') {
+                if (conditionResult === false) {
+                    // Execute remaining directives after @else
+                    skipRemaining = false;
+                } else {
+                    // Skip @else block since @if was true
+                    skipRemaining = true;
+                }
+                continue;
+            }
+
+            if (skipRemaining) continue;
+
+            const result = await executeDirective(directive, step, ctx, {
+                executeChildDirectives,
+            });
+
+            if (!result.continue) break;
         }
+
+        emitter?.emit({
+            type: 'step:end',
+            timestamp: Date.now(),
+            stepId: step.id,
+            success: true,
+            duration: Date.now() - startTime,
+        });
 
         return {
             stepId: step.id,
@@ -139,160 +290,21 @@ async function executeStep(
             duration: Date.now() - startTime,
         };
     } catch (e) {
+        emitter?.emit({
+            type: 'step:end',
+            timestamp: Date.now(),
+            stepId: step.id,
+            success: false,
+            duration: Date.now() - startTime,
+            error: e instanceof Error ? e.message : String(e),
+        });
+
         return {
             stepId: step.id,
             status: 'failure',
             error: e instanceof Error ? e.message : String(e),
             duration: Date.now() - startTime,
         };
-    }
-}
-
-/**
- * Execute a single directive within a step.
- */
-async function executeDirective(
-    directive: Directive,
-    store: StateStore,
-    tools: ToolProvider,
-    logger: Logger | undefined,
-    dryRun: boolean,
-): Promise<void> {
-    const context = store.getAll();
-
-    switch (directive.type) {
-        case 'call': {
-            const tool = String(directive.args['tool'] ?? '');
-            const method = String(directive.args['method'] ?? '');
-            const rawInput = String(directive.args['input'] ?? '');
-            const capture = String(directive.args['capture'] ?? '');
-
-            // Substitute variables in the input
-            const resolvedInput = substituteVariables(rawInput, context);
-
-            if (dryRun) {
-                logger?.info(`[dry-run] @call ${tool}.${method}(${resolvedInput})`);
-                if (capture) {
-                    store.set(capture, `[dry-run result of ${tool}.${method}]`);
-                }
-                return;
-            }
-
-            const result = await tools.call(tool, method, {
-                command: resolvedInput,
-                input: resolvedInput,
-            });
-
-            if (result.ok) {
-                if (capture) {
-                    store.set(capture, result.value);
-                }
-                logger?.debug(`@call ${tool}.${method} → success`);
-            } else {
-                throw new Error(
-                    `@call ${tool}.${method} failed: ${result.error.message}`,
-                );
-            }
-            break;
-        }
-
-        case 'if': {
-            const condition = String(directive.args['condition'] ?? '');
-            const resolvedCondition = substituteVariables(condition, context);
-            const evalResult = evaluateCondition(resolvedCondition, context);
-
-            if (!evalResult.ok) {
-                throw new Error(
-                    `@if condition error: ${evalResult.error.message}`,
-                );
-            }
-
-            logger?.debug(`@if ${condition} → ${evalResult.value}`);
-
-            if (!evalResult.value) {
-                // Skip — in a full implementation, would skip to @else
-                logger?.debug('Condition false — skipping block');
-            }
-            break;
-        }
-
-        case 'output': {
-            const variables = directive.args['variables'] as string[] | undefined;
-            if (variables) {
-                for (const varRef of variables) {
-                    const name = varRef.startsWith('$') ? varRef.slice(1) : varRef;
-                    const value = store.get(name);
-                    logger?.info(`@output ${name} = ${JSON.stringify(value)}`);
-                }
-            }
-            break;
-        }
-
-        case 'assert': {
-            const expression = String(directive.args['expression'] ?? '');
-            const resolved = substituteVariables(expression, context);
-            const evalResult = evaluateCondition(resolved, context);
-
-            if (!evalResult.ok) {
-                throw new Error(
-                    `@assert evaluation error: ${evalResult.error.message}`,
-                );
-            }
-
-            if (!evalResult.value) {
-                throw new Error(`@assert failed: ${expression}`);
-            }
-
-            logger?.debug(`@assert ${expression} → passed`);
-            break;
-        }
-
-        case 'env': {
-            const envName = String(directive.args['name'] ?? '');
-            const envValue = process.env[envName];
-            if (envValue !== undefined) {
-                store.set(envName, envValue);
-            }
-            logger?.debug(`@env ${envName} = ${envValue ?? '(undefined)'}`);
-            break;
-        }
-
-        case 'use': {
-            const ref = String(directive.args['ref'] ?? '');
-            logger?.info(`@use ${ref} — resolved (import registered)`);
-            // Resolution handled at a higher level by resolve-imports use case
-            break;
-        }
-
-        case 'agent':
-        case 'handoff': {
-            // Not implemented in MVP — log and continue
-            logger?.warn(
-                `@${directive.type} is not implemented in MVP — skipping`,
-                { raw: directive.raw },
-            );
-            break;
-        }
-
-        case 'parallel':
-        case 'for':
-        case 'repeat':
-        case 'try':
-        case 'on-error':
-        case 'workflow':
-        case 'else': {
-            // Block directives — MVP handles sequentially, log intent
-            logger?.info(`@${directive.type} — sequential fallback in MVP`, {
-                raw: directive.raw,
-            });
-            break;
-        }
-
-        default: {
-            logger?.warn(`Unknown directive: @${directive.type}`, {
-                raw: directive.raw,
-            });
-        }
     }
 }
 
