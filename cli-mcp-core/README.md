@@ -77,21 +77,25 @@ tags: [dev, code-review]
 # Step 2 — Run checks in parallel
 
 @parallel:
-  ## Lint
-  @call eslint-analyzer.check($changed_files) → $lint
 
-  ## Tests
-  @call test-runner.run($repo_path) → $tests
+## Lint
 
-  ## Security
-  @call security-scanner.scan($changed_files) → $security
+@call eslint-analyzer.check($changed_files) → $lint
+
+## Tests
+
+@call test-runner.run($repo_path) → $tests
+
+## Security
+
+@call security-scanner.scan($changed_files) → $security
 
 # Step 3 — Evaluate
 
 @if $security.critical_count > 0:
-  $passed = false
+$passed = false
 @else:
-  $passed = $lint.error_count == 0 && $tests.passed
+$passed = $lint.error_count == 0 && $tests.passed
 
 @output: $report, $passed
 ```
@@ -100,18 +104,21 @@ tags: [dev, code-review]
 
 ## Directives
 
-| Directive | Purpose |
-|---|---|
-| `@use` | Import a skill, tool, or sub-workflow |
-| `@call` | Call a tool and capture the result |
-| `@if` / `@else` | Conditional branching |
-| `@for` | Bounded iteration |
-| `@parallel` | Parallel execution |
-| `@try` / `@on-error` | Error handling |
-| `@assert` | Validation checkpoint |
-| `@output` | Declare workflow outputs |
-| `@agent` | Delegate to an AI agent |
-| `@handoff` | Transfer to another agent |
+| Directive            | Purpose                                        |
+| -------------------- | ---------------------------------------------- |
+| `@use`               | Import a skill, tool, or sub-workflow          |
+| `@call`              | Call a tool and capture the result             |
+| `@if` / `@else`      | Conditional branching                          |
+| `@for`               | Bounded iteration                              |
+| `@repeat`            | Loop with stop condition (`max:N until/while`) |
+| `@parallel`          | Parallel execution                             |
+| `@try` / `@on-error` | Error handling                                 |
+| `@assert`            | Validation checkpoint                          |
+| `@output`            | Declare workflow outputs                       |
+| `@env`               | Reference an environment variable              |
+| `@workflow`          | Inline sub-workflow                            |
+| `@agent`             | Delegate to an AI agent                        |
+| `@handoff`           | Transfer to another agent                      |
 
 ---
 
@@ -185,31 +192,31 @@ pnpm typecheck
 
 ## Stack
 
-| Layer | Package | Role |
-|---|---|---|
-| CLI | `citty` | Command routing |
-| Prompts | `@clack/prompts` | Interactive prompts |
-| Frontmatter | `gray-matter` | YAML parsing |
-| Markdown | `unified` + `remark-parse` | AST generation |
-| Directives | `remark-directive` | `@` directive support |
-| Orchestration | `@mastra/core` | DAG workflows |
-| MCP | `@modelcontextprotocol/sdk` | Tool interop |
-| Validation | `zod` | Typed schemas |
-| Build | `obuild` | TypeScript bundling |
-| Tests | `vitest` | Unit + integration |
+| Layer         | Package                     | Role                  |
+| ------------- | --------------------------- | --------------------- |
+| CLI           | `citty`                     | Command routing       |
+| Prompts       | `@clack/prompts`            | Interactive prompts   |
+| Frontmatter   | `gray-matter`               | YAML parsing          |
+| Markdown      | `unified` + `remark-parse`  | AST generation        |
+| Directives    | `remark-directive`          | `@` directive support |
+| Orchestration | `@mastra/core`              | DAG workflows         |
+| MCP           | `@modelcontextprotocol/sdk` | Tool interop          |
+| Validation    | `zod`                       | Typed schemas         |
+| Build         | `obuild`                    | TypeScript bundling   |
+| Tests         | `vitest`                    | Unit + integration    |
 
 ---
 
 ## Roadmap
 
-| Phase | Version | Features |
-|---|---|---|
-| 1 | v0.1.0 | MVP — Parse + sequential run |
-| 2 | v0.2.0 | DAG orchestration (Mastra) |
-| 3 | v0.3.0 | MCP + Skills integration |
-| 4 | v0.4.0 | Registry & distribution |
-| 5 | v0.5.0 | Copilot + IDE agents (ACP) |
-| 6 | v1.0.0 | Production & scale |
+| Phase | Version | Features                                                    | Status |
+| ----- | ------- | ----------------------------------------------------------- | ------ |
+| 1     | v0.1.0  | MVP — Parse + sequential run                                | ✅     |
+| 2     | v0.2.0  | DAG orchestration (Mastra), full control flow, event system | ✅     |
+| 3     | v0.3.0  | MCP client/server, `@agent` LLM, Result monad               | ⏳     |
+| 4     | v0.4.0  | Registry & distribution                                     | ⏳     |
+| 5     | v0.5.0  | Copilot + IDE agents (ACP)                                  | ⏳     |
+| 6     | v1.0.0  | Production & scale                                          | ⏳     |
 
 ---
 

@@ -7,6 +7,8 @@
  * @module core/entities/directive
  */
 
+import type { Step } from './step.js';
+
 /**
  * All supported directive types in the chainskills workflow format.
  *
@@ -81,6 +83,8 @@ export interface Directive {
     readonly raw: string;
     /** Parsed arguments — structure varies by directive type. */
     readonly args: Readonly<Record<string, unknown>>;
+    /** Nested child steps for block directives (:::parallel, :::if, :::for, :::try, etc.). */
+    readonly children?: readonly Step[];
 }
 
 /** Type guard: checks whether a string is a valid `DirectiveType`. */

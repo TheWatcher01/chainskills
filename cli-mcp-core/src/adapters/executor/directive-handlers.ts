@@ -151,11 +151,13 @@ export async function handleFor(
 
     ctx.logger?.info(`@for ${variable} in ${iterableRef} — ${items.length} items`);
 
-    // Get child directives (directives after @for in the same step)
+    // Get child directives: prefer directive.children, then step.children, then fallback
     const forIdx = step.directives.indexOf(directive);
-    const childDirectives = step.children
-        ? step.children.flatMap((c) => c.directives)
-        : step.directives.slice(forIdx + 1);
+    const childDirectives = directive.children
+        ? directive.children.flatMap((c) => c.directives)
+        : step.children
+            ? step.children.flatMap((c) => c.directives)
+            : step.directives.slice(forIdx + 1);
 
     const results: unknown[] = [];
     for (let i = 0; i < items.length; i++) {
@@ -197,9 +199,11 @@ export async function handleRepeat(
     ctx.logger?.info(`@repeat max:${max} until ${untilCondition}`);
 
     const repeatIdx = step.directives.indexOf(directive);
-    const childDirectives = step.children
-        ? step.children.flatMap((c) => c.directives)
-        : step.directives.slice(repeatIdx + 1);
+    const childDirectives = directive.children
+        ? directive.children.flatMap((c) => c.directives)
+        : step.children
+            ? step.children.flatMap((c) => c.directives)
+            : step.directives.slice(repeatIdx + 1);
 
     for (let i = 0; i < max; i++) {
         ctx.store.set('_iteration', i);
@@ -246,16 +250,24 @@ export async function handleTry(
     );
 
     // Directives between @try and @on-error (or end)
-    const tryDirectives = onErrorIdx >= 0
-        ? step.directives.slice(tryIdx + 1, onErrorIdx)
-        : step.children
-            ? step.children.flatMap((c) => c.directives)
-            : step.directives.slice(tryIdx + 1);
+    // Prefer directive.children from parser, then step-level fallback
+    const tryDirectives = directive.children
+        ? directive.children.flatMap((c) => c.directives)
+        : onErrorIdx >= 0
+            ? step.directives.slice(tryIdx + 1, onErrorIdx)
+            : step.children
+                ? step.children.flatMap((c) => c.directives)
+                : step.directives.slice(tryIdx + 1);
 
-    // Directives after @on-error
-    const errorDirectives = onErrorIdx >= 0
-        ? step.directives.slice(onErrorIdx + 1)
-        : [];
+    // Error directives from parser or step-level fallback
+    const parsedErrorChildren = directive.args['_errorChildren'] as Step[] | undefined;
+
+    // Directives after @on-error: prefer parsed error children, then step-level
+    const errorDirectives = parsedErrorChildren
+        ? parsedErrorChildren.flatMap((c) => c.directives)
+        : onErrorIdx >= 0
+            ? step.directives.slice(onErrorIdx + 1)
+            : [];
 
     try {
         if (!ctx.dryRun) {
@@ -304,24 +316,27 @@ export async function handleTry(
 
 /** Handle @parallel directive — in SimpleExecutor, runs sequentially. */
 export async function handleParallel(
-    _directive: Directive,
+    directive: Directive,
     step: Step,
     ctx: DirectiveHandlerContext,
     executeChildDirectives: (directives: readonly Directive[], ctx: DirectiveHandlerContext) => Promise<void>,
 ): Promise<DirectiveHandlerResult> {
     ctx.logger?.info(`@parallel — executing children sequentially (SimpleExecutor)`);
 
+    // Prefer directive.children from parser, fallback to step.children
+    const parallelChildren = directive.children ?? step.children ?? [];
+
     ctx.emitter?.emit({
         type: 'parallel:start',
         timestamp: Date.now(),
-        stepIds: step.children?.map((c) => c.id) ?? [],
+        stepIds: parallelChildren.map((c) => c.id),
     });
 
     const startTime = Date.now();
     const results: Record<string, { success: boolean; error?: string }> = {};
 
-    if (step.children && step.children.length > 0) {
-        for (const child of step.children) {
+    if (parallelChildren.length > 0) {
+        for (const child of parallelChildren) {
             try {
                 await executeChildDirectives(child.directives, {
                     ...ctx,

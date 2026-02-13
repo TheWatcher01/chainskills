@@ -1,7 +1,8 @@
 /**
  * CLI command: `chainskills run <workflow>`
  *
- * Parses and executes a `.workflow.md` file.
+ * Parses and executes a `.workflow.md` file with real-time streaming output
+ * via event emitter.
  *
  * @module cli/run
  */
@@ -13,6 +14,7 @@ import pc from 'picocolors';
 import { createContainer } from '#config/container.js';
 import { parseWorkflow } from '#core/use-cases/parse-workflow.js';
 import { validateWorkflow } from '#core/use-cases/validate-workflow.js';
+import type { ExecutionEvent } from '#core/ports/execution-events.port.js';
 
 export const runCommand = defineCommand({
     meta: {
@@ -116,6 +118,67 @@ export const runCommand = defineCommand({
         } else {
             console.log(pc.cyan('\n⟫ Executing workflow...\n'));
         }
+
+        // Wire streaming event listener for real-time output
+        container.emitter.on((event: ExecutionEvent) => {
+            switch (event.type) {
+                case 'step:start':
+                    console.log(
+                        pc.cyan(`  ${pc.bold('▸')} Step ${event.stepIndex + 1}/${event.totalSteps}: ${pc.bold(event.stepTitle)}`),
+                    );
+                    break;
+
+                case 'step:end':
+                    if (event.success) {
+                        console.log(
+                            pc.green(`    ✓ completed`) + pc.dim(` (${event.duration}ms)`),
+                        );
+                    } else {
+                        console.log(
+                            pc.red(`    ✗ failed`) +
+                            (event.error ? pc.dim(`: ${event.error}`) : ''),
+                        );
+                    }
+                    break;
+
+                case 'directive:start':
+                    console.log(
+                        pc.dim(`    @${event.directiveType}`) +
+                        (event.raw ? pc.dim(` — ${event.raw.slice(0, 60)}`) : ''),
+                    );
+                    break;
+
+                case 'parallel:start':
+                    console.log(
+                        pc.magenta(`    ═══ parallel start`) +
+                        pc.dim(` (${event.stepIds.length} branches)`),
+                    );
+                    break;
+
+                case 'parallel:end':
+                    console.log(
+                        pc.magenta(`    ═══ parallel end`) +
+                        pc.dim(` (${event.duration}ms)`),
+                    );
+                    break;
+
+                case 'loop:iteration':
+                    console.log(
+                        pc.dim(`    ↻ iteration ${event.index + 1}/${event.total}`),
+                    );
+                    break;
+
+                case 'error':
+                    console.log(
+                        pc.red(`    ⚡ error: ${event.message}`),
+                    );
+                    break;
+
+                // workflow:start and workflow:end handled at top level
+                default:
+                    break;
+            }
+        });
 
         const execResult = await container.executor.execute(
             workflow,

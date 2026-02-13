@@ -42,7 +42,12 @@ export {
     type ValidationReport,
     type ValidationDiagnostic,
 } from '#core/use-cases/validate-workflow.js';
-export { buildDAG, type DAGNode, type DAG } from '#core/use-cases/build-dag.js';
+export {
+    buildDAG,
+    type DAGNode,
+    type DAGNodeType,
+    type DAG,
+} from '#core/use-cases/build-dag.js';
 
 // ─── Core Services ───────────────────────────────────────────────────────────
 export {
@@ -65,5 +70,18 @@ export type {
 export { ok, err } from '#infra/errors.js';
 export { createLogger, type Logger, type LogLevel } from '#infra/logger.js';
 
+// ─── Execution Events ────────────────────────────────────────────────────────
+export {
+    createEventEmitter,
+    type ExecutionEvent,
+    type ExecutionEventType,
+    type ExecutionEventEmitter,
+    type ExecutionEventHandler,
+} from '#core/ports/execution-events.port.js';
+
 // ─── Config ──────────────────────────────────────────────────────────────────
 export { createContainer, type Container } from '#config/container.js';
+
+// ─── Adapters (optional deep imports) ────────────────────────────────────────
+export { createMastraExecutor } from '#adapters/executor/mastra-executor.js';
+export type { MastraExecutorDeps } from '#adapters/executor/mastra-executor.js';

@@ -7,6 +7,7 @@
 - **Langage**: TypeScript (strict) — Node.js ≥ 20, pnpm
 - **Architecture**: Hexagonal (Ports & Adapters) — core pur, zéro dépendance
 - **Setup**: [AGENTS.md](../AGENTS.md) (agents, skills, architecture)
+- **Roadmap**: [.github/ROADMAP.md](ROADMAP.md) (suivi d'implémentation, phases, changelog — **à mettre à jour pour toute évolution de version**)
 - **CLI framework**: Citty (UnJS ecosystem)
 - **Orchestration**: Mastra (DAG workflows)
 - **Parsing**: unified + remark-parse + remark-directive + gray-matter

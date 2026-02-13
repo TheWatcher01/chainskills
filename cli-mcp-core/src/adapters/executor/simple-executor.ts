@@ -226,29 +226,46 @@ async function executeStep(
                 });
                 conditionResult = ifResult.conditionResult;
 
+                // Get children from directive.children (parser) or step.children (fallback)
+                const ifChildren = directive.children ?? step.children;
+                const elseChildren = directive.args['_elseChildren'] as Step[] | undefined;
+
                 if (conditionResult === false) {
-                    // Skip directives until @else or next block directive
-                    const elseIdx = step.directives.findIndex(
-                        (d, idx) => idx > i && d.type === 'else',
-                    );
-                    if (elseIdx >= 0) {
-                        // Skip to after @else — execute remaining after @else
-                        i = elseIdx;
-                    } else if (step.children) {
-                        // Skip children
-                        skipRemaining = false;
-                    } else {
-                        skipRemaining = true;
-                    }
-                } else {
-                    // Condition true — execute children if present
-                    if (step.children && step.children.length > 0) {
-                        for (const child of step.children) {
+                    // Condition false — execute else branch if available
+                    if (elseChildren && elseChildren.length > 0) {
+                        for (const child of elseChildren) {
                             await executeChildDirectives(child.directives, {
                                 ...ctx,
                                 stepId: child.id,
                             });
                         }
+                    } else {
+                        // No parsed else children — fallback to flat @else directive
+                        const elseIdx = step.directives.findIndex(
+                            (d, idx) => idx > i && d.type === 'else',
+                        );
+                        if (elseIdx >= 0) {
+                            i = elseIdx;
+                        } else {
+                            skipRemaining = true;
+                        }
+                    }
+                } else {
+                    // Condition true — execute main children
+                    if (ifChildren && ifChildren.length > 0) {
+                        for (const child of ifChildren) {
+                            await executeChildDirectives(child.directives, {
+                                ...ctx,
+                                stepId: child.id,
+                            });
+                        }
+                    }
+                    // Skip any flat @else that follows
+                    const elseIdx = step.directives.findIndex(
+                        (d, idx) => idx > i && d.type === 'else',
+                    );
+                    if (elseIdx >= 0) {
+                        skipRemaining = true;
                     }
                 }
                 continue;

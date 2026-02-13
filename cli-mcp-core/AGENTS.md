@@ -90,6 +90,7 @@ chainskills/
 ├── tests/                         # Vitest — parser, runtime, mcp, cli
 ├── rules/                         # Règles métier externalisées (JSON)
 ├── .github/                       # Architecture agentique
+│   ├── ROADMAP.md                 # Suivi détaillé : phases, checkboxes, changelog, métriques
 │   ├── agents/                    # Plan.agent.md, Review.agent.md
 │   ├── prompts/                   # Prompts réutilisables
 │   ├── skills/                    # Skills Copilot custom
@@ -209,10 +210,13 @@ npx chainskills run workflow.md
 
 ## Roadmap
 
+> **Fichier de suivi détaillé** : [.github/ROADMAP.md](ROADMAP.md) — phases, checkboxes, décisions, changelog, métriques.
+> Toute mise à jour de roadmap doit aussi mettre à jour ce fichier.
+
 | Phase | Version | Contenu                                       | Statut      | Date       |
 | ----- | ------- | --------------------------------------------- | ----------- | ---------- |
 | 1     | v0.1.0  | MVP — Parse + Run séquentiel + CLI + Tests    | ✅ Complété | 2026-02-13 |
-| 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel  | ⏳ Planifié | Q1 2026    |
+| 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel  | ✅ Complété | 2026-02-13 |
 | 3     | v0.3.0  | MCP client/server, `@agent` LLM, Result monad | ⏳ Planifié | Q2 2026    |
 | 4     | v0.4.0  | Registry npm-like, résolution distante/git    | ⏳ Planifié | Q2 2026    |
 | 5     | v0.5.0  | Copilot ACP, agents IDE                       | ⏳ Planifié | Q3 2026    |
@@ -239,3 +243,28 @@ npx chainskills run workflow.md
 - 7 fichiers de tests (Vitest)
 - 0 erreurs typecheck
 - Architecture prête pour extension (DAG, MCP, Registry)
+
+### v0.2.0 — DAG Orchestration & Full Control Flow
+
+**Fonctionnalités :**
+
+- DAG builder complet (`buildDAG`) — détection de type, analyse de dépendances, groupes parallèles, détection de cycles
+- Parser block-level (`:::parallel`, `:::if`, `:::for`, `:::try`, `:::workflow`) — containerDirective récursif
+- Moteur d'exécution séquentiel complet — 15 directives (`@if/@else`, `@for`, `@repeat`, `@try/@on-error`, `@parallel`, `@assert`, `@env`, `@output`, `@agent`, `@handoff`)
+- MastraExecutor — orchestration DAG réelle avec `.then()`/`.parallel()` via @mastra/core
+- Strategy pattern pour sélection d'executor (`CHAINSKILLS_EXECUTOR=simple|mastra`)
+- Directive handlers partagés (DRY) — `directive-handlers.ts`
+- Système d'événements typé — 11 types d'événements, emitter avec `on/off/emit`
+- CLI `inspect` — visualisation DAG ASCII avec caractères box-drawing (═, ◇, ↻, ⚡, ●), mode `--json`
+- CLI `list` — recherche récursive de `.workflow.md` avec métadonnées frontmatter, mode `--json`
+- CLI `run` — streaming d'événements en temps réel (step, directive, parallel, loop, error)
+- 6 templates pré-packagés (dev: code-review, tdd-cycle | cybersec: recon-target, vuln-scan | osint: domain-recon | ess: grant-application)
+- Templates enrichis avec `@parallel`, `@repeat`, `@for`, `@try`
+
+**Métriques :**
+
+- ~50 fichiers TypeScript
+- 11 fichiers de tests (Vitest) — 141 tests
+- 0 erreurs typecheck
+- Architecture prête pour extension (MCP, Registry, Copilot ACP)
+ot ACP)
