@@ -18,6 +18,9 @@ const EnvSchema = z.object({
     CHAINSKILLS_STATE_BACKEND: z
         .enum(['memory', 'sqlite', 'redis'])
         .default(DEFAULT_CONFIG.stateBackend),
+    CHAINSKILLS_EXECUTOR: z
+        .enum(['simple', 'mastra'])
+        .default(DEFAULT_CONFIG.executor),
     CHAINSKILLS_WORKFLOWS_DIR: z
         .string()
         .default(DEFAULT_CONFIG.workflowsDir),
@@ -66,6 +69,7 @@ export function loadEnvConfig(): AppConfig {
     return {
         logLevel: env.CHAINSKILLS_LOG_LEVEL,
         stateBackend: env.CHAINSKILLS_STATE_BACKEND,
+        executor: env.CHAINSKILLS_EXECUTOR,
         workflowsDir: env.CHAINSKILLS_WORKFLOWS_DIR,
         globalDir: env.CHAINSKILLS_GLOBAL_DIR,
         mcpPort: env.MCP_SERVER_PORT,

@@ -8,12 +8,17 @@
 
 import type { LogLevel } from '#infra/logger.js';
 
+/** Supported executor backends. */
+export type ExecutorBackend = 'simple' | 'mastra';
+
 /** Application configuration shape. */
 export interface AppConfig {
     /** Log level. */
     readonly logLevel: LogLevel;
     /** State backend. */
     readonly stateBackend: 'memory' | 'sqlite' | 'redis';
+    /** Executor backend — 'simple' for sequential, 'mastra' for DAG orchestration. */
+    readonly executor: ExecutorBackend;
     /** Local workflows directory. */
     readonly workflowsDir: string;
     /** Global chainskills directory. */
@@ -30,6 +35,7 @@ export interface AppConfig {
 export const DEFAULT_CONFIG: AppConfig = {
     logLevel: 'debug',
     stateBackend: 'memory',
+    executor: 'mastra',
     workflowsDir: './workflows',
     globalDir: '~/.chainskills',
     mcpPort: 3001,
