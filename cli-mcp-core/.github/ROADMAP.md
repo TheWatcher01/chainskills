@@ -13,7 +13,7 @@
 | v0.2.1   | Security     | Hardening sécurité, Result monad utilities, architecture fixes    | ✅ Complété |
 | v0.3.0-α | MCP          | MCP server, SDK API, `--json` mode, `serve` command               | ✅ Complété |
 | v0.3.0   | MCP+Agent    | MCP client, `@agent` LLM, composite tools                         | ✅ Complété |
-| v0.4.0   | VS Code Ext  | Extension VS Code, Copilot Chat, DAG visualizer, step debugging   | ⏳ Planifié |
+| v0.4.0   | VS Code Ext  | Extension VS Code, Copilot Chat, DAG visualizer, step debugging   | 🔄 En cours |
 | v0.5.0   | Registry     | npm-like registry, `@use` résolution distante/git                 | ⏳ Planifié |
 | v0.6.0   | IDE Advanced | Language Server Protocol, advanced IDE features                   | ⏳ Planifié |
 | v1.0.0   | Production   | SQLite, Redis, rate limiting, enterprise features                 | ⏳ Planifié |
@@ -608,26 +608,53 @@ chainskills-vscode/
 
 ### Phases d'Implémentation
 
-**Phase 1 — Core Extensions** (2-3 semaines)
+**Phase 1 — Core chainskills Enhancements** ✅ **COMPLÉTÉ** (2026-02-13)
 
-- [ ] Nouveau repo `chainskills-vscode/`
-- [ ] Package.json avec contribution points
-- [ ] Extension activation + command registration
-- [ ] WorkflowTreeProvider (local workflows discovery)
-- [ ] Commands: run, validate, init, inspect
-- [ ] TextMate grammar pour syntax highlighting
-- [ ] OutputChannel integration
+- [x] ExecutionController API (pause/resume/cancel/step)
+- [x] StateStore serialization (serialize/deserialize)
+- [x] CancellationToken entity implementation
+- [x] VS Code error format (`--format=vscode` flag)
+- [x] @breakpoint directive (parser + handler)
+- [x] Tests pour nouvelles APIs (+18 tests → 197 total)
+- [x] ExecutionController dans SimpleExecutor et MastraExecutor
+- [x] Result monad utilities (map, flatMap, mapErr, unwrapOr, match)
 
-**Phase 2 — Core chainskills Enhancements** (1-2 semaines)
+**Résultats Phase 1**:
 
-- [ ] ExecutionController API (pause/resume/cancel)
-- [ ] StateStore serialization
-- [ ] CancellationToken implementation
-- [ ] VS Code error format (`--format=vscode`)
-- [ ] VsCodeOutputAdapter
-- [ ] Tests pour nouvelles APIs
+- 197/197 tests passing
+- 0 erreurs typecheck
+- ExecutionController avec listeners (onPause, onResume, onCancel, onStep)
+- CancellationToken avec observer pattern (5 tests)
+- StateStore serialization (JSON) pour mid-execution persistence (6 tests)
+- @breakpoint directive conditionnelle (16ème directive)
+- CLI `--format=vscode` pour Problem Matcher (validate + run)
+- 7 smart commits groupés par feature
 
-**Phase 3 — Webviews** (2-3 semaines)
+**Phase 2 — Extension Skeleton (VS Code)** ✅ **COMPLÉTÉ** (2026-02-13)
+
+- [x] Nouveau repo `chainskills-vscode/` (structure complète)
+- [x] package.json avec contribution points (10 commands, 1 view, Problem Matcher, task def)
+- [x] Extension activation + command registration
+- [x] WorkflowTreeProvider (local workflows discovery + metadata parsing)
+- [x] Commands: run, runDryRun, validate, inspect, pause/resume/stop/step, templates, refresh
+- [x] TextMate grammar pour syntax highlighting (16 directives)
+- [x] language-configuration.json (bracket matching, auto-closing)
+- [x] ExecutionController (POSIX signals: SIGSTOP/SIGCONT/SIGTERM)
+- [x] Build pipeline (webpack → 23 KB bundle)
+- [x] Testing guide (quick + full test suites)
+
+**Résultats Phase 2**:
+
+- 490 lignes TypeScript → 23 KB bundle (webpack)
+- 10 commands opérationnels (spawns chainskills CLI via child_process)
+- TreeView découvre .workflow.md avec frontmatter parsing
+- Problem Matcher parse `file:line:col: severity: message`
+- Auto-validate on save (configurable)
+- File watcher refreshes tree on changes
+- 5 configuration properties
+- Complete README + TESTING guides
+
+**Phase 3 — Webviews** ⏳ **Planifié** (2-3 semaines)
 
 - [ ] DAG Visualizer (D3.js + dagre)
 - [ ] Execution Monitor (real-time progress)
