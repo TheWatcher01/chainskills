@@ -153,30 +153,3 @@ export interface ExecutionEventEmitter {
     /** Unsubscribe a handler. */
     off(handler: ExecutionEventHandler): void;
 }
-
-// ─── Default Implementation ──────────────────────────────────────────────────
-
-/**
- * Create a simple in-process event emitter.
- *
- * Uses a synchronous callback list — no Node.js EventEmitter dependency
- * so the core stays pure.
- */
-export function createEventEmitter(): ExecutionEventEmitter {
-    const handlers: ExecutionEventHandler[] = [];
-
-    return {
-        emit(event: ExecutionEvent): void {
-            for (const handler of handlers) {
-                handler(event);
-            }
-        },
-        on(handler: ExecutionEventHandler): void {
-            handlers.push(handler);
-        },
-        off(handler: ExecutionEventHandler): void {
-            const idx = handlers.indexOf(handler);
-            if (idx >= 0) handlers.splice(idx, 1);
-        },
-    };
-}

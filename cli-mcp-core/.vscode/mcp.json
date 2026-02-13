@@ -1,0 +1,13 @@
+{
+    "servers": {
+        "chainskills": {
+            "command": "node",
+            "args": [
+                "./bin/cli.mjs",
+                "serve",
+                "--stdio"
+            ],
+            "env": {}
+        }
+    }
+}

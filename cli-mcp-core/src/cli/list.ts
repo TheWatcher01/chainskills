@@ -90,7 +90,7 @@ export const listCommand = defineCommand({
             return;
         }
 
-        const container = createContainer();
+        const container = await createContainer();
         const workflows: Array<{
             path: string;
             name: string;

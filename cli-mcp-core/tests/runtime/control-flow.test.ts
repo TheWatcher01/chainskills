@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { createSimpleExecutor } from '#adapters/executor/simple-executor.js';
 import { createMemoryStore } from '#adapters/state/memory-store.js';
 import { createShellToolProvider } from '#adapters/tools/shell-tool-provider.js';
-import { createEventEmitter } from '#core/ports/execution-events.port.js';
+import { createEventEmitter } from '#infra/event-emitter.js';
 import { createLogger } from '#infra/logger.js';
 import type { Workflow } from '#core/entities/workflow.js';
 import type { Step } from '#core/entities/step.js';

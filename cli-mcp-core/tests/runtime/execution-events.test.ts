@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createEventEmitter } from '#core/ports/execution-events.port.js';
+import { createEventEmitter } from '#infra/event-emitter.js';
 import type { ExecutionEvent } from '#core/ports/execution-events.port.js';
 
 describe('createEventEmitter', () => {

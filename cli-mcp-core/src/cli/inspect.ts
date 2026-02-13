@@ -198,7 +198,7 @@ export const inspectCommand = defineCommand({
         }
 
         // Parse
-        const container = createContainer();
+        const container = await createContainer();
         const parseResult = parseWorkflow(source, container.parser);
         if (!parseResult.ok) {
             console.error(pc.red(`Parse error: ${parseResult.error.message}`));
