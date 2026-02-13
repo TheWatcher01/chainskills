@@ -30,4 +30,18 @@ export interface StateStore {
 
     /** Remove all entries. */
     clear(): void;
+
+    /** Serialize store state to JSON string for persistence. */
+    serialize(): string;
+
+    /** Deserialize and restore store state from JSON string. */
+    deserialize(data: string): void;
+}
+
+/** Execution snapshot for save/restore mid-execution. */
+export interface ExecutionSnapshot {
+    readonly stepIndex: number;
+    readonly state: string;
+    readonly timestamp: number;
+    readonly workflowPath: string;
 }

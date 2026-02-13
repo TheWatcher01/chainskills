@@ -14,3 +14,10 @@ export {
     resolveImports,
     type ResolvedWorkflow,
 } from './resolve-imports.js';
+export {
+    runWorkflow,
+    describeWorkflow,
+    type SDKError,
+    type RunWorkflowResult,
+    type WorkflowDescription,
+} from './run-workflow.js';

@@ -8,7 +8,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { resolve, basename } from 'node:path';
+import { resolve, basename, normalize } from 'node:path';
 import type { Result } from '#infra/errors.js';
 import type { ResolveError } from '#infra/errors.js';
 import { ok, err, resolveError } from '#infra/errors.js';
@@ -41,7 +41,19 @@ export function createLocalResolver(basePath: string): SkillResolver {
                 );
             }
 
-            const absolutePath = resolve(basePath, ref);
+            const absolutePath = normalize(resolve(basePath, ref));
+            const normalizedBase = normalize(resolve(basePath));
+
+            // Security: prevent path traversal outside the workspace
+            if (!absolutePath.startsWith(normalizedBase)) {
+                return err(
+                    resolveError(
+                        'PATH_TRAVERSAL',
+                        `Reference "${ref}" resolves outside the workspace directory. Path traversal is not allowed.`,
+                        ref,
+                    ),
+                );
+            }
 
             try {
                 const content = readFileSync(absolutePath, 'utf-8');

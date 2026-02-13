@@ -41,6 +41,15 @@ const EnvSchema = z.object({
         .int()
         .positive()
         .default(DEFAULT_CONFIG.shellTimeout),
+    MCP_TRANSPORT: z
+        .enum(['stdio', 'http'])
+        .default(DEFAULT_CONFIG.mcpTransport),
+    MCP_SERVER_NAME: z
+        .string()
+        .default(DEFAULT_CONFIG.mcpServerName),
+    MCP_SERVER_VERSION: z
+        .string()
+        .default(DEFAULT_CONFIG.mcpServerVersion),
 });
 
 /**
@@ -73,6 +82,9 @@ export function loadEnvConfig(): AppConfig {
         workflowsDir: env.CHAINSKILLS_WORKFLOWS_DIR,
         globalDir: env.CHAINSKILLS_GLOBAL_DIR,
         mcpPort: env.MCP_SERVER_PORT,
+        mcpTransport: env.MCP_TRANSPORT,
+        mcpServerName: env.MCP_SERVER_NAME,
+        mcpServerVersion: env.MCP_SERVER_VERSION,
         registryUrl: env.CHAINSKILLS_REGISTRY_URL,
         shellTimeout: env.CHAINSKILLS_SHELL_TIMEOUT,
     };

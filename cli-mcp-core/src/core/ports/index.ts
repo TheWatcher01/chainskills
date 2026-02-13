@@ -38,4 +38,10 @@ export type {
     LoopIterationEvent,
     ErrorEvent,
 } from './execution-events.port.js';
-export { createEventEmitter } from './execution-events.port.js';
+export type {
+    AgentProvider,
+    AgentInvokeOptions,
+    AgentResult,
+    AgentError,
+    AgentMessage,
+} from './agent-provider.port.js';

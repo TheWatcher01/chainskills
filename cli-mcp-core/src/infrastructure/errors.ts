@@ -38,6 +38,48 @@ export function err<E>(error: E): Err<E> {
     return { ok: false, error };
 }
 
+// ─── Result Utilities ────────────────────────────────────────────────────────
+
+/** Check if a Result is Ok. */
+export function isOk<T, E>(result: Result<T, E>): result is Ok<T> {
+    return result.ok;
+}
+
+/** Check if a Result is Err. */
+export function isErr<T, E>(result: Result<T, E>): result is Err<E> {
+    return !result.ok;
+}
+
+/** Transform the success value of a Result. */
+export function map<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {
+    return result.ok ? ok(fn(result.value)) : result;
+}
+
+/** Transform and flatten the success value of a Result. */
+export function flatMap<T, U, E>(result: Result<T, E>, fn: (value: T) => Result<U, E>): Result<U, E> {
+    return result.ok ? fn(result.value) : result;
+}
+
+/** Transform the error value of a Result. */
+export function mapErr<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {
+    return result.ok ? result : err(fn(result.error));
+}
+
+/** Unwrap the success value or return a default. */
+export function unwrapOr<T, E>(result: Result<T, E>, defaultValue: T): T {
+    return result.ok ? result.value : defaultValue;
+}
+
+/** Unwrap the success value or compute a default from the error. */
+export function unwrapOrElse<T, E>(result: Result<T, E>, fn: (error: E) => T): T {
+    return result.ok ? result.value : fn(result.error);
+}
+
+/** Pattern match on a Result — exhaustive handling of both branches. */
+export function match<T, E, U>(result: Result<T, E>, handlers: { ok: (value: T) => U; err: (error: E) => U }): U {
+    return result.ok ? handlers.ok(result.value) : handlers.err(result.error);
+}
+
 // ─── Domain Error Types ──────────────────────────────────────────────────────
 
 /** Base interface for all chainskills domain errors. */

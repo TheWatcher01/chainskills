@@ -10,6 +10,7 @@
 import type { Result } from '#infra/errors.js';
 import type { ExecutionError } from '#infra/errors.js';
 import type { Workflow } from '#core/entities/workflow.js';
+import type { ExecutionController } from './execution-controller.port.js';
 
 /** Options for workflow execution. */
 export interface ExecutionOptions {
@@ -33,6 +34,8 @@ export interface ExecutionResult {
     readonly outputs: Record<string, unknown>;
     readonly steps: readonly StepResult[];
     readonly duration: number;
+    /** Controller for execution flow (pause/resume/cancel). */
+    readonly controller: ExecutionController;
 }
 
 /**

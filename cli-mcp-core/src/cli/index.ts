@@ -12,11 +12,12 @@ import { validateCommand } from './validate.js';
 import { initCommand } from './init.js';
 import { inspectCommand } from './inspect.js';
 import { listCommand } from './list.js';
+import { serveCommand } from './serve.js';
 
 const main = defineCommand({
     meta: {
         name: 'chainskills',
-        version: '0.2.0',
+        version: '0.3.0',
         description:
             'Compose, share, and run AI agent workflows written in natural language',
     },
@@ -26,6 +27,7 @@ const main = defineCommand({
         init: initCommand,
         inspect: inspectCommand,
         list: listCommand,
+        serve: serveCommand,
     },
 });
 

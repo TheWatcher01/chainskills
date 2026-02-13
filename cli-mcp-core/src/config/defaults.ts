@@ -11,6 +11,9 @@ import type { LogLevel } from '#infra/logger.js';
 /** Supported executor backends. */
 export type ExecutorBackend = 'simple' | 'mastra';
 
+/** Supported MCP transports. */
+export type McpTransport = 'stdio' | 'http';
+
 /** Application configuration shape. */
 export interface AppConfig {
     /** Log level. */
@@ -23,8 +26,14 @@ export interface AppConfig {
     readonly workflowsDir: string;
     /** Global chainskills directory. */
     readonly globalDir: string;
-    /** MCP server port. */
+    /** MCP server port (used for HTTP transport). */
     readonly mcpPort: number;
+    /** MCP transport type — 'stdio' for Copilot, 'http' for web clients. */
+    readonly mcpTransport: McpTransport;
+    /** MCP server name exposed to clients. */
+    readonly mcpServerName: string;
+    /** MCP server version exposed to clients. */
+    readonly mcpServerVersion: string;
     /** Registry URL. */
     readonly registryUrl: string;
     /** Shell command timeout (ms). */
@@ -39,6 +48,9 @@ export const DEFAULT_CONFIG: AppConfig = {
     workflowsDir: './workflows',
     globalDir: '~/.chainskills',
     mcpPort: 3001,
+    mcpTransport: 'stdio',
+    mcpServerName: 'chainskills',
+    mcpServerVersion: '0.3.0',
     registryUrl: 'https://registry.chainskills.dev',
     shellTimeout: 30_000,
 };

@@ -34,6 +34,13 @@ export type {
     SkillResolver,
     ResolvedSkill,
 } from '#core/ports/skill-resolver.port.js';
+export type {
+    AgentProvider,
+    AgentInvokeOptions,
+    AgentResult,
+    AgentError,
+    AgentMessage,
+} from '#core/ports/agent-provider.port.js';
 
 // ─── Core Use Cases ──────────────────────────────────────────────────────────
 export { parseWorkflow } from '#core/use-cases/parse-workflow.js';
@@ -48,6 +55,13 @@ export {
     type DAGNodeType,
     type DAG,
 } from '#core/use-cases/build-dag.js';
+export {
+    runWorkflow,
+    describeWorkflow,
+    type SDKError,
+    type RunWorkflowResult,
+    type WorkflowDescription,
+} from '#core/use-cases/run-workflow.js';
 
 // ─── Core Services ───────────────────────────────────────────────────────────
 export {
@@ -67,16 +81,16 @@ export type {
     ResolveError,
     ToolError,
 } from '#infra/errors.js';
-export { ok, err } from '#infra/errors.js';
+export { ok, err, isOk, isErr, map, flatMap, mapErr, unwrapOr, unwrapOrElse, match } from '#infra/errors.js';
 export { createLogger, type Logger, type LogLevel } from '#infra/logger.js';
 
 // ─── Execution Events ────────────────────────────────────────────────────────
-export {
-    createEventEmitter,
-    type ExecutionEvent,
-    type ExecutionEventType,
-    type ExecutionEventEmitter,
-    type ExecutionEventHandler,
+export { createEventEmitter } from '#infra/event-emitter.js';
+export type {
+    ExecutionEvent,
+    ExecutionEventType,
+    ExecutionEventEmitter,
+    ExecutionEventHandler,
 } from '#core/ports/execution-events.port.js';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
@@ -85,3 +99,10 @@ export { createContainer, type Container } from '#config/container.js';
 // ─── Adapters (optional deep imports) ────────────────────────────────────────
 export { createMastraExecutor } from '#adapters/executor/mastra-executor.js';
 export type { MastraExecutorDeps } from '#adapters/executor/mastra-executor.js';
+export { createMcpServer } from '#adapters/tools/mcp-server.js';
+export type { McpServerConfig } from '#adapters/tools/mcp-server.js';
+export { createOpenAIAgent, createNoopAgent } from '#adapters/agents/openai-agent.js';
+export type { OpenAIAgentConfig } from '#adapters/agents/openai-agent.js';
+export { createMcpClientProvider } from '#adapters/tools/mcp-client.js';
+export type { McpClientConfig, McpServerEntry } from '#adapters/tools/mcp-client.js';
+export { createCompositeToolProvider } from '#adapters/tools/composite-tool-provider.js';
