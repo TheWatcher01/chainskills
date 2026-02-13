@@ -24,11 +24,20 @@
 - **Security Hardened** — Shell command allowlist, no metacharacter injection, env scoping
 - **MCP Interop** — Expose workflows as MCP tools (`serve`); call remote MCP tools (`@call mcp.*`)
 - **`@agent` LLM delegation** — Delegate tasks to any OpenAI-compatible AI agent
+- **Execution Control** — Pause, resume, cancel, step-through workflows
+- **`@breakpoint` Debugging** — Conditional breakpoints for workflow debugging
+- **VS Code Extension** — Syntax highlighting, TreeView, commands, auto-validate
 
 ### Coming Soon
 
-- **Registry & Distribution** 🔜 — `add`, `publish`, `remove` from an npm-like registry (v0.4.0)
-- **Copilot ACP** 🔜 — `@chainskills` Chat Participant in VS Code (v0.5.0)
+- **CodeLens Run/Validate** 🔜 — Clickable "▶ Run | 🔍 Validate" above each step (v0.5.0)
+- **Live Diagnostics** 🔜 — Red squiggles for invalid directives as you type (v0.5.0)
+- **Autocomplete** 🔜 — `@` → directives, `$` → variables, `@call` → tools (v0.5.0)
+- **Copilot Chat** 🔜 — `@chainskills /create` in GitHub Copilot Chat (v0.6.0)
+- **Agent Mode Tools** 🔜 — Copilot uses chainskills autonomously (v0.6.0)
+- **DAG Webview** 🔜 — Interactive graph visualization (v0.6.0)
+- **Debug Adapter** 🔜 — F5 to debug workflows with Variables panel (v0.7.0)
+- **Registry** 🔜 — `add`, `publish`, `remove` from npm-like registry (v0.8.0)
 
 ---
 
@@ -129,6 +138,7 @@ $passed = $lint.error_count == 0 && $tests.passed
 | `@workflow`          | Inline sub-workflow                            |
 | `@agent`             | Delegate to an AI agent                        |
 | `@handoff`           | Transfer to another agent                      |
+| `@breakpoint`        | Conditional debugging breakpoint               |
 
 ---
 
@@ -140,10 +150,33 @@ chainskills validate <workflow.md>   # Check syntax + dependencies
 chainskills inspect <workflow.md>    # Display DAG visualization
 chainskills init <name>              # Scaffold a new .workflow.md
 chainskills list [-g]                # List workflows (local or global)
-chainskills add <source> [-g]        # 🔜 Install from Git/registry (v0.4.0)
-chainskills publish                  # 🔜 Publish to registry (v0.4.0)
+chainskills add <source> [-g]        # 🔜 Install from Git/registry (v0.8.0)
+chainskills publish                  # 🔜 Publish to registry (v0.8.0)
 chainskills serve [--port 3001]      # Expose as MCP server (stdio or HTTP)
 ```
+
+---
+
+## VS Code Extension
+
+The **chainskills-vscode** extension provides IDE integration for `.workflow.md` files:
+
+- **Syntax Highlighting** — TextMate grammar for 17 directives, `$variables`, `:::blocks`
+- **Workflow Explorer** — TreeView discovers `.workflow.md` files with frontmatter metadata
+- **10 Commands** — Run, Validate, Inspect, Pause, Resume, Stop, Step, Templates, Refresh
+- **Auto-validate on Save** — Configurable validation on file save
+- **Problem Matcher** — Errors parsed from `--format=vscode` output
+- **Execution Control** — Pause/Resume/Cancel via POSIX signals
+
+### Install from source
+
+```bash
+cd chainskills-vscode
+npm install && npm run compile
+# Press F5 in VS Code to launch Extension Development Host
+```
+
+> See [chainskills-vscode/README.md](../chainskills-vscode/README.md) for full documentation.
 
 ---
 
@@ -236,10 +269,13 @@ pnpm exec tsx src/cli/index.ts inspect path/to/workflow.md
 | ----- | ------- | ----------------------------------------------------------- | ------ |
 | 1     | v0.1.0  | MVP — Parse + sequential run                                | ✅     |
 | 2     | v0.2.0  | DAG orchestration (Mastra), full control flow, event system | ✅     |
-| 3     | v0.3.0  | MCP client/server, `@agent` LLM, Result monad               | ⏳     |
-| 4     | v0.4.0  | Registry & distribution                                     | ⏳     |
-| 5     | v0.5.0  | Copilot + IDE agents (ACP)                                  | ⏳     |
-| 6     | v1.0.0  | Production & scale                                          | ⏳     |
+| 3     | v0.3.0  | MCP client/server, `@agent` LLM, Result monad               | ✅     |
+| 4     | v0.4.0  | VS Code extension skeleton, core enhancements               | ✅     |
+| 5     | v0.5.0  | IDE Language Features (CodeLens, Completion, Diagnostics)    | 🔄     |
+| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG Webview  | ⏳     |
+| 7     | v0.7.0  | Debug Adapter (DAP), Test Controller, Rename/References      | ⏳     |
+| 8     | v0.8.0  | Registry & distribution                                      | ⏳     |
+| 9     | v1.0.0  | Production & scale                                           | ⏳     |
 
 ---
 

@@ -8,6 +8,7 @@
 - **Architecture**: Hexagonal (Ports & Adapters) — core pur, zéro dépendance
 - **Setup**: [AGENTS.md](../AGENTS.md) (agents, skills, architecture)
 - **Roadmap**: [.github/ROADMAP.md](ROADMAP.md) (suivi d'implémentation, phases, changelog — **à mettre à jour pour toute évolution de version**)
+- **Extension VS Code**: `chainskills-vscode/` (repo adjacent) — 10 commands, TreeView, syntax highlighting
 - **CLI framework**: Citty (UnJS ecosystem)
 - **Orchestration**: Mastra (DAG workflows)
 - **Parsing**: unified + remark-parse + remark-directive + gray-matter
@@ -49,7 +50,7 @@
 ## Format `.workflow.md`
 
 - Frontmatter YAML obligatoire (name, description, version, inputs, outputs, env, tags)
-- Directives `@` : `@use`, `@call`, `@if`, `@for`, `@parallel`, `@try`, `@assert`, `@output`, `@agent`, `@handoff`
+- Directives `@` : `@use`, `@call`, `@if`, `@for`, `@parallel`, `@try`, `@assert`, `@output`, `@agent`, `@handoff`, `@breakpoint`
 - Variables : `$name` avec substitution par le template engine
 - Sections Markdown = steps du workflow (heading = step boundary)
 

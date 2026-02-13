@@ -13,9 +13,12 @@
 | v0.2.1   | Security     | Hardening sécurité, Result monad utilities, architecture fixes    | ✅ Complété |
 | v0.3.0-α | MCP          | MCP server, SDK API, `--json` mode, `serve` command               | ✅ Complété |
 | v0.3.0   | MCP+Agent    | MCP client, `@agent` LLM, composite tools                         | ✅ Complété |
-| v0.4.0   | VS Code Ext  | Extension VS Code, Copilot Chat, DAG visualizer, step debugging   | 🔄 En cours |
-| v0.5.0   | Registry     | npm-like registry, `@use` résolution distante/git                 | ⏳ Planifié |
-| v0.6.0   | IDE Advanced | Language Server Protocol, advanced IDE features                   | ⏳ Planifié |
+| v0.4.0   | VS Code Ext  | Extension skeleton, core enhancements, syntax highlighting        | ✅ Complété |
+| v0.5.0   | IDE Features | Language Features (CodeLens, Completion, Hover, Diagnostics)      | 🔄 En cours |
+| v0.6.0   | Copilot AI   | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | ⏳ Planifié |
+| v0.7.0   | Debug & Test | Debug Adapter (DAP), Test Controller, Variable Inspector          | ⏳ Planifié |
+| v0.8.0   | Registry     | npm-like registry, `@use` résolution distante/git                 | ⏳ Planifié |
+| v0.9.0   | Polish       | Marketplace publish, integration tests, performance               | ⏳ Planifié |
 | v1.0.0   | Production   | SQLite, Redis, rate limiting, enterprise features                 | ⏳ Planifié |
 
 > Voir aussi : [AGENTS.md](../AGENTS.md) — architecture agentique complète, structure projet, stack technique.
@@ -182,6 +185,9 @@
 | 2026-02-13 | v0.2.1 | Security hardening + Result monad + arch fixes        | 10 fichiers modifiés, 1 créé                      |
 | 2026-02-13 | v0.3α  | MCP server, SDK API, `serve`, `--json`, config MCP    | 6 fichiers créés, 8 modifiés, 149 tests           |
 | 2026-02-13 | v0.3.0 | @agent LLM + MCP client + composite tools             | 6 fichiers créés, 10 modifiés, 179 tests          |
+| 2026-02-13 | v0.4.0 | Phase 1: Core enhancements (ExecutionController, etc.) | 8 fichiers créés/modifiés, 197 tests               |
+| 2026-02-13 | v0.4.0 | Phase 2: Extension VS Code skeleton                    | 18 fichiers, repo chainskills-vscode/              |
+| 2026-02-13 | v0.5.0 | Research: 15 VS Code API integration points identifiés | ROADMAP, AGENTS.md, README.md mis à jour           |
 
 ---
 
@@ -486,129 +492,56 @@
 
 ---
 
-## v0.4.0 — Extension VS Code & Copilot Chat Integration (Planifié)
+## v0.4.0 — Extension VS Code & Core Enhancements ✅ COMPLÉTÉ (2026-02-13)
 
 ### Vue d'ensemble
 
-Transformer chainskills d'un CLI en une expérience developer-first intégrée dans VS Code avec:
-
-- Extension native VS Code (Command Palette, TreeView, Webviews)
-- GitHub Copilot Chat participant (`@chainskills`)
-- Visualisation DAG interactive (D3.js)
-- Exécution temps réel avec streaming events
-- Step debugging (pause/resume/step-over)
-- Template gallery interactive
+Extension VS Code skeleton avec 10 commandes, TreeView, TextMate grammar, Problem Matcher, et enhancements du core CLI (ExecutionController, CancellationToken, StateStore serialization, @breakpoint, --format=vscode).
 
 ### Architecture Extension
 
-**Nouveau repo**: `chainskills-vscode/` (monorepo adjacent)
+**Repo séparé**: `chainskills-vscode/` (monorepo adjacent)
 
 **Structure**:
 
 ```
 chainskills-vscode/
 ├── src/
-│   ├── extension.ts              # Activation
-│   ├── commands/                 # run, validate, inspect, init, stop
-│   ├── views/                    # WorkflowTreeProvider, ExecutionStatusView
-│   ├── webviews/                 # dag-visualizer, execution-monitor
-│   ├── copilot/                  # chatParticipant, slashCommands
-│   ├── adapters/                 # outputChannelAdapter, taskAdapter
-│   └── utils/                    # workflowDiscovery, mcpBridge
-├── media/                         # Icons, CSS
-├── syntaxes/                      # workflow.tmLanguage.json
-└── package.json                   # Extension manifest
+│   ├── extension.ts              # Activation + registration
+│   ├── commands.ts               # 10 command handlers (CLI integration)
+│   ├── tree-provider.ts          # WorkflowTreeProvider (file discovery)
+│   └── execution-controller.ts   # POSIX signals (SIGSTOP/SIGCONT/SIGTERM)
+├── syntaxes/
+│   └── workflow.tmLanguage.json  # TextMate grammar (16 directives)
+├── language-configuration.json   # Brackets, auto-closing, folding
+├── .vscode/                      # Launch/tasks config
+└── package.json                  # Extension manifest (10 commands, 1 view, etc.)
 ```
 
-### Nouvelles Capacités Core chainskills
+### Capacités Core ajoutées (chainskills CLI)
 
-**Modifications nécessaires** dans chainskills core:
-
-1. **Pause/Resume/Cancel API** (`ExecutionController`)
-   - Port: `src/core/ports/workflow-executor.port.ts`
-   - Méthodes: `pause()`, `resume()`, `cancel()`, `step()`
-   - Mode debug: `ExecutionOptions.mode: 'normal' | 'debug'`
-
-2. **Sérialisation d'état** (Save/Restore mid-execution)
-   - Port: `StateStore.serialize()` / `deserialize()`
-   - Type: `ExecutionSnapshot` avec `{ stepIndex, state, timestamp }`
-   - Adapter: `PersistentStateStore` avec auto-save
-
-3. **Cancellation Tokens**
-   - Entity: `src/core/entities/cancellation-token.ts`
-   - Interface: `CancellationToken` avec `isCancelled()` et event
-   - Propagation: dans tous les adapters
-
-4. **VS Code Error Format**
-   - Format: `file(line,col): error CODE: message`
-   - Flag CLI: `--format=vscode`
-   - Pour: Problem Matcher dans Tasks
-
-5. **VS Code Output Adapter**
-   - Adapter: `src/adapters/output/vscode-output-adapter.ts`
-   - Forward events → `OutputChannel`, Webview, TreeView
-   - Colored output avec timestamps et emoji status
-
-6. **Directive @breakpoint**
-   - Syntaxe: `@breakpoint` ou `@breakpoint <condition>`
-   - Parser: détection dans remark-workflow-plugin
-   - Executor: pause si hit + eval condition
+| Feature | Description |
+|---|---|
+| ExecutionController API | `pause()`, `resume()`, `cancel()`, `step()` avec listeners |
+| CancellationToken | Graceful cancellation avec observer pattern |
+| StateStore serialization | `serialize()`/`deserialize()` pour mid-execution persistence |
+| `@breakpoint` directive | Conditional debugging (17ème directive) |
+| `--format=vscode` flag | Problem Matcher format (`file:line:col: severity: message`) |
+| Result monad utilities | `map`, `flatMap`, `mapErr`, `unwrapOr`, `match` |
 
 ### Contribution Points VS Code
 
-**Commands** (8):
+| Type | Nombre | Détail |
+|---|---|---|
+| Commands | 10 | run, runDryRun, validate, inspect, pause/resume/stop/step, openTemplates, refreshWorkflows |
+| TreeView | 1 | `chainskillsWorkflows` in Explorer |
+| Problem Matcher | 1 | `$chainskills` parse `file:line:col: severity: message` |
+| Task definition | 1 | type `chainskills` with workflow/inputs/dryRun |
+| Configuration | 5 | cliPath, executor, autoValidate, showDagOnInspect, templatesPath |
+| Language | 1 | `workflow-markdown` (.workflow.md) |
+| Grammar | 1 | TextMate (16 directives + variables + blocks) |
 
-- `chainskills.run` — Run workflow (picker ou argument)
-- `chainskills.runCurrent` — Run current file (Ctrl+Shift+R)
-- `chainskills.validate` — Validate workflow
-- `chainskills.inspect` — Show DAG visualization
-- `chainskills.init` — Initialize new workflow
-- `chainskills.stopExecution` — Cancel running workflow
-- `chainskills.openTemplates` — Browse template gallery
-- `chainskills.showOutput` — Focus output channel
-
-**Views** (2):
-
-- `chainskills-workflows` — Local workflows + templates + recent runs
-- `chainskills-execution` — Active executions avec progress
-
-**Webviews** (2):
-
-- DAG Visualizer — D3.js + dagre layout, click → jump to source
-- Execution Monitor — Progress, variables inspector, events log, controls
-
-**Language**:
-
-- ID: `workflow`
-- Extensions: `.workflow.md`
-- Grammar: TextMate syntax highlighting
-
-**Keybindings**:
-
-- `Ctrl+Shift+R` (Mac: `Cmd+Shift+R`) — Run current workflow
-
-### Copilot Chat Integration
-
-**Participant**: `@chainskills`
-
-**Slash Commands**:
-
-- `/create <description>` — Generate workflow from natural language
-- `/explain <file>` — Analyze and document workflow
-- `/fix <error>` — Suggest corrections for errors
-- `/optimize <file>` — Suggest performance improvements
-- `/convert <format>` — Convert from JSON/YAML/GitHub Actions
-
-**Implementation**:
-
-- API: `vscode.chat.registerChatParticipant()`
-- Handler: parse request → call LLM → stream response
-- Context: use `request.references` for file context
-- Actions: buttons for "Accept", "Apply Fix", "Preview"
-
-### Phases d'Implémentation
-
-**Phase 1 — Core chainskills Enhancements** ✅ **COMPLÉTÉ** (2026-02-13)
+### Phase 1 — Core Enhancements ✅ COMPLÉTÉ (2026-02-13)
 
 - [x] ExecutionController API (pause/resume/cancel/step)
 - [x] StateStore serialization (serialize/deserialize)
@@ -618,19 +551,9 @@ chainskills-vscode/
 - [x] Tests pour nouvelles APIs (+18 tests → 197 total)
 - [x] ExecutionController dans SimpleExecutor et MastraExecutor
 - [x] Result monad utilities (map, flatMap, mapErr, unwrapOr, match)
+- [x] 7 smart commits groupés par feature
 
-**Résultats Phase 1**:
-
-- 197/197 tests passing
-- 0 erreurs typecheck
-- ExecutionController avec listeners (onPause, onResume, onCancel, onStep)
-- CancellationToken avec observer pattern (5 tests)
-- StateStore serialization (JSON) pour mid-execution persistence (6 tests)
-- @breakpoint directive conditionnelle (16ème directive)
-- CLI `--format=vscode` pour Problem Matcher (validate + run)
-- 7 smart commits groupés par feature
-
-**Phase 2 — Extension Skeleton (VS Code)** ✅ **COMPLÉTÉ** (2026-02-13)
+### Phase 2 — Extension Skeleton ✅ COMPLÉTÉ (2026-02-13)
 
 - [x] Nouveau repo `chainskills-vscode/` (structure complète)
 - [x] package.json avec contribution points (10 commands, 1 view, Problem Matcher, task def)
@@ -643,104 +566,245 @@ chainskills-vscode/
 - [x] Build pipeline (webpack → 23 KB bundle)
 - [x] Testing guide (quick + full test suites)
 
-**Résultats Phase 2**:
+### Résultats v0.4.0
 
-- 490 lignes TypeScript → 23 KB bundle (webpack)
-- 10 commands opérationnels (spawns chainskills CLI via child_process)
-- TreeView découvre .workflow.md avec frontmatter parsing
-- Problem Matcher parse `file:line:col: severity: message`
-- Auto-validate on save (configurable)
-- File watcher refreshes tree on changes
-- 5 configuration properties
-- Complete README + TESTING guides
+| Métrique | CLI | Extension |
+|---|---|---|
+| Tests | 197/197 passing (16 fichiers) | Manual testing OK |
+| Typecheck | 0 erreurs | 0 erreurs |
+| Build | 5 bundles — 809 kB | webpack → 23 KB |
+| Fichiers | ~65 fichiers TypeScript | 4 fichiers TypeScript |
+| Directives | 17 types supportés | 16 highlighted |
 
-**Phase 3 — Webviews** ⏳ **Planifié** (2-3 semaines)
+---
 
-- [ ] DAG Visualizer (D3.js + dagre)
-- [ ] Execution Monitor (real-time progress)
-- [ ] Event streaming to webviews
-- [ ] Click node → jump to source
-- [ ] Template gallery (searchable)
+## v0.5.0 — IDE Language Features (Planifié — Q2 2026)
 
-**Phase 4 — Copilot Integration** (1-2 semaines)
+> Transformer l'extension en vrai IDE pour `.workflow.md` grâce aux Language Features VS Code.
 
-- [ ] Chat participant registration
-- [ ] Slash commands implementation
-- [ ] LLM calls via vscode.lm API
-- [ ] Workflow generation from natural language
-- [ ] Error analysis and fix suggestions
+### Décisions architecturales v0.5.0
 
-**Phase 5 — Step Debugging** (2-3 semaines)
+| Décision | Choix | Raison |
+|---|---|---|
+| Parse cache | `WorkflowDocument` per-document cache | Parse once, share across all providers |
+| Import mode | Library import (not CLI spawn) | In-process parsing = lower latency, streaming events |
+| Provider grouping | 1 file per provider dans `src/providers/` | Séparation des préoccupations, maintenance |
+| Invalidation | `onDidChangeTextDocument` debounced (300ms) | Balance entre réactivité et performance |
 
-- [ ] @breakpoint directive
-- [ ] Breakpoint management UI
-- [ ] Step-over / Step-into controls
-- [ ] Variable inspector
-- [ ] State save/restore for resume
+### Structure cible Extension
 
-**Phase 6 — Polish & Release** (1 semaine)
+```
+chainskills-vscode/src/
+├── extension.ts                    # Activation, registration
+├── workflow-document.ts            # Shared AST parse cache
+├── providers/
+│   ├── code-lens.provider.ts       # ▶ Run | 🔍 Validate | 📊 DAG above steps
+│   ├── completion.provider.ts      # @ → directives, $ → variables, @call → tools
+│   ├── diagnostics.provider.ts     # Live validation on-type (red squiggles)
+│   ├── hover.provider.ts           # Directive docs, variable values, tool signatures
+│   ├── document-link.provider.ts   # @use/@workflow clickable links
+│   ├── folding.provider.ts         # :::parallel, :::if, :::for blocks
+│   ├── symbols.provider.ts         # Outline: Workflow → Steps → Directives
+│   ├── rename.provider.ts          # F2 on $variable → rename everywhere
+│   └── file-decoration.provider.ts # ✓/✗/⚡ badges on .workflow.md in Explorer
+├── copilot/                        # v0.6.0
+├── debug/                          # v0.7.0
+├── testing/                        # v0.7.0
+├── views/
+│   ├── tree-provider.ts            # Enhanced workflow tree
+│   ├── status-bar.ts               # ⏳ recon-target 3/7
+│   └── webview-dag.ts              # v0.6.0
+├── commands.ts
+└── execution-controller.ts
+```
 
-- [ ] Webpack bundling + optimization
-- [ ] Integration tests (@vscode/test-electron)
-- [ ] README avec screenshots
-- [ ] CHANGELOG
-- [ ] Package .vsix
-- [ ] Publish to marketplace
+### Top 15 — VS Code API Integration Points
 
-### Effort Estimé
+| Rank | Feature | API | Effort | Impact |
+|---|---|---|---|---|
+| 1 | **Copilot Chat `@chainskills`** | `createChatParticipant` | 20h | ★★★★★ |
+| 2 | **Agent Mode Tools** | `lm.registerTool` | 8h | ★★★★★ |
+| 3 | **CodeLens Run/Validate** | `CodeLensProvider` | 6h | ★★★★☆ |
+| 4 | **Live Diagnostics** | `DiagnosticCollection` | 12h | ★★★★☆ |
+| 5 | **Autocomplete @/$/@call** | `CompletionItemProvider` | 14h | ★★★★☆ |
+| 6 | **StatusBar** | `StatusBarItem` | 3h | ★★★☆☆ |
+| 7 | **DAG Webview** | `WebviewPanel` (D3.js) | 30h | ★★★★☆ |
+| 8 | **Hover Documentation** | `HoverProvider` | 8h | ★★★☆☆ |
+| 9 | **Document Links** | `DocumentLinkProvider` | 5h | ★★★☆☆ |
+| 10 | **File Decorations** | `FileDecorationProvider` | 4h | ★★★☆☆ |
+| 11 | **Test Controller** | `TestController` | 16h | ★★★★☆ |
+| 12 | **Debug Adapter (DAP)** | `DebugAdapterDescriptorFactory` | 40h | ★★★★★ |
+| 13 | **Folding Ranges** | `FoldingRangeProvider` | 4h | ★★☆☆☆ |
+| 14 | **Document Symbols** | `DocumentSymbolProvider` | 6h | ★★★☆☆ |
+| 15 | **Variable Rename** | `RenameProvider` | 10h | ★★★☆☆ |
 
-**Total**: 10-14 semaines (2.5-3.5 mois)
+### Phase 3 — Language Features (Semaines 1-4) ⏳
 
-**Breakdown**:
+> **Objectif** : L'extension devient un vrai IDE pour `.workflow.md`
 
-- Phases 1+2 (MVP): 4 semaines — extension fonctionnelle avec commands basiques
-- Phase 3 (Webviews): 3 semaines — visualisation interactive
-- Phase 4 (Copilot): 2 semaines — agent conversationnel
-- Phase 5 (Debug): 3 semaines — debugging avancé
-- Phase 6 (Polish): 1 semaine — finitions
+#### Semaine 1 — Quick Wins (13h)
 
-### Dépendances NPM
+- [ ] `WorkflowDocument` — per-document AST cache with source positions
+- [ ] `StatusBarItem` — "⏳ workflow 3/7" pendant exécution, "✓ 2.3s" complété (3h)
+- [ ] `CodeLensProvider` — "▶ Run | 🔍 Validate | 📊 DAG" au-dessus de chaque step heading (6h)
+- [ ] `FoldingRangeProvider` — replier `:::parallel`, `:::if`, `:::for`, steps (4h)
 
-**Extension**:
+#### Semaine 2 — Diagnostics + Navigation (17h)
 
-- `@types/vscode`: ^1.85.0
-- `@vscode/vsce`: ^2.22.0 (packaging)
-- `@vscode/test-electron`: ^2.3.0 (tests)
-- `webpack`: ^5.90.0
-- `ts-loader`: ^9.5.0
+- [ ] `DiagnosticCollection` — live validation on-type: undefined `$variables`, missing frontmatter, invalid directives (12h)
+- [ ] `DocumentLinkProvider` — `@use ./path` et `@workflow ref` cliquables → navigation fichier (5h)
 
-**Webviews**:
+#### Semaine 3 — Autocomplete (14h)
 
-- `d3`: ^7.9.0 (DAG visualization)
-- `dagre`: ^0.8.5 (layout algorithm)
+- [ ] `CompletionItemProvider` — type `@` → dropdown directives avec docs, `$` → variables, `@call ` → tools disponibles, frontmatter keys (14h)
 
-**Core chainskills** (peer dependency):
+#### Semaine 4 — Hover + Outline + Decorations (18h)
 
-- `chainskills`: ^0.4.0
+- [ ] `HoverProvider` — documentation directive au survol, valeurs `$variable`, signatures tools (8h)
+- [ ] `DocumentSymbolProvider` — Outline: Workflow → Steps → Directives → Variables (6h)
+- [ ] `FileDecorationProvider` — badges ✓/✗/⚡ sur les `.workflow.md` dans l'Explorer (4h)
 
-### Métriques de Succès
+**Métriques cibles v0.5.0** : 8 nouveaux providers, ~2000 lignes TypeScript, 0 errefs typecheck
 
-- ✅ Extension activates en <500ms
-- ✅ DAG render 100 steps en <2s
-- ✅ Event streaming latency <10ms
-- ✅ Memory usage <50MB (5 workflows parallèles)
-- ✅ Marketplace rating >4.5/5
-- ✅ 1000+ installs dans 3 mois
+---
 
-### Risks & Mitigations
+## v0.6.0 — Copilot Chat & AI Integration (Planifié — Q2 2026)
 
-**Bundling size** (40+ packages):
+> Intégration native avec GitHub Copilot Chat et Agent Mode.
 
-- Mitigation: esbuild tree-shaking, externalize heavy deps
+### Décisions architecturales v0.6.0
 
-**Webview security** (CSP restrictions):
+| Décision | Choix | Raison |
+|---|---|---|
+| Chat Participant | `@chainskills` via `vscode.chat.createChatParticipant()` | Apparaît nativement dans Copilot Chat — 1.8M+ utilisateurs |
+| Agent Mode Tools | `vscode.lm.registerTool()` wrapping MCP tools | Copilot utilise chainskills autonomement en agent mode |
+| LLM Access | `vscode.lm.selectChatModels()` | Utilise l'abonnement Copilot — pas de clé API requise |
+| Slash Commands | `/create`, `/explain`, `/fix`, `/optimize`, `/convert` | Couvre les 5 workflows principaux d'un utilisateur |
+| MCP→Tools Bridge | Auto-register MCP tools as `lm.registerTool` | Dual access: MCP standard + Copilot agent mode |
 
-- Mitigation: marked.js + DOMPurify, strict CSP
+### Phase 4 — Copilot Integration (Semaines 5-7) ⏳
 
-**Marketplace approval** (MCP scrutiny):
+#### Semaine 5 — Agent Mode Tools (8h)
 
-- Mitigation: clear security docs, allowlist-only
+- [ ] `src/copilot/agent-tools.ts` — bridge MCP tools → `lm.registerTool()`
+- [ ] 6 tools: `chainskills_run`, `chainskills_validate`, `chainskills_describe`, `chainskills_create`, `chainskills_list`, `chainskills_add_step`
+- [ ] Auto-register sur activation de l'extension
+- [ ] MCP server auto-discovery via `.vscode/mcp.json`
 
-**Performance large DAGs** (100+ steps):
+#### Semaine 6-7 — Chat Participant (20h)
 
-- Mitigation: virtualized tree, web worker for layout
+- [ ] `src/copilot/chat-participant.ts` — `@chainskills` dans Copilot Chat
+- [ ] `src/copilot/slash-commands.ts` — `/create`, `/explain`, `/fix`, `/optimize`, `/convert`
+- [ ] Streaming via `ChatResponseStream` (buttons, file trees, command links)
+- [ ] `followupProvider` — suggestions après réponse ("Exécuter ce workflow ?")
+- [ ] Context via `request.references` — fichier actif, sélection, workspace
+
+### Phase 5 — DAG Webview (Semaines 8-9) ⏳
+
+- [ ] `src/views/webview-dag.ts` — DAG Visualizer D3.js + dagre layout
+- [ ] Click node → jump to source line
+- [ ] Color-code: green=completed, yellow=running, red=failed, gray=pending
+- [ ] Zoom, pan, export SVG/PNG
+- [ ] Event bridge: `ExecutionEventEmitter` → Webview `postMessage()`
+
+### Copilot Agent Mode — Workflow-as-Skill Pattern
+
+```
+Utilisateur : "audit de sécurité de ce repo"
+    ↓
+Copilot Agent Mode:
+    1. chainskills_list() → trouve vuln-scan.workflow.md
+    2. chainskills_describe() → vérifie les inputs requis
+    3. chainskills_run(vuln-scan, { target: $workspacePath }) → exécute
+    4. Rapporte les résultats dans le chat
+```
+
+**Métriques cibles v0.6.0** : 6 agent tools + 5 slash commands + DAG Webview
+
+---
+
+## v0.7.0 — Debug & Testing (Planifié — Q3 2026)
+
+> Debugging avancé (DAP complet) et framework de tests intégré.
+
+### Phase 6 — Debug Adapter Protocol (Semaines 10-12) ⏳
+
+- [ ] `src/debug/debug-adapter.ts` — DAP inline via `InlineDebugAdapterFactory`
+- [ ] `src/debug/breakpoint-manager.ts` — mapping `@breakpoint` ↔ editor breakpoints
+- [ ] F5 pour debugger un workflow
+- [ ] Step through: un directive à la fois
+- [ ] Variables panel: affiche `$state` et variables du workflow
+- [ ] Call stack: hiérarchie des steps
+
+### Phase 7 — Test Controller (Semaine 12) ⏳
+
+- [ ] `src/testing/test-controller.ts` — chaque `.workflow.md` = test item dans Test Explorer
+- [ ] 3 profils: "Dry Run" (rapide), "Full Run" (réel), "Debug Run" (avec breakpoints)
+- [ ] Structure hiérarchique: Workflow → Steps → Directives
+- [ ] CI/CD integration via VS Code test results API
+
+### Phase 8 — Rename & References (Semaine 13) ⏳
+
+- [ ] `RenameProvider` — F2 sur `$variable` → renomme partout (10h)
+- [ ] `ReferenceProvider` — trouver tous les usages d'une variable/skill (6h)
+- [ ] `DefinitionProvider` — go-to-definition pour `@use`, `$variable`, `@workflow` (4h)
+
+**Métriques cibles v0.7.0** : DAP complet + Test Explorer + F2 rename
+
+---
+
+## v0.8.0 — Registry & Distribution (Planifié — Q3 2026)
+
+> npm-like registry pour partager et installer des skills/workflows.
+
+- [ ] `chainskills add owner/repo[@workflow]` — install depuis Git/registry
+- [ ] `chainskills publish` — publier sur le registry
+- [ ] `chainskills remove <name>` — désinstaller un skill
+- [ ] `@use package-name` — résolution distante automatique
+- [ ] Semantic versioning pour les workflows
+- [ ] `AuthenticationProvider` VS Code pour auth registry
+- [ ] `SecretStorage` pour tokens sécurisés
+
+---
+
+## v0.9.0 — Polish & Marketplace (Planifié — Q3 2026)
+
+> Finitions, tests d'intégration, publication marketplace.
+
+- [ ] Integration tests (`@vscode/test-electron`)
+- [ ] Performance profiling (activation < 500ms, DAG render < 2s)
+- [ ] README avec GIFs / screenshots
+- [ ] CHANGELOG.md complet
+- [ ] Package `.vsix` + publish VS Code Marketplace
+- [ ] Extension icon + branding
+
+---
+
+## v1.0.0 — Production & Scale (Planifié — Q4 2026)
+
+> Enterprise features et scalabilité.
+
+- [ ] `SQLite` state store — persistent execution history
+- [ ] `Redis` state store — distributed execution
+- [ ] Rate limiting — protections anti-abus
+- [ ] Audit log — traçabilité des exécutions
+- [ ] `InlayHintProvider` — hints inline (valeurs résolues, types, ordre)
+- [ ] `SemanticTokensProvider` — coloration sémantique riche (au-delà TextMate)
+- [ ] `SignatureHelpProvider` — signature tools dans `@call tool.method(`
+- [ ] `CommentController` — annotations inline (résultats validation, suggestions)
+- [ ] `TimelineProvider` — historique des exécutions par fichier
+- [ ] `CustomTextEditorProvider` — split editor (source + preview)
+
+---
+
+## Effort Estimé (v0.5.0 → v1.0.0)
+
+| Phase | Version | Contenu | Durée | Heures |
+|---|---|---|---|---|
+| Language Features | v0.5.0 | CodeLens, Completion, Diagnostics, Hover, Symbols, Links, Folding, FileDecoration, StatusBar | 4 sem | ~62h |
+| Copilot + AI | v0.6.0 | Chat Participant, Agent Mode Tools, DAG Webview | 5 sem | ~58h |
+| Debug & Test | v0.7.0 | DAP, TestController, Rename, References | 4 sem | ~76h |
+| Registry | v0.8.0 | add/publish/remove, semver, auth | 3 sem | ~40h |
+| Polish | v0.9.0 | Integration tests, marketplace publish | 2 sem | ~20h |
+| Production | v1.0.0 | SQLite, Redis, enterprise | 4 sem | ~50h |
+| **Total** |  |  | **~22 sem** | **~306h** |

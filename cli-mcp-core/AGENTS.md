@@ -34,28 +34,34 @@
 ## Architecture — Couches
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  CLI Layer (Citty)                                      │
-│  chainskills run | validate | add | list | serve        │
-└──────────────────────┬──────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  VS Code Extension Layer (chainskills-vscode)                       │
+│  ChatParticipant | CodeLens | Completion | Hover | DAG Webview      │
+└──────────────────────┬──────────────────────────────────────────────┘
+                       │ import as library
+┌──────────────────────▼──────────────────────────────────────────────┐
+│  CLI Layer (Citty)                                                  │
+│  chainskills run | validate | inspect | list | serve | init         │
+└──────────────────────┬──────────────────────────────────────────────┘
                        │
-┌──────────────────────▼──────────────────────────────────┐
-│  Core (domaine pur — zéro dépendance)                   │
-│  ┌──────────┐ ┌──────────┐ ┌────────────┐ ┌──────────┐ │
-│  │ Entities │ │ Use Cases│ │ Services   │ │ Ports    │ │
-│  │ Workflow │ │ Parse    │ │ Template   │ │ Executor │ │
-│  │ Step     │ │ BuildDAG │ │ Condition  │ │ Resolver │ │
-│  │ Directive│ │ Validate │ │ Engine     │ │ Registry │ │
-│  └──────────┘ └──────────┘ └────────────┘ └──────────┘ │
-└──────────────────────┬──────────────────────────────────┘
+┌──────────────────────▼──────────────────────────────────────────────┐
+│  Core (domaine pur — zéro dépendance)                               │
+│  ┌──────────┐ ┌──────────┐ ┌────────────┐ ┌──────────┐             │
+│  │ Entities │ │ Use Cases│ │ Services   │ │ Ports    │             │
+│  │ Workflow │ │ Parse    │ │ Template   │ │ Executor │             │
+│  │ Step     │ │ BuildDAG │ │ Condition  │ │ Resolver │             │
+│  │ Directive│ │ Validate │ │ Engine     │ │ Registry │             │
+│  │ Cancel   │ │ RunWF    │ │            │ │ Agent    │             │
+│  └──────────┘ └──────────┘ └────────────┘ └──────────┘             │
+└──────────────────────┬──────────────────────────────────────────────┘
                        │ Ports & Adapters
-┌──────────────────────▼──────────────────────────────────┐
-│  Adapters                                               │
-│  ┌─────────┐ ┌─────────┐ ┌──────┐ ┌────────┐ ┌──────┐ │
-│  │ Remark  │ │ Mastra  │ │ MCP  │ │ Skills │ │ State│ │
-│  │ Parser  │ │ Executor│ │ SDK  │ │ Resolve│ │ Store│ │
-│  └─────────┘ └─────────┘ └──────┘ └────────┘ └──────┘ │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────▼──────────────────────────────────────────────┐
+│  Adapters                                                           │
+│  ┌─────────┐ ┌─────────┐ ┌──────┐ ┌────────┐ ┌──────┐ ┌────────┐ │
+│  │ Remark  │ │ Mastra  │ │ MCP  │ │ Skills │ │ State│ │ Agent  │ │
+│  │ Parser  │ │ Executor│ │ SDK  │ │ Resolve│ │ Store│ │ OpenAI │ │
+│  └─────────┘ └─────────┘ └──────┘ └────────┘ └──────┘ └────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -124,6 +130,7 @@ chainskills/
 | `@env`      | Variable d'environnement       | `@env API_KEY`                                |
 | `@agent`    | Déléguer à un agent            | `@agent copilot: "Fix this bug"`              |
 | `@handoff`  | Transférer à un autre agent    | `@handoff review-agent: "Review the changes"` |
+| `@breakpoint` | Point d'arrêt conditionnel   | `@breakpoint $count > 5`                      |
 
 ---
 
@@ -213,15 +220,17 @@ npx chainskills run workflow.md
 > **Fichier de suivi détaillé** : [.github/ROADMAP.md](ROADMAP.md) — phases, checkboxes, décisions, changelog, métriques.
 > Toute mise à jour de roadmap doit aussi mettre à jour ce fichier.
 
-| Phase | Version | Contenu                                          | Statut      | Date       |
-| ----- | ------- | ------------------------------------------------ | ----------- | ---------- |
-| 1     | v0.1.0  | MVP — Parse + Run séquentiel + CLI + Tests       | ✅ Complété | 2026-02-13 |
-| 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel     | ✅ Complété | 2026-02-13 |
-| 3     | v0.3.0  | MCP client/server, `@agent` LLM, composite tools | ✅ Complété | 2026-02-13 |
-| 4     | v0.4.0  | Extension VS Code, Copilot Chat, DAG visualizer  | 🔄 En cours | 2026-02-13 |
-| 5     | v0.5.0  | Registry npm-like, résolution distante/git       | ⏳ Planifié | Q3 2026    |
-| 6     | v0.6.0  | Language Server Protocol, IDE features avancées  | ⏳ Planifié | Q3 2026    |
-| 7     | v1.0.0  | Production & Scale (SQLite, Redis, limits)       | ⏳ Planifié | Q4 2026    |
+| Phase | Version | Contenu                                                           | Statut      | Date       |
+| ----- | ------- | ----------------------------------------------------------------- | ----------- | ---------- |
+| 1     | v0.1.0  | MVP — Parse + Run séquentiel + CLI + Tests                        | ✅ Complété | 2026-02-13 |
+| 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel                      | ✅ Complété | 2026-02-13 |
+| 3     | v0.3.0  | MCP client/server, `@agent` LLM, composite tools                  | ✅ Complété | 2026-02-13 |
+| 4     | v0.4.0  | Extension VS Code skeleton, core enhancements                      | ✅ Complété | 2026-02-13 |
+| 5     | v0.5.0  | IDE Language Features (CodeLens, Completion, Hover, Diagnostics)   | 🔄 En cours | Q2 2026    |
+| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG Webview         | ⏳ Planifié | Q2 2026    |
+| 7     | v0.7.0  | Debug Adapter (DAP), Test Controller, Rename/References            | ⏳ Planifié | Q3 2026    |
+| 8     | v0.8.0  | Registry npm-like, résolution distante/git                         | ⏳ Planifié | Q3 2026    |
+| 9     | v1.0.0  | Production & Scale (SQLite, Redis, enterprise)                     | ⏳ Planifié | Q4 2026    |
 
 ### v0.1.0 — MVP Complété
 
@@ -292,61 +301,51 @@ npx chainskills run workflow.md
 - 14 fichiers de tests (Vitest) — 179 tests
 - 0 erreurs typecheck
 - Build: 5 bundles — 770 kB total (24 fichiers)
-### v0.4.0 — VS Code Extension & Debugging (En cours)
 
-**Phase 1 — Core Enhancements** ✅ **COMPLÉTÉ** (2026-02-13)
+### v0.4.0 — Extension VS Code & Core Enhancements ✅ COMPLÉTÉ (2026-02-13)
 
-**Fonctionnalités :**
+**Fonctionnalités Core (Phase 1) :**
 
 - ExecutionController API — `pause()`, `resume()`, `cancel()`, `step()` avec listeners
 - CancellationToken entity — graceful cancellation avec observer pattern
 - StateStore serialization — `serialize()`/`deserialize()` pour mid-execution persistence
-- `@breakpoint` directive — conditional debugging (16ème directive)
-- CLI `--format=vscode` flag — Problem Matcher format (`file:line:col: severity: message`)
+- `@breakpoint` directive — conditional debugging (17ème directive)
+- CLI `--format=vscode` flag — Problem Matcher format
 - Result monad utilities — `map`, `flatMap`, `mapErr`, `unwrapOr`, `match`
-- ExecutionController implémenté pour SimpleExecutor et MastraExecutor
-- 18 nouveaux tests (cancellation-token, state-store, execution-controller)
 
-**Métriques Phase 1 :**
+**Extension VS Code (Phase 2) :**
 
-- 197/197 tests passing (↑18 depuis v0.3.0)
-- 0 erreurs typecheck
-- 7 smart commits groupés par feature
-- Architecture prête pour extension VS Code
+- Repo `chainskills-vscode/` — 10 commands, 1 TreeView, TextMate grammar, Problem Matcher
+- WorkflowTreeProvider — discovers `.workflow.md` files, parses frontmatter
+- ExecutionController — POSIX signals (SIGSTOP/SIGCONT/SIGTERM)
+- Auto-validate on save, file watcher, 5 configuration properties
+- Webpack 5 → 23 KB bundle
 
-**Phase 2 — Extension Skeleton** ✅ **COMPLÉTÉ** (2026-02-13)
+**Métriques :**
 
-**Fonctionnalités :**
+- CLI: 197/197 tests passing, 0 erreurs typecheck
+- Extension: 490 lignes TS → 23 KB bundle, 18 fichiers créés
 
-- Nouveau repo `chainskills-vscode/` — structure complète avec src/, syntaxes/, .vscode/
-- package.json — VS Code extension manifest avec contribution points :
-  - 10 commands (run, runDryRun, validate, inspect, pause/resume/stop/step, openTemplates, refreshWorkflows)
-  - 1 TreeView (chainskillsWorkflows in Explorer)
-  - 1 Problem Matcher (`$chainskills` parse `--format=vscode`)
-  - 1 Task definition (type `chainskills` with workflow/inputs/dryRun)
-  - 5 configuration properties (cliPath, executor, autoValidate, showDagOnInspect, templatesPath)
-- WorkflowTreeProvider — discovers `.workflow.md` files, parses frontmatter metadata
-- ExecutionController — pause/resume/cancel avec POSIX signals (SIGSTOP/SIGCONT/SIGTERM)
-- TextMate grammar — syntax highlighting pour 16 directives, variables `$name`, blocks `:::`
-- language-configuration.json — bracket matching, auto-closing pairs, folding
-- Command handlers — 10 handlers avec CLI integration via `child_process.exec()`
-- Auto-validate on save — configurable via `chainskills.autoValidate`
-- File watcher — refreshes TreeView on `.workflow.md` changes
-- Menu contributions — editor title, view title, view context menu, command palette
-- Context keys — `chainskills.isExecuting`, `chainskills.isPaused` pour command visibility
+### v0.5.0 — IDE Language Features (En cours)
 
-**Build & Testing :**
+**Objectif** : Transformer l'extension en vrai IDE pour `.workflow.md`
 
-- TypeScript 5.4.5, Node16 modules, ES2022 target
-- Webpack 5.105.2 — bundle `src/*.ts` → `dist/extension.js` (23 KB)
-- ESLint + Prettier ready
-- Launch config pour debugging (F5 → Extension Development Host)
-- TESTING.md — comprehensive test guide (quick test 5min, full test 15min)
-- test-workflow.workflow.md — validation workflow
+**Intégrations prévues (Top 15 VS Code APIs) :**
 
-**Métriques Phase 2 :**
-
-- 490 lignes TypeScript → 23 KB bundle
-- 18 fichiers créés (src: 4, config: 8, docs: 3, test: 1, syntaxes: 1, language-config: 1)
-- 0 erreurs typecheck après corrections
-- 1 commit git avec message détaillé
+| Feature | API | Impact |
+|---|---|---|
+| Copilot Chat `@chainskills` | `createChatParticipant` | ★★★★★ |
+| Agent Mode Tools | `lm.registerTool` | ★★★★★ |
+| CodeLens Run/Validate | `CodeLensProvider` | ★★★★☆ |
+| Live Diagnostics | `DiagnosticCollection` | ★★★★☆ |
+| Autocomplete @/$/@call | `CompletionItemProvider` | ★★★★☆ |
+| DAG Webview | `WebviewPanel` (D3.js) | ★★★★☆ |
+| Debug Adapter (DAP) | `DebugAdapterDescriptorFactory` | ★★★★★ |
+| Test Controller | `TestController` | ★★★★☆ |
+| StatusBar | `StatusBarItem` | ★★★☆☆ |
+| Hover Documentation | `HoverProvider` | ★★★☆☆ |
+| Document Links | `DocumentLinkProvider` | ★★★☆☆ |
+| File Decorations | `FileDecorationProvider` | ★★★☆☆ |
+| Document Symbols | `DocumentSymbolProvider` | ★★★☆☆ |
+| Folding Ranges | `FoldingRangeProvider` | ★★☆☆☆ |
+| Variable Rename | `RenameProvider` | ★★★☆☆ |
