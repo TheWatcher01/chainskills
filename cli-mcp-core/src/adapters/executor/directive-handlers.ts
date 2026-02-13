@@ -15,6 +15,7 @@ import type { ToolProvider } from '#core/ports/tool-provider.port.js';
 import type { SkillResolver } from '#core/ports/skill-resolver.port.js';
 import type { WorkflowParser } from '#core/ports/workflow-parser.port.js';
 import type { ExecutionEventEmitter } from '#core/ports/execution-events.port.js';
+import type { AgentProvider } from '#core/ports/agent-provider.port.js';
 import { substituteVariables } from '#core/services/template-engine.js';
 import { evaluateCondition } from '#core/services/condition-parser.js';
 import type { Logger } from '#infra/logger.js';
@@ -29,8 +30,11 @@ export interface DirectiveHandlerContext {
     readonly emitter?: ExecutionEventEmitter;
     readonly resolver?: SkillResolver;
     readonly parser?: WorkflowParser;
+    readonly agent?: AgentProvider;
     readonly dryRun: boolean;
     readonly stepId: string;
+    /** Set of env var names declared in the workflow frontmatter `env: []`. */
+    readonly allowedEnvVars?: ReadonlySet<string>;
 }
 
 /** Result of a directive handler execution. */
@@ -41,6 +45,8 @@ export interface DirectiveHandlerResult {
     readonly conditionResult?: boolean;
     /** Captured output value. */
     readonly output?: unknown;
+    /** Error message — set instead of throwing. Propagated by the dispatcher. */
+    readonly error?: string;
 }
 
 // ─── Individual Handlers ─────────────────────────────────────────────────────
@@ -108,9 +114,10 @@ export async function handleCall(
             directiveType: 'call',
             success: false,
         });
-        throw new Error(
-            `@call ${tool}.${method} failed: ${result.error.message}`,
-        );
+        return {
+            continue: false,
+            error: `@call ${tool}.${method} failed: ${result.error.message}`,
+        };
     }
 }
 
@@ -125,7 +132,7 @@ export async function handleIf(
     const evalResult = evaluateCondition(resolvedCondition, context);
 
     if (!evalResult.ok) {
-        throw new Error(`@if condition error: ${evalResult.error.message}`);
+        return { continue: false, error: `@if condition error: ${evalResult.error.message}` };
     }
 
     ctx.logger?.debug(`@if ${condition} → ${evalResult.value}`);
@@ -421,28 +428,83 @@ export function handleAssert(
     const evalResult = evaluateCondition(resolved, context);
 
     if (!evalResult.ok) {
-        throw new Error(`@assert evaluation error: ${evalResult.error.message}`);
+        return { continue: false, error: `@assert evaluation error: ${evalResult.error.message}` };
     }
 
     if (!evalResult.value) {
-        throw new Error(`@assert failed: ${expression}`);
+        return { continue: false, error: `@assert failed: ${expression}` };
     }
 
     ctx.logger?.debug(`@assert ${expression} → passed`);
     return { continue: true };
 }
 
-/** Handle @env directive — load environment variable into store. */
+/**
+ * Handle @breakpoint directive — conditional pause for debugging.
+ *
+ * Evaluates an optional condition and logs when breakpoint is hit.
+ * Future: integrate with ExecutionController to actually pause execution.
+ *
+ * @example
+ * ```md
+ * @breakpoint $retries > 3
+ * @breakpoint
+ * ```
+ */
+export function handleBreakpoint(
+    directive: Directive,
+    ctx: DirectiveHandlerContext,
+): DirectiveHandlerResult {
+    const condition = String(directive.args['condition'] ?? 'true');
+    const context = ctx.store.getAll();
+    const resolved = substituteVariables(condition, context);
+    const evalResult = evaluateCondition(resolved, context);
+
+    if (!evalResult.ok) {
+        ctx.logger?.warn(`@breakpoint evaluation error: ${evalResult.error.message}`);
+        return { continue: true }; // Don't fail execution on breakpoint errors
+    }
+
+    if (evalResult.value) {
+        ctx.logger?.info(`🔴 Breakpoint hit: ${condition}`);
+        ctx.emitter?.emit({
+            type: 'directive:end',
+            timestamp: Date.now(),
+            stepId: ctx.stepId,
+            directiveType: 'breakpoint',
+            success: true,
+            result: { condition, hit: true },
+        });
+        // TODO: Integrate with ExecutionController.pause() when available in context
+    }
+
+    return { continue: true };
+}
+
+/**
+ * Handle @env directive — load environment variable into store.
+ *
+ * Security: Only variables declared in the workflow's frontmatter `env: []`
+ * are accessible. Access to undeclared variables is rejected.
+ */
 export function handleEnv(
     directive: Directive,
     ctx: DirectiveHandlerContext,
 ): DirectiveHandlerResult {
     const envName = String(directive.args['name'] ?? '');
+
+    // Security: check if this env var is declared in the workflow's env allowlist
+    const allowedEnvVars = ctx.allowedEnvVars;
+    if (allowedEnvVars && !allowedEnvVars.has(envName)) {
+        ctx.logger?.warn(`@env ${envName} — rejected: not declared in workflow frontmatter env[]`);
+        return { continue: true };
+    }
+
     const envValue = process.env[envName];
     if (envValue !== undefined) {
         ctx.store.set(envName, envValue);
     }
-    ctx.logger?.debug(`@env ${envName} = ${envValue ?? '(undefined)'}`);
+    ctx.logger?.debug(`@env ${envName} = ${envValue !== undefined ? '***' : '(undefined)'}`);
     return { continue: true };
 }
 
@@ -456,16 +518,70 @@ export function handleUse(
     return { continue: true };
 }
 
-/** Handle @agent / @handoff directives — not implemented yet (v0.3.0). */
-export function handleAgentOrHandoff(
+/**
+ * Handle `@agent` and `@handoff` directives — delegate tasks to an AI agent.
+ *
+ * - `@agent copilot: "Fix the bug in auth.ts"` → invoke agent, capture response
+ * - `@handoff reviewer: "Review these changes"` → invoke agent as handoff
+ *
+ * The response is stored in `$agent_response` (or a custom capture variable).
+ */
+export async function handleAgentOrHandoff(
     directive: Directive,
     ctx: DirectiveHandlerContext,
-): DirectiveHandlerResult {
-    ctx.logger?.warn(
-        `@${directive.type} is not implemented — skipping (planned for v0.3.0)`,
-        { raw: directive.raw },
-    );
-    return { continue: true };
+): Promise<DirectiveHandlerResult> {
+    const agentName = String(directive.args['agent'] ?? directive.args['name'] ?? 'copilot');
+    const prompt = String(directive.args['prompt'] ?? directive.args['message'] ?? '');
+    const capture = String(directive.args['capture'] ?? 'agent_response');
+
+    if (!prompt) {
+        return { continue: false, error: `@${directive.type}: no prompt provided` };
+    }
+
+    // In dry-run mode, just log
+    if (ctx.dryRun) {
+        ctx.logger?.info(`@${directive.type} ${agentName}: "${prompt.slice(0, 80)}" [dry-run]`);
+        const dryResponse = `[dry-run] @${directive.type} ${agentName}: "${prompt.slice(0, 100)}"`;
+        ctx.store.set(capture, dryResponse);
+        return { continue: true, output: dryResponse };
+    }
+
+    // Check if agent provider is wired
+    if (!ctx.agent) {
+        ctx.logger?.warn(
+            `@${directive.type}: no agent provider configured — set AGENT_API_KEY. Skipping.`,
+            { raw: directive.raw },
+        );
+        return { continue: true };
+    }
+
+    // Resolve variables in prompt
+    const vars = ctx.store.getAll();
+    const resolvedPrompt = substituteVariables(prompt, vars);
+
+    // Invoke the agent
+    const result = await ctx.agent.invoke({
+        agent: agentName,
+        prompt: resolvedPrompt,
+        variables: vars,
+    });
+
+    if (!result.ok) {
+        return {
+            continue: false,
+            error: `@${directive.type} ${agentName} failed: ${result.error.message}`,
+        };
+    }
+
+    // Store response in state
+    ctx.store.set(capture, result.value.content);
+    ctx.logger?.info(`@${directive.type} ${agentName}: response received`, {
+        model: result.value.model,
+        tokens: result.value.usage?.totalTokens,
+        capturedAs: `$${capture}`,
+    });
+
+    return { continue: true, output: result.value.content };
 }
 
 // ─── Main Dispatcher ─────────────────────────────────────────────────────────
@@ -537,6 +653,10 @@ export async function executeDirective(
             result = handleAssert(directive, ctx);
             break;
 
+        case 'breakpoint':
+            result = handleBreakpoint(directive, ctx);
+            break;
+
         case 'env':
             result = handleEnv(directive, ctx);
             break;
@@ -547,7 +667,7 @@ export async function executeDirective(
 
         case 'agent':
         case 'handoff':
-            result = handleAgentOrHandoff(directive, ctx);
+            result = await handleAgentOrHandoff(directive, ctx);
             break;
 
         case 'else':
@@ -568,8 +688,14 @@ export async function executeDirective(
         timestamp: Date.now(),
         stepId: ctx.stepId,
         directiveType: directive.type,
-        success: true,
+        success: !result.error,
     });
+
+    // Propagate handler errors as exceptions for backward compatibility
+    // with existing executor try/catch blocks. Handlers no longer throw directly.
+    if (result.error) {
+        throw new Error(result.error);
+    }
 
     return result;
 }

@@ -26,6 +26,7 @@ import type {
     ExecutionResult,
     StepResult,
 } from '#core/ports/workflow-executor.port.js';
+import type { ExecutionController } from '#core/ports/execution-controller.port.js';
 import type { StateStore } from '#core/ports/state-store.port.js';
 import type { ToolProvider } from '#core/ports/tool-provider.port.js';
 import type { SkillResolver } from '#core/ports/skill-resolver.port.js';
@@ -36,6 +37,90 @@ import {
     type DirectiveHandlerContext,
 } from './directive-handlers.js';
 import type { Logger } from '#infra/logger.js';
+import type { AgentProvider } from '#core/ports/agent-provider.port.js';
+
+/**
+ * Simple implementation of ExecutionController.
+ * Manages pause/resume/cancel state for workflow execution.
+ */
+class SimpleExecutionController implements ExecutionController {
+    private _paused = false;
+    private _cancelled = false;
+    private _pauseListeners: Array<() => void> = [];
+    private _resumeListeners: Array<() => void> = [];
+    private _stepMode = false;
+
+    pause(): void {
+        if (!this._paused && !this._cancelled) {
+            this._paused = true;
+            this._pauseListeners.forEach((l) => l());
+        }
+    }
+
+    resume(): void {
+        if (this._paused && !this._cancelled) {
+            this._paused = false;
+            this._stepMode = false;
+            this._resumeListeners.forEach((l) => l());
+        }
+    }
+
+    cancel(): void {
+        if (!this._cancelled) {
+            this._cancelled = true;
+            this._paused = false;
+        }
+    }
+
+    step(): void {
+        if (this._paused && !this._cancelled) {
+            this._stepMode = true;
+            this._paused = false;
+            this._resumeListeners.forEach((l) => l());
+        }
+    }
+
+    isPaused(): boolean {
+        return this._paused;
+    }
+
+    isCancelled(): boolean {
+        return this._cancelled;
+    }
+
+    onPaused(listener: () => void): void {
+        this._pauseListeners.push(listener);
+    }
+
+    onResumed(listener: () => void): void {
+        this._resumeListeners.push(listener);
+    }
+
+    /** Internal: check if we should pause after step (for step mode). */
+    shouldPauseAfterStep(): boolean {
+        if (this._stepMode && !this._cancelled) {
+            this._stepMode = false;
+            this._paused = true;
+            this._pauseListeners.forEach((l) => l());
+            return true;
+        }
+        return false;
+    }
+
+    /** Internal: wait until resumed or cancelled. */
+    async waitUntilResumed(): Promise<void> {
+        if (!this._paused) return;
+        return new Promise((resolve) => {
+            const listener = () => {
+                this._resumeListeners = this._resumeListeners.filter(
+                    (l) => l !== listener,
+                );
+                resolve();
+            };
+            this._resumeListeners.push(listener);
+        });
+    }
+}
 
 /** Dependencies injected into the executor. */
 export interface SimpleExecutorDeps {
@@ -45,6 +130,7 @@ export interface SimpleExecutorDeps {
     readonly emitter?: ExecutionEventEmitter;
     readonly resolver?: SkillResolver;
     readonly parser?: WorkflowParser;
+    readonly agent?: AgentProvider;
 }
 
 /**
@@ -56,7 +142,7 @@ export interface SimpleExecutorDeps {
 export function createSimpleExecutor(
     deps: SimpleExecutorDeps,
 ): WorkflowExecutor {
-    const { store, tools, logger, emitter, resolver, parser } = deps;
+    const { store, tools, logger, emitter, resolver, parser, agent } = deps;
 
     return {
         async execute(
@@ -67,6 +153,7 @@ export function createSimpleExecutor(
             const startTime = Date.now();
             const dryRun = options?.dryRun ?? false;
             const stepResults: StepResult[] = [];
+            const controller = new SimpleExecutionController();
 
             // Seed store with inputs
             for (const [key, value] of Object.entries(inputs)) {
@@ -88,6 +175,30 @@ export function createSimpleExecutor(
 
             // Execute each step sequentially
             for (let i = 0; i < workflow.steps.length; i++) {
+                // Check for cancellation
+                if (controller.isCancelled()) {
+                    logger?.warn('Workflow execution cancelled');
+                    emitter?.emit({
+                        type: 'workflow:end',
+                        timestamp: Date.now(),
+                        workflowName: workflow.name,
+                        success: false,
+                        duration: Date.now() - startTime,
+                    });
+                    return err(
+                        executionError(
+                            'CANCELLED',
+                            'Workflow execution was cancelled',
+                        ),
+                    );
+                }
+
+                // Wait if paused
+                if (controller.isPaused()) {
+                    logger?.info('Workflow paused, waiting for resume...');
+                    await controller.waitUntilResumed();
+                }
+
                 const step = workflow.steps[i]!;
                 const stepResult = await executeStep(
                     step,
@@ -100,8 +211,12 @@ export function createSimpleExecutor(
                     emitter,
                     resolver,
                     parser,
+                    agent,
                 );
                 stepResults.push(stepResult);
+
+                // Pause after step for step mode
+                controller.shouldPauseAfterStep();
 
                 // Abort on failure (unless step is in a @try block)
                 if (stepResult.status === 'failure') {
@@ -145,7 +260,12 @@ export function createSimpleExecutor(
                 outputs,
             });
 
-            return ok({ outputs, steps: stepResults, duration });
+            return ok({
+                outputs,
+                steps: stepResults,
+                duration,
+                controller,
+            });
         },
     };
 }
@@ -187,6 +307,7 @@ async function executeStep(
     emitter?: ExecutionEventEmitter,
     resolver?: SkillResolver,
     parser?: WorkflowParser,
+    agent?: AgentProvider,
 ): Promise<StepResult> {
     const startTime = Date.now();
 
@@ -208,6 +329,7 @@ async function executeStep(
         emitter,
         resolver,
         parser,
+        agent,
         dryRun,
         stepId: step.id,
     };

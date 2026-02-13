@@ -46,5 +46,17 @@ export function createMemoryStore(
         clear(): void {
             store.clear();
         },
+
+        serialize(): string {
+            return JSON.stringify(Array.from(store.entries()));
+        },
+
+        deserialize(data: string): void {
+            const entries = JSON.parse(data) as Array<[string, unknown]>;
+            store.clear();
+            for (const [key, value] of entries) {
+                store.set(key, value);
+            }
+        },
     };
 }

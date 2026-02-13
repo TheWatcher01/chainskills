@@ -24,6 +24,7 @@ import type {
     ExecutionResult,
     StepResult,
 } from '#core/ports/workflow-executor.port.js';
+import type { ExecutionController } from '#core/ports/execution-controller.port.js';
 import type { StateStore } from '#core/ports/state-store.port.js';
 import type { ToolProvider } from '#core/ports/tool-provider.port.js';
 import type { SkillResolver } from '#core/ports/skill-resolver.port.js';
@@ -35,6 +36,63 @@ import {
     type DirectiveHandlerContext,
 } from './directive-handlers.js';
 import type { Logger } from '#infra/logger.js';
+import type { AgentProvider } from '#core/ports/agent-provider.port.js';
+
+// ─── ExecutionController Implementation ──────────────────────────────────────
+
+/**
+ * Simple execution controller for Mastra workflows.
+ * Note: Mastra has its own suspend/resume, but this provides
+ * a unified interface for chainskills.
+ */
+class MastraExecutionController implements ExecutionController {
+    private _paused = false;
+    private _cancelled = false;
+    private _pauseListeners: Array<() => void> = [];
+    private _resumeListeners: Array<() => void> = [];
+
+    pause(): void {
+        if (!this._paused && !this._cancelled) {
+            this._paused = true;
+            this._pauseListeners.forEach((l) => l());
+        }
+    }
+
+    resume(): void {
+        if (this._paused && !this._cancelled) {
+            this._paused = false;
+            this._resumeListeners.forEach((l) => l());
+        }
+    }
+
+    cancel(): void {
+        if (!this._cancelled) {
+            this._cancelled = true;
+            this._paused = false;
+        }
+    }
+
+    step(): void {
+        // Step mode not implemented for Mastra (yet)
+        this.resume();
+    }
+
+    isPaused(): boolean {
+        return this._paused;
+    }
+
+    isCancelled(): boolean {
+        return this._cancelled;
+    }
+
+    onPaused(listener: () => void): void {
+        this._pauseListeners.push(listener);
+    }
+
+    onResumed(listener: () => void): void {
+        this._resumeListeners.push(listener);
+    }
+}
 
 // ─── Loose Zod schema for dynamic workflow data ──────────────────────────────
 
@@ -51,6 +109,7 @@ export interface MastraExecutorDeps {
     readonly emitter?: ExecutionEventEmitter;
     readonly resolver?: SkillResolver;
     readonly parser?: WorkflowParser;
+    readonly agent?: AgentProvider;
 }
 
 // ─── Helper: execute child directives recursively ────────────────────────────
@@ -85,7 +144,7 @@ async function executeChainskillsStep(
     deps: MastraExecutorDeps,
     dryRun: boolean,
 ): Promise<Record<string, unknown>> {
-    const { store, tools, logger, emitter, resolver, parser } = deps;
+    const { store, tools, logger, emitter, resolver, parser, agent } = deps;
 
     const ctx: DirectiveHandlerContext = {
         store,
@@ -94,6 +153,7 @@ async function executeChainskillsStep(
         emitter,
         resolver,
         parser,
+        agent,
         dryRun,
         stepId: step.id,
     };
@@ -284,6 +344,7 @@ export function createMastraExecutor(
         ): Promise<Result<ExecutionResult, ExecutionError>> {
             const startTime = Date.now();
             const dryRun = options?.dryRun ?? false;
+            const controller = new MastraExecutionController();
 
             // Seed store with inputs
             for (const [key, value] of Object.entries(inputs)) {
@@ -367,7 +428,12 @@ export function createMastraExecutor(
                     outputs,
                 });
 
-                return ok({ outputs, steps: stepResults, duration });
+                return ok({
+                    outputs,
+                    steps: stepResults,
+                    duration,
+                    controller,
+                });
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
                 logger?.error(`[Mastra] Workflow failed: ${errorMsg}`);
