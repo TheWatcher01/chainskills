@@ -16,35 +16,45 @@
 
 - **Natural Language Workflows** — Write workflows in Markdown with `@` directives
 - **DAG Orchestration** — Sequential, parallel, branching, looping via Mastra
-- **MCP Interop** — Connect to any MCP-compatible tool; expose workflows as MCP tools
-- **Skills Composable** — Import and chain community skills (`@use skill-name`)
-- **CLI-First** — Run, validate, inspect, publish from the terminal
-- **Agent Agnostic** — Works with Copilot, Claude, Cursor, or any AI agent
+- **Full Control Flow** — `@if/@else`, `@for`, `@repeat`, `@try/@on-error`, `@parallel`, `@assert`
+- **Shell Tool Execution** — Execute shell commands securely with `@call shell.exec()`
+- **Skills Composable** — Import and chain local skills (`@use ./path`)
+- **CLI-First** — Run, validate, inspect from the terminal
 - **Hexagonal Architecture** — Pure domain core, zero external dependencies
+- **Security Hardened** — Shell command allowlist, no metacharacter injection, env scoping
+- **MCP Interop** — Expose workflows as MCP tools (`serve`); call remote MCP tools (`@call mcp.*`)
+- **`@agent` LLM delegation** — Delegate tasks to any OpenAI-compatible AI agent
+
+### Coming Soon
+
+- **Registry & Distribution** 🔜 — `add`, `publish`, `remove` from an npm-like registry (v0.4.0)
+- **Copilot ACP** 🔜 — `@chainskills` Chat Participant in VS Code (v0.5.0)
 
 ---
 
 ## Quick Start
 
 ```bash
-# Install globally
-npm i -g chainskills
-
-# Or use npx
-npx chainskills run workflow.md
+# Clone and build from source (not yet published on npm)
+git clone https://github.com/TheWatcher01/chainskills.git
+cd chainskills
+pnpm install
+pnpm build
 
 # Initialize a new workflow
-chainskills init my-workflow
+pnpm exec tsx src/cli/index.ts init my-workflow
 
 # Run a workflow
-chainskills run my-workflow.workflow.md --input target=example.com
+pnpm exec tsx src/cli/index.ts run my-workflow.workflow.md --input target=example.com
 
 # Validate syntax
-chainskills validate my-workflow.workflow.md
+pnpm exec tsx src/cli/index.ts validate my-workflow.workflow.md
 
 # Inspect the DAG
-chainskills inspect my-workflow.workflow.md
+pnpm exec tsx src/cli/index.ts inspect my-workflow.workflow.md
 ```
+
+> **Note:** The package is not yet published on npm. Use `pnpm exec tsx src/cli/index.ts` for local development.
 
 ---
 
@@ -130,9 +140,9 @@ chainskills validate <workflow.md>   # Check syntax + dependencies
 chainskills inspect <workflow.md>    # Display DAG visualization
 chainskills init <name>              # Scaffold a new .workflow.md
 chainskills list [-g]                # List workflows (local or global)
-chainskills add <source> [-g]        # Install from Git/registry
-chainskills publish                  # Publish to registry
-chainskills serve [--port 3001]      # Expose as MCP server
+chainskills add <source> [-g]        # 🔜 Install from Git/registry (v0.4.0)
+chainskills publish                  # 🔜 Publish to registry (v0.4.0)
+chainskills serve [--port 3001]      # Expose as MCP server (stdio or HTTP)
 ```
 
 ---
@@ -186,6 +196,19 @@ pnpm lint
 
 # Type check
 pnpm typecheck
+```
+
+### Running CLI from source
+
+```bash
+# Run a workflow
+pnpm exec tsx src/cli/index.ts run path/to/workflow.md
+
+# Validate a workflow
+pnpm exec tsx src/cli/index.ts validate path/to/workflow.md
+
+# Inspect DAG
+pnpm exec tsx src/cli/index.ts inspect path/to/workflow.md
 ```
 
 ---

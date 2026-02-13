@@ -213,14 +213,15 @@ npx chainskills run workflow.md
 > **Fichier de suivi détaillé** : [.github/ROADMAP.md](ROADMAP.md) — phases, checkboxes, décisions, changelog, métriques.
 > Toute mise à jour de roadmap doit aussi mettre à jour ce fichier.
 
-| Phase | Version | Contenu                                       | Statut      | Date       |
-| ----- | ------- | --------------------------------------------- | ----------- | ---------- |
-| 1     | v0.1.0  | MVP — Parse + Run séquentiel + CLI + Tests    | ✅ Complété | 2026-02-13 |
-| 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel  | ✅ Complété | 2026-02-13 |
-| 3     | v0.3.0  | MCP client/server, `@agent` LLM, Result monad | ⏳ Planifié | Q2 2026    |
-| 4     | v0.4.0  | Registry npm-like, résolution distante/git    | ⏳ Planifié | Q2 2026    |
-| 5     | v0.5.0  | Copilot ACP, agents IDE                       | ⏳ Planifié | Q3 2026    |
-| 6     | v1.0.0  | Production & Scale (SQLite, Redis, limits)    | ⏳ Planifié | Q4 2026    |
+| Phase | Version | Contenu                                          | Statut      | Date       |
+| ----- | ------- | ------------------------------------------------ | ----------- | ---------- |
+| 1     | v0.1.0  | MVP — Parse + Run séquentiel + CLI + Tests       | ✅ Complété | 2026-02-13 |
+| 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel     | ✅ Complété | 2026-02-13 |
+| 3     | v0.3.0  | MCP client/server, `@agent` LLM, composite tools | ✅ Complété | 2026-02-13 |
+| 4     | v0.4.0  | Extension VS Code, Copilot Chat, DAG visualizer  | ⏳ Planifié | Q2 2026    |
+| 5     | v0.5.0  | Registry npm-like, résolution distante/git       | ⏳ Planifié | Q3 2026    |
+| 6     | v0.6.0  | Language Server Protocol, IDE features avancées  | ⏳ Planifié | Q3 2026    |
+| 7     | v1.0.0  | Production & Scale (SQLite, Redis, limits)       | ⏳ Planifié | Q4 2026    |
 
 ### v0.1.0 — MVP Complété
 
@@ -267,4 +268,27 @@ npx chainskills run workflow.md
 - 11 fichiers de tests (Vitest) — 141 tests
 - 0 erreurs typecheck
 - Architecture prête pour extension (MCP, Registry, Copilot ACP)
-ot ACP)
+
+### v0.3.0 — MCP Interop & @agent LLM
+
+**Fonctionnalités :**
+
+- MCP Server adapter (5 tools, 2 prompts, dynamic resources via `registerTool`/`registerPrompt`/`registerResource`)
+- CLI `serve` command (stdio for Copilot + streamable HTTP for web)
+- SDK API (`runWorkflow`, `describeWorkflow`) — reused by MCP, CLI `--json`, and programmatic usage
+- `--json` mode for `run` and `validate` commands
+- `@agent` / `@handoff` directives — real LLM integration via OpenAI-compatible API
+- AgentProvider port + NoopAgent for tests/dry-run
+- MCP Client tool provider — `@call mcp.tool_name()` to invoke tools on external MCP servers
+- Composite tool provider — routes `shell.*` and `mcp.*` to correct backend
+- `.vscode/mcp.json` — Copilot auto-discovery of chainskills MCP server
+- Security: shell injection fix (`execFileSync` + allowlist), scoped `@env`, path traversal protection
+- Result monad utilities (map, flatMap, mapErr, unwrapOr, match)
+- Architecture fix: `createEventEmitter()` moved from port to infrastructure
+
+**Métriques :**
+
+- ~60 fichiers TypeScript
+- 14 fichiers de tests (Vitest) — 179 tests
+- 0 erreurs typecheck
+- Build: 5 bundles — 770 kB total (24 fichiers)
