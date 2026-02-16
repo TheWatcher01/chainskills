@@ -187,20 +187,22 @@ function parseDirectiveArgs(
             break;
         }
         case 'agent': {
-            // @agent copilot: "message"
-            const agentMatch = raw.match(/^@agent\s+(\w+):\s*"([^"]*)"/);
+            // @agent copilot: "message" → $capture
+            const agentMatch = raw.match(/^@agent\s+(\w+):\s*"([^"]*)"(?:\s*(?:→|->|>)\s*\$(\w+))?/);
             if (agentMatch) {
                 args['agent'] = agentMatch[1];
                 args['message'] = agentMatch[2];
+                if (agentMatch[3]) args['capture'] = agentMatch[3];
             }
             break;
         }
         case 'handoff': {
-            // @handoff agent-name: "message"
-            const handoffMatch = raw.match(/^@handoff\s+([\w-]+):\s*"([^"]*)"/);
+            // @handoff agent-name: "message" → $capture
+            const handoffMatch = raw.match(/^@handoff\s+([\w-]+):\s*"([^"]*)"(?:\s*(?:→|->|>)\s*\$(\w+))?/);
             if (handoffMatch) {
                 args['target'] = handoffMatch[1];
                 args['message'] = handoffMatch[2];
+                if (handoffMatch[3]) args['capture'] = handoffMatch[3];
             }
             break;
         }
@@ -458,6 +460,11 @@ function blockNodesToSteps(
 export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
     return (tree, file) => {
         const steps: Step[] = [];
+
+        /** Depth of the first heading encountered — defines "top-level" steps. */
+        let primaryDepth: number | null = null;
+
+        /** Current top-level step being built. */
         let currentStep: {
             id: string;
             title: string;
@@ -466,8 +473,33 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
             children?: Step[];
         } | null = null;
 
+        /** Current sub-step (child of currentStep) being built. */
+        let currentChild: {
+            id: string;
+            title: string;
+            descParts: string[];
+            directives: Directive[];
+        } | null = null;
+
+        // Helper to finalize current child into parent's children
+        function finalizeChild(): void {
+            if (currentChild && currentStep) {
+                if (!currentStep.children) {
+                    currentStep.children = [];
+                }
+                currentStep.children.push({
+                    id: currentChild.id,
+                    title: currentChild.title,
+                    description: currentChild.descParts.join('\n').trim(),
+                    directives: currentChild.directives,
+                });
+                currentChild = null;
+            }
+        }
+
         // Helper to finalize current step
         function finalizeStep(): void {
+            finalizeChild();
             if (currentStep) {
                 steps.push({
                     id: currentStep.id,
@@ -479,24 +511,55 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
             }
         }
 
+        /** Get the active target (child step if building a child, otherwise parent step). */
+        function activeTarget() {
+            return currentChild ?? currentStep;
+        }
+
         // Walk the AST at the top level
         for (const node of tree.children) {
-            // Heading = new step boundary
+            // Heading = step boundary with depth-aware nesting
             if (node.type === 'heading') {
-                finalizeStep();
                 const heading = node as Heading;
                 const text = extractText(heading.children);
-                currentStep = {
-                    id: slugify(text),
-                    title: text,
-                    descParts: [],
-                    directives: [],
-                };
+                const depth = heading.depth;
+
+                // Set primary depth from first heading
+                if (primaryDepth === null) {
+                    primaryDepth = depth;
+                }
+
+                if (depth <= primaryDepth) {
+                    // Same or shallower depth → new top-level step
+                    finalizeStep();
+                    currentStep = {
+                        id: slugify(text),
+                        title: text,
+                        descParts: [],
+                        directives: [],
+                    };
+                    currentChild = null;
+                } else {
+                    // Deeper heading → child of current top-level step
+                    finalizeChild();
+                    if (currentStep) {
+                        currentChild = {
+                            id: slugify(text),
+                            title: text,
+                            descParts: [],
+                            directives: [],
+                        };
+                    }
+                }
                 continue;
             }
 
             // Before any heading — skip (frontmatter area handled separately)
             if (!currentStep) continue;
+
+            // Get the active target for directive/content collection
+            const target = activeTarget();
+            if (!target) continue;
 
             // Container directive → block with children
             if (node.type === 'containerDirective') {
@@ -514,7 +577,8 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
                         dNode.attributes ?? {},
                     );
 
-                    const blockId = `${currentStep.id}-${name}`;
+                    const parentId = currentChild?.id ?? currentStep.id;
+                    const blockId = `${parentId}-${name}`;
                     const { mainChildren, elseChildren, errorChildren } =
                         parseContainerChildren(
                             (dNode.children ?? []) as (PhrasingContent | RootContent)[],
@@ -537,16 +601,19 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
                         children: mainChildren,
                     };
 
-                    currentStep.directives.push(directive);
+                    target.directives.push(directive);
 
                     // Also set step.children for backward compatibility
-                    if (!currentStep.children) {
-                        currentStep.children = [];
+                    // (only on the parent step level, not on child sub-steps)
+                    if (!currentChild) {
+                        if (!currentStep.children) {
+                            currentStep.children = [];
+                        }
+                        currentStep.children = [
+                            ...currentStep.children,
+                            ...mainChildren,
+                        ];
                     }
-                    currentStep.children = [
-                        ...currentStep.children,
-                        ...mainChildren,
-                    ];
                     continue;
                 }
 
@@ -556,7 +623,7 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
                         ? extractText(dNode.children as PhrasingContent[])
                         : '';
                     const raw = `@${name} ${childText}`.trim();
-                    currentStep.directives.push({
+                    target.directives.push({
                         type: name,
                         raw,
                         args: parseDirectiveArgs(
@@ -581,7 +648,7 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
                         ? extractText(dNode.children as PhrasingContent[])
                         : '';
                     const raw = `@${name} ${childText}`.trim();
-                    currentStep.directives.push({
+                    target.directives.push({
                         type: name,
                         raw,
                         args: parseDirectiveArgs(
@@ -608,7 +675,7 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
                     const normalizedName = name.replace(/^on-error$/, 'on-error');
                     if (isDirectiveType(normalizedName)) {
                         const raw = text.trim();
-                        currentStep.directives.push({
+                        target.directives.push({
                             type: normalizedName as DirectiveType,
                             raw,
                             args: parseDirectiveArgs(
@@ -622,7 +689,7 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
                 }
 
                 // Regular paragraph — add to description
-                currentStep.descParts.push(text);
+                target.descParts.push(text);
             }
         }
 

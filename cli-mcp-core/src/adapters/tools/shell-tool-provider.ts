@@ -92,13 +92,21 @@ function buildSafeEnv(): Record<string, string> {
  * @returns Tuple of `[binary, args[]]`.
  */
 function parseCommand(raw: string): [string, string[]] {
+    // Strip outer matching quotes — e.g. `"echo hello"` → `echo hello`
+    const trimmed = raw.trim();
+    const stripped =
+        (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+            (trimmed.startsWith("'") && trimmed.endsWith("'"))
+            ? trimmed.slice(1, -1)
+            : trimmed;
+
     const tokens: string[] = [];
     let current = '';
     let inSingle = false;
     let inDouble = false;
 
-    for (let i = 0; i < raw.length; i++) {
-        const ch = raw[i]!;
+    for (let i = 0; i < stripped.length; i++) {
+        const ch = stripped[i]!;
         if (ch === "'" && !inDouble) {
             inSingle = !inSingle;
         } else if (ch === '"' && !inSingle) {

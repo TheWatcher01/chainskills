@@ -6,9 +6,9 @@
 - **Project**: chainskills — Framework de workflows agentiques en langage naturel
 - **Langage**: TypeScript (strict) — Node.js ≥ 20, pnpm
 - **Architecture**: Hexagonal (Ports & Adapters) — core pur, zéro dépendance
-- **Setup**: [AGENTS.md](../AGENTS.md) (agents, skills, architecture)
-- **Roadmap**: [.github/ROADMAP.md](ROADMAP.md) (suivi d'implémentation, phases, changelog — **à mettre à jour pour toute évolution de version**)
-- **Extension VS Code**: `chainskills-vscode/` (repo adjacent) — 10 commands, TreeView, syntax highlighting
+- **Setup**: [AGENTS.md](AGENTS.md) (agents, skills, architecture)
+- **Roadmap**: [.github/ROADMAP.md](./ROADMAP.md) (suivi d'implémentation, phases, changelog — **à mettre à jour pour toute évolution de version**)
+- **Extension VS Code**: `../vscode-extension/` (repo adjacent) — 10 commands, TreeView, syntax highlighting
 - **CLI framework**: Citty (UnJS ecosystem)
 - **Orchestration**: Mastra (DAG workflows)
 - **Parsing**: unified + remark-parse + remark-directive + gray-matter

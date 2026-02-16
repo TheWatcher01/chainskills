@@ -96,6 +96,23 @@ function analyzeStepVariables(step: Step): StepVariables {
             }
         }
 
+        // Capture variables from @agent/@handoff → $capture
+        if (directive.type === 'agent' || directive.type === 'handoff') {
+            // Check args first (if parser extracted capture)
+            const capture = directive.args['capture'];
+            if (typeof capture === 'string') {
+                produces.add(capture.startsWith('$') ? capture.slice(1) : capture);
+            } else {
+                // Fallback: extract → $varname from raw text
+                const captureMatch = directive.raw.match(
+                    /(?:→|->|>)\s*\$(\w+)\s*$/,
+                );
+                if (captureMatch?.[1]) {
+                    produces.add(captureMatch[1]);
+                }
+            }
+        }
+
         // Variables in conditions (@if, @assert)
         if (directive.type === 'if' || directive.type === 'assert') {
             const condition = String(
@@ -408,6 +425,53 @@ function computeParallelGroups(nodes: readonly DAGNode[]): (readonly string[])[]
         .filter((group) => group.length > 0);
 }
 
+// ─── Documentation Step Filtering ────────────────────────────────────────────
+
+/**
+ * Check whether a step (or any of its descendants) contains actual directives.
+ *
+ * A step is "executable" if it has at least one directive, or if any of its
+ * children recursively have directives.
+ */
+function hasExecutableContent(step: Step): boolean {
+    if (step.directives.length > 0) return true;
+    if (step.children) {
+        return step.children.some(hasExecutableContent);
+    }
+    return false;
+}
+
+/**
+ * Filter out parasitic documentation steps that appear after `@output`.
+ *
+ * In `.workflow.md` files, content after `@output` (Usage, Examples, etc.)
+ * is documentation — not executable workflow steps. Steps without any
+ * executable content (directives in themselves or their children) that
+ * appear after the `@output` step are removed.
+ */
+function filterPostOutputDocSteps(steps: readonly Step[]): readonly Step[] {
+    // Find the index of the step containing @output
+    const outputIdx = steps.findIndex((step) =>
+        step.directives.some((d) => d.type === 'output'),
+    );
+
+    // No @output found — keep all steps
+    if (outputIdx === -1) return steps;
+
+    // Keep everything up to and including @output step.
+    // After @output, only keep steps with executable content.
+    const filtered: Step[] = [];
+    for (let i = 0; i < steps.length; i++) {
+        if (i <= outputIdx) {
+            filtered.push(steps[i]!);
+        } else if (hasExecutableContent(steps[i]!)) {
+            filtered.push(steps[i]!);
+        }
+    }
+
+    return filtered;
+}
+
 // ─── Main Entry Point ────────────────────────────────────────────────────────
 
 /**
@@ -426,9 +490,12 @@ export function buildDAG(
         return ok({ nodes: [], entryPoints: [], parallelGroups: [] });
     }
 
+    // Filter out documentation steps (no directives) that appear after @output
+    const steps = filterPostOutputDocSteps(workflow.steps);
+
     // Analyze variables for each step
     const stepVars = new Map<string, StepVariables>();
-    for (const step of workflow.steps) {
+    for (const step of steps) {
         stepVars.set(step.id, analyzeStepVariables(step));
     }
 
@@ -441,7 +508,9 @@ export function buildDAG(
         producerMap.set(input.name, '__input__');
     }
 
-    for (const step of workflow.steps) {
+    let previousStepId: string | undefined;
+
+    for (const step of steps) {
         const vars = stepVars.get(step.id)!;
 
         // Determine dependencies based on consumed variables
@@ -453,6 +522,14 @@ export function buildDAG(
             }
         }
 
+        // Implicit sequential fallback: if no variable-based dependencies exist
+        // and this is not the first step, depend on the previous step to preserve
+        // document order. Steps with explicit variable deps use those instead,
+        // enabling auto-parallelization when variable flow allows it.
+        if (dependencies.size === 0 && previousStepId !== undefined) {
+            dependencies.add(previousStepId);
+        }
+
         const node = buildNodeForStep(step, [...dependencies], vars);
         nodes.push(node);
 
@@ -460,6 +537,8 @@ export function buildDAG(
         for (const produced of vars.produces) {
             producerMap.set(produced, step.id);
         }
+
+        previousStepId = step.id;
     }
 
     // Detect cycles

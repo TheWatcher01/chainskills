@@ -14,19 +14,51 @@
 
 ## Features
 
-- **Natural Language Workflows** — Write workflows in Markdown with `@` directives
-- **DAG Orchestration** — Sequential, parallel, branching, looping via Mastra
-- **Full Control Flow** — `@if/@else`, `@for`, `@repeat`, `@try/@on-error`, `@parallel`, `@assert`
-- **Shell Tool Execution** — Execute shell commands securely with `@call shell.exec()`
+### Core Engine
+
+- **Natural Language Workflows** — Write workflows in Markdown with 17 `@` directives
+- **DAG Orchestration** — Sequential, parallel, branching, looping via Mastra (auto-parallelization by variable dependency analysis)
+- **Full Control Flow** — `@if/@else`, `@for`, `@repeat`, `@try/@on-error`, `@parallel`, `@assert`, `@workflow` (sub-workflows)
+- **Dual Executor Strategy** — `SimpleExecutor` (sequential) + `MastraExecutor` (DAG) — switch via `CHAINSKILLS_EXECUTOR` env var
+- **Shell Tool Execution** — Security-hardened shell commands via `@call shell.exec()` (binary allowlist, metachar rejection, `execFileSync`)
 - **Skills Composable** — Import and chain local skills (`@use ./path`)
-- **CLI-First** — Run, validate, inspect from the terminal
-- **Hexagonal Architecture** — Pure domain core, zero external dependencies
-- **Security Hardened** — Shell command allowlist, no metacharacter injection, env scoping
-- **MCP Interop** — Expose workflows as MCP tools (`serve`); call remote MCP tools (`@call mcp.*`)
-- **`@agent` LLM delegation** — Delegate tasks to any OpenAI-compatible AI agent
-- **Execution Control** — Pause, resume, cancel, step-through workflows
+- **Hexagonal Architecture** — Pure domain core, zero external dependencies, 8 ports, DI container
+- **Result Monad** — `Result<T, E>` pattern with `map`, `flatMap`, `mapErr`, `unwrapOr`, `match` utilities
+- **Execution Events** — 11 typed event types with observer pattern (workflow/step/directive/parallel/loop/error)
+
+### MCP & AI
+
+- **MCP Server** — Expose 5 tools + 2 prompts + dynamic resources via `chainskills serve` (stdio + HTTP)
+- **MCP Client** — Call remote MCP tools via `@call mcp.*` (lazy connect, tool discovery)
+- **Composite Tool Provider** — Extensible routing by namespace (`shell.*`, `mcp.*`)
+- **`@agent` / `@handoff`** — Delegate tasks to any OpenAI-compatible AI agent (OpenAI, Anthropic, Ollama, Groq)
+- **Noop Agent** — Deterministic stub for tests/dry-run without API key
+
+### Execution Control
+
+- **ExecutionController API** — `pause()`, `resume()`, `cancel()`, `step()` with event listeners
+- **CancellationToken** — Graceful cancellation with observer pattern
+- **StateStore Serialization** — `serialize()` / `deserialize()` for mid-execution persistence
 - **`@breakpoint` Debugging** — Conditional breakpoints for workflow debugging
-- **VS Code Extension** — Syntax highlighting, TreeView, commands, auto-validate
+
+### CLI
+
+- **6 Commands** — `run`, `validate`, `inspect`, `init`, `list`, `serve`
+- **`--format=vscode`** — Problem Matcher output for VS Code integration
+- **`--json` Mode** — Machine-readable JSON output for `run` and `validate`
+- **`--dry-run`** — Simulate execution without side effects
+- **DAG ASCII Visualization** — `inspect` displays DAG with box-drawing characters
+- **Event Streaming** — Real-time step/directive/error events during `run`
+
+### VS Code Extension (../vscode-extension)
+
+- **Syntax Highlighting** — TextMate grammar for 17 directives, `$variables`, `:::blocks`
+- **Workflow Explorer** — TreeView discovers `.workflow.md` files with frontmatter metadata
+- **10 Commands** — Run, Validate, Inspect, Pause, Resume, Stop, Step, Dry Run, Templates, Refresh
+- **Auto-validate on Save** — Configurable validation on file save
+- **Problem Matcher** — Errors parsed from `--format=vscode` output
+- **Execution Control** — Pause/Resume/Cancel via POSIX signals
+- **Task Definition** — `chainskills` task type for `tasks.json`
 
 ### Coming Soon
 
@@ -159,7 +191,7 @@ chainskills serve [--port 3001]      # Expose as MCP server (stdio or HTTP)
 
 ## VS Code Extension
 
-The **chainskills-vscode** extension provides IDE integration for `.workflow.md` files:
+The **chainskills vscode** extension (in `../vscode/`) provides IDE integration for `.workflow.md` files:
 
 - **Syntax Highlighting** — TextMate grammar for 17 directives, `$variables`, `:::blocks`
 - **Workflow Explorer** — TreeView discovers `.workflow.md` files with frontmatter metadata
@@ -171,12 +203,25 @@ The **chainskills-vscode** extension provides IDE integration for `.workflow.md`
 ### Install from source
 
 ```bash
-cd chainskills-vscode
+cd ../vscode
 npm install && npm run compile
 # Press F5 in VS Code to launch Extension Development Host
 ```
 
-> See [chainskills-vscode/README.md](../chainskills-vscode/README.md) for full documentation.
+> See [vscode/README.md](../vscode-extension/README.md) for full documentation.
+
+### Metrics (v0.4.0)
+
+| Metric     | CLI                        | Extension          |
+| ---------- | -------------------------- | ------------------ |
+| Tests      | 197/197 passing (17 files) | Manual testing OK  |
+| Typecheck  | 0 errors                   | 0 errors           |
+| Build      | 5 bundles — 809 KB         | webpack → 23 KB    |
+| Source     | ~65 TypeScript files       | 4 TypeScript files |
+| Directives | 17 types supported         | 17 highlighted     |
+| Ports      | 8 abstract interfaces      | —                  |
+
+> See [FEATURES.md](FEATURES.md) for the complete feature catalog with use cases.
 
 ---
 
@@ -248,34 +293,38 @@ pnpm exec tsx src/cli/index.ts inspect path/to/workflow.md
 
 ## Stack
 
-| Layer         | Package                     | Role                  |
-| ------------- | --------------------------- | --------------------- |
-| CLI           | `citty`                     | Command routing       |
-| Prompts       | `@clack/prompts`            | Interactive prompts   |
-| Frontmatter   | `gray-matter`               | YAML parsing          |
-| Markdown      | `unified` + `remark-parse`  | AST generation        |
-| Directives    | `remark-directive`          | `@` directive support |
-| Orchestration | `@mastra/core`              | DAG workflows         |
-| MCP           | `@modelcontextprotocol/sdk` | Tool interop          |
-| Validation    | `zod`                       | Typed schemas         |
-| Build         | `obuild`                    | TypeScript bundling   |
-| Tests         | `vitest`                    | Unit + integration    |
+| Layer         | Package                     | Role                         |
+| ------------- | --------------------------- | ---------------------------- |
+| CLI           | `citty`                     | Command routing              |
+| Prompts       | `@clack/prompts`            | Interactive prompts          |
+| Colors        | `picocolors`                | Console formatting           |
+| Frontmatter   | `gray-matter`               | YAML parsing                 |
+| Markdown      | `unified` + `remark-parse`  | AST generation               |
+| Directives    | `remark-directive`          | `@` directive support        |
+| AST traversal | `unist-util-visit`          | Walk/transform AST           |
+| Orchestration | `@mastra/core`              | DAG workflows                |
+| MCP           | `@modelcontextprotocol/sdk` | Tool interop (server+client) |
+| Validation    | `zod`                       | Typed schemas                |
+| Build         | `obuild`                    | TypeScript bundling          |
+| Tests         | `vitest`                    | Unit + integration           |
 
 ---
 
 ## Roadmap
 
-| Phase | Version | Features                                                    | Status |
-| ----- | ------- | ----------------------------------------------------------- | ------ |
-| 1     | v0.1.0  | MVP — Parse + sequential run                                | ✅     |
-| 2     | v0.2.0  | DAG orchestration (Mastra), full control flow, event system | ✅     |
-| 3     | v0.3.0  | MCP client/server, `@agent` LLM, Result monad               | ✅     |
-| 4     | v0.4.0  | VS Code extension skeleton, core enhancements               | ✅     |
-| 5     | v0.5.0  | IDE Language Features (CodeLens, Completion, Diagnostics)    | 🔄     |
-| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG Webview  | ⏳     |
-| 7     | v0.7.0  | Debug Adapter (DAP), Test Controller, Rename/References      | ⏳     |
-| 8     | v0.8.0  | Registry & distribution                                      | ⏳     |
-| 9     | v1.0.0  | Production & scale                                           | ⏳     |
+| Phase | Version | Features                                                         | Status |
+| ----- | ------- | ---------------------------------------------------------------- | ------ |
+| 1     | v0.1.0  | MVP — Parse + sequential run + CLI + 86 tests                    | ✅     |
+| 2     | v0.2.0  | DAG orchestration (Mastra), full control flow, event system      | ✅     |
+| 2.1   | v0.2.1  | Security hardening, Result monad utilities, architecture fixes   | ✅     |
+| 3     | v0.3.0  | MCP server/client, `@agent` LLM, composite tools, SDK API        | ✅     |
+| 4     | v0.4.0  | VS Code extension skeleton, ExecutionController, `@breakpoint`   | ✅     |
+| 5     | v0.5.0  | IDE Language Features (CodeLens, Completion, Hover, Diagnostics) | 🔄     |
+| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG Webview       | ⏳     |
+| 7     | v0.7.0  | Debug Adapter (DAP), Test Controller, Rename/References          | ⏳     |
+| 8     | v0.8.0  | Registry & distribution                                          | ⏳     |
+| 9     | v0.9.0  | Polish, integration tests, marketplace publish                   | ⏳     |
+| 10    | v1.0.0  | Production & scale (SQLite, Redis, enterprise)                   | ⏳     |
 
 ---
 

@@ -305,23 +305,32 @@ describe('createOpenAIAgent network', () => {
 
 describe('agent in container', () => {
     it('should provide a noop agent when no API key is set', async () => {
-        const { createContainer } = await import('#config/container.js');
-        const container = await createContainer({
-            executor: 'simple',
-            logLevel: 'error',
-        });
+        // Ensure no AGENT_API_KEY leaks from environment
+        const savedKey = process.env['AGENT_API_KEY'];
+        delete process.env['AGENT_API_KEY'];
 
-        expect(container.agent).toBeDefined();
-        expect(container.agent.has('copilot')).toBe(true);
+        try {
+            const { createContainer } = await import('#config/container.js');
+            const container = await createContainer({
+                executor: 'simple',
+                logLevel: 'error',
+            });
 
-        const result = await container.agent.invoke({
-            agent: 'copilot',
-            prompt: 'test',
-        });
+            expect(container.agent).toBeDefined();
+            expect(container.agent.has('copilot')).toBe(true);
 
-        expect(isOk(result)).toBe(true);
-        if (result.ok) {
-            expect(result.value.content).toContain('[dry-run]');
+            const result = await container.agent.invoke({
+                agent: 'copilot',
+                prompt: 'test',
+            });
+
+            expect(isOk(result)).toBe(true);
+            if (result.ok) {
+                expect(result.value.content).toContain('[dry-run]');
+            }
+        } finally {
+            // Restore env
+            if (savedKey !== undefined) process.env['AGENT_API_KEY'] = savedKey;
         }
     });
 

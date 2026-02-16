@@ -48,12 +48,19 @@ export const runCommand = defineCommand({
             description: 'Output format: human | json | vscode (VS Code Problem Matcher)',
             default: 'human',
         },
+        verbose: {
+            type: 'boolean',
+            alias: 'v',
+            description: 'Show verbose debug logs on stderr',
+            default: false,
+        },
     },
     async run({ args }) {
         const workflowPath = resolve(args.workflow);
         const dryRun = args['dry-run'];
         const jsonMode = args.json || args.format === 'json';
         const vscodeMode = args.format === 'vscode';
+        const verbose = args.verbose;
 
         // Parse inputs
         const inputs: Record<string, string> = {};
@@ -145,8 +152,11 @@ export const runCommand = defineCommand({
             process.exit(1);
         }
 
-        // Create container
-        const container = await createContainer();
+        // Create container — suppress logger noise in interactive mode
+        // (stderr JSON lines can appear red in VS Code terminal, confusing users)
+        const container = await createContainer({
+            logLevel: verbose ? 'debug' : 'warn',
+        });
 
         // Parse
         console.log(pc.cyan('⟫ Parsing workflow...'));

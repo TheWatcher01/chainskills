@@ -36,11 +36,18 @@ export const validateCommand = defineCommand({
             description: 'Output format: human | json | vscode (VS Code Problem Matcher)',
             default: 'human',
         },
+        verbose: {
+            type: 'boolean',
+            alias: 'v',
+            description: 'Show verbose debug logs on stderr',
+            default: false,
+        },
     },
     async run({ args }) {
         const workflowPath = resolve(args.workflow);
         const jsonMode = args.json || args.format === 'json';
         const vscodeMode = args.format === 'vscode';
+        const verbose = args.verbose;
 
         // ── JSON mode — delegate to SDK API ─────────────────────────────
         if (jsonMode && !vscodeMode) {
@@ -140,7 +147,10 @@ export const validateCommand = defineCommand({
             process.exit(1);
         }
 
-        const container = await createContainer();
+        // Suppress logger noise in interactive mode
+        const container = await createContainer({
+            logLevel: verbose ? 'debug' : 'warn',
+        });
 
         // Parse
         console.log(pc.cyan('⟫ Parsing...'));

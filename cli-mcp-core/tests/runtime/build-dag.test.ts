@@ -50,7 +50,7 @@ describe('buildDAG — empty workflow', () => {
 // ─── Sequential Steps ────────────────────────────────────────────────────────
 
 describe('buildDAG — sequential steps', () => {
-    it('should create sequential nodes with no dependencies for independent steps', () => {
+    it('should create implicit sequential dependency for steps without variable flow', () => {
         const wf = makeWorkflow([
             makeStep('step-a', [
                 { type: 'call', raw: '@call shell.exec(echo hi) → $a_out', args: { tool: 'shell', method: 'exec', input: 'echo hi', capture: 'a_out' } },
@@ -67,8 +67,10 @@ describe('buildDAG — sequential steps', () => {
         expect(result.value.nodes).toHaveLength(2);
         const a = getNode(result.value, 'step-a');
         const b = getNode(result.value, 'step-b');
+        // First step has no deps, second depends on first (document order)
         expect(a?.dependencies).toHaveLength(0);
-        expect(b?.dependencies).toHaveLength(0);
+        expect(b?.dependencies).toHaveLength(1);
+        expect(b?.dependencies).toContain('step-a');
         expect(a?.type).toBe('sequential');
         expect(b?.type).toBe('sequential');
     });
@@ -224,7 +226,7 @@ describe('buildDAG — node type detection', () => {
 // ─── Parallel Groups ─────────────────────────────────────────────────────────
 
 describe('buildDAG — auto-parallelization', () => {
-    it('should group independent steps at the same level', () => {
+    it('should create sequential parallel groups following document order', () => {
         const wf = makeWorkflow([
             makeStep('a', [
                 { type: 'call', raw: '@call shell.exec(echo a) → $a', args: { tool: 'shell', method: 'exec', input: 'echo a', capture: 'a' } },
@@ -241,15 +243,12 @@ describe('buildDAG — auto-parallelization', () => {
         expect(result.ok).toBe(true);
         if (!result.ok) return;
 
-        // a and b should be in the same parallel group (level 0)
-        expect(result.value.parallelGroups.length).toBeGreaterThanOrEqual(2);
-        const level0 = result.value.parallelGroups[0]!;
-        expect(level0).toContain('a');
-        expect(level0).toContain('b');
-
-        // c should be in a later level
-        const level1 = result.value.parallelGroups[1]!;
-        expect(level1).toContain('c');
+        // With implicit sequential deps: a → b → c
+        // a is level 0, b is level 1 (dep: a), c is level 2 (deps: a, b)
+        expect(result.value.parallelGroups).toHaveLength(3);
+        expect(result.value.parallelGroups[0]).toContain('a');
+        expect(result.value.parallelGroups[1]).toContain('b');
+        expect(result.value.parallelGroups[2]).toContain('c');
     });
 
     it('should create a single group for fully sequential steps', () => {
@@ -280,7 +279,7 @@ describe('buildDAG — auto-parallelization', () => {
 // ─── Entry Points ────────────────────────────────────────────────────────────
 
 describe('buildDAG — entry points', () => {
-    it('should identify nodes with no dependencies as entry points', () => {
+    it('should identify only the first step as entry point with implicit sequential deps', () => {
         const wf = makeWorkflow([
             makeStep('entry-a'),
             makeStep('entry-b'),
@@ -293,8 +292,9 @@ describe('buildDAG — entry points', () => {
         expect(result.ok).toBe(true);
         if (!result.ok) return;
 
+        // Only the first step is an entry point — others depend on predecessors
+        expect(result.value.entryPoints).toHaveLength(1);
         expect(result.value.entryPoints).toContain('entry-a');
-        expect(result.value.entryPoints).toContain('entry-b');
     });
 });
 
