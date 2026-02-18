@@ -5,6 +5,10 @@ description: Research and create implementation plans before coding
 user-invokable: true
 disable-model-invocation: false
 handoffs:
+    - label: Request Research
+      agent: Research
+      prompt: Research the following topic before we plan the implementation:
+      send: false
     - label: Code Review
       agent: Review
       prompt: Review the implementation for quality and correctness.

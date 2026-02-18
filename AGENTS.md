@@ -22,12 +22,21 @@
 
 ---
 
-## Agents (2)
+## Agents (3)
 
-| Agent      | Rôle                                             | Fichier                          |
-| ---------- | ------------------------------------------------ | -------------------------------- |
-| **Plan**   | Recherche & planification d'implémentation (r/o) | `.github/agents/Plan.agent.md`   |
-| **Review** | QA & validation du travail complété              | `.github/agents/Review.agent.md` |
+| Agent        | Rôle                                                      | Fichier                            |
+| ------------ | --------------------------------------------------------- | ---------------------------------- |
+| **Research** | Recherche approfondie web+codebase, sourcing et freshness | `.github/agents/Research.agent.md` |
+| **Plan**     | Recherche & planification d'implémentation (r/o)          | `.github/agents/Plan.agent.md`     |
+| **Review**   | QA & validation du travail complété                       | `.github/agents/Review.agent.md`   |
+
+**Handoff graph :**
+
+```
+[Research] ──→ [Plan] ──→ (implementation) ──→ [Review]
+    ↑                                              │
+    └──────────── re-research if blocked ──────────┘
+```
 
 ---
 
@@ -92,14 +101,15 @@ chainskills/
 │   ├── dev/                       # code-review, tdd-cycle, refactor-module
 │   ├── cybersec/                  # recon-target, vuln-scan, pentest-report
 │   ├── osint/                     # person-recon, domain-recon, social-footprint
-│   └── ess/                       # grant-application, budget-zero-euro, multi-funder-dispatch
+│   ├── ess/                       # grant-application, budget-zero-euro, multi-funder-dispatch
+│   └── meta/                      # Meta-workflows : agent-factory, research-domain
 ├── tests/                         # Vitest — parser, runtime, mcp, cli
 ├── rules/                         # Règles métier externalisées (JSON)
 ├── .github/                       # Architecture agentique
 │   ├── ROADMAP.md                 # Suivi détaillé : phases, checkboxes, changelog, métriques
-│   ├── agents/                    # Plan.agent.md, Review.agent.md
+│   ├── agents/                    # Research.agent.md, Plan.agent.md, Review.agent.md
 │   ├── prompts/                   # Prompts réutilisables
-│   ├── skills/                    # Skills Copilot custom
+│   ├── skills/                    # Skills Copilot custom (smart, smart-commit, research)
 │   └── instructions/              # Instructions path-specific
 ├── .env.example
 ├── .gitignore
@@ -160,12 +170,13 @@ chainskills serve [--port 3001]
 
 ## Skills
 
-### Custom — Copilot (2)
+### Custom — Copilot (3)
 
-| Skill            | Fonction                               | Fichier                                |
-| ---------------- | -------------------------------------- | -------------------------------------- |
-| **smart**        | Auto-apprentissage à partir des échecs | `.github/skills/smart/SKILL.md`        |
-| **smart-commit** | Commits Git groupés, audit sécurité    | `.github/skills/smart-commit/SKILL.md` |
+| Skill            | Fonction                                            | Fichier                                |
+| ---------------- | --------------------------------------------------- | -------------------------------------- |
+| **smart**        | Auto-apprentissage à partir des échecs              | `.github/skills/smart/SKILL.md`        |
+| **smart-commit** | Commits Git groupés, audit sécurité                 | `.github/skills/smart-commit/SKILL.md` |
+| **research**     | Protocole de recherche multi-sources avec freshness | `.github/skills/research/SKILL.md`     |
 
 ### Externes — Workflows DAG (1)
 
