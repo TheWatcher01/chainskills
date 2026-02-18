@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.workspace.onDidSaveTextDocument((document) => {
             const config = vscode.workspace.getConfiguration('chainskills');
             const autoValidate = config.get<boolean>('autoValidate', true);
-            
+
             if (autoValidate && document.fileName.endsWith('.workflow.md')) {
                 vscode.commands.executeCommand('chainskills.validateWorkflow', document.uri);
             }

@@ -1,44 +1,48 @@
-# Testing Guide — chainskills VS Code Extension
+# Guide de Test — Extension VS Code chainskills
 
-## Prerequisites
+## Prérequis
 
-✅ **Completed**:
-- chainskills CLI built and linked globally (`npm link`)
-- Extension compiled successfully (dist/extension.js - 23 KB)
-- Test workflow created (test-workflow.workflow.md)
+✅ **Complétés** :
 
-## Quick Test (5 minutes)
+- CLI chainskills compilé et lié globalement (`npm link`)
+- Extension compilée avec succès (dist/extension.js - 23 KB)
+- Workflow de test créé (test-workflow.workflow.md)
 
-### 1. Launch Extension Development Host
+## Test Rapide (5 minutes)
+
+### 1. Lancer l'Hôte de Développement d'Extension
 
 ```bash
-cd /home/TheWatcher01/projects/chainskills-vscode
-code .
+cd /home/TheWatcher01/projects/chainskills/vscode
 ```
 
-In VS Code:
-1. Press **F5** (or Run > Start Debugging)
-2. A new "Extension Development Host" window will open
-3. The extension is now active in this window
+Dans VS Code :
 
-### 2. Verify Installation
+1. Appuyez sur **F5** (ou Exécuter > Démarrer le débogage)
+2. Une nouvelle fenêtre "Extension Development Host" s'ouvrira
+3. L'extension est maintenant active dans cette fenêtre
 
-In the Extension Development Host window:
+### 2. Vérifier l'Installation
 
-**Check 1: Syntax Highlighting**
-- Open `test-workflow.workflow.md`
-- Verify directives are colored (`@env`, `@if`, `@else`, `@output`)
-- Verify variables are colored (`$target`, `$result`, `$TARGET`)
+Dans la fenêtre Extension Development Host :
 
-**Check 2: TreeView**
-- Open Explorer (Ctrl+Shift+E)
-- Look for "CHAINSKILLS WORKFLOWS" view at the bottom
-- Should show: test-workflow (v1.0.0)
-- Click to open the file
+**Vérification 1 : Coloration Syntaxique**
 
-**Check 3: Commands (Command Palette - Ctrl+Shift+P)**
-- Type "chainskills"
-- Should see 10 commands:
+- Ouvrir `test-workflow.workflow.md`
+- Vérifier que les directives sont colorées (`@env`, `@if`, `@else`, `@output`)
+- Vérifier que les variables sont colorées (`$target`, `$result`, `$TARGET`)
+
+**Vérification 2 : TreeView**
+
+- Ouvrir l'Explorateur (Ctrl+Shift+E)
+- Chercher la vue "CHAINSKILLS WORKFLOWS" en bas
+- Devrait afficher : test-workflow (v1.0.0)
+- Cliquer pour ouvrir le fichier
+
+**Vérification 3 : Commandes (Palette de Commandes - Ctrl+Shift+P)**
+
+- Taper "chainskills"
+- Devrait voir 10 commandes :
   - chainskills: Run Workflow
   - chainskills: Run Workflow (Dry Run)
   - chainskills: Validate Workflow
@@ -50,29 +54,30 @@ In the Extension Development Host window:
   - chainskills: Browse Workflow Templates
   - chainskills: Refresh Workflows
 
-**Check 4: Editor Toolbar**
-- Open `test-workflow.workflow.md`
-- Look at the editor toolbar (top right)
-- Should see 3 icons:
+**Vérification 4 : Barre d'Outils Éditeur**
+
+- Ouvrir `test-workflow.workflow.md`
+- Regarder la barre d'outils de l'éditeur (en haut à droite)
+- Devrait voir 3 icônes :
   - ▶️ Run Workflow
   - ✓ Validate Workflow
   - 📊 Inspect Workflow DAG
 
-### 3. Test Core Features
+### 3. Tester les Fonctionnalités Principales
 
-#### Test Validation
+#### Test de Validation
 
-1. Open `test-workflow.workflow.md`
-2. Click the ✓ icon in editor toolbar (or Ctrl+Shift+P > "chainskills: Validate Workflow")
-3. Check the **Problems** panel (View > Problems)
-4. Should show: "Workflow validated successfully" (or errors if any)
+1. Ouvrir `test-workflow.workflow.md`
+2. Cliquer sur l'icône ✓ dans la barre d'outils (ou Ctrl+Shift+P > "chainskills: Validate Workflow")
+3. Vérifier le panneau **Problèmes** (Affichage > Problèmes)
+4. Devrait afficher : "Workflow validated successfully" (ou erreurs le cas échéant)
 
-#### Test DAG Inspection
+#### Test d'Inspection DAG
 
-1. With `test-workflow.workflow.md` open
-2. Click the 📊 icon (or run "Inspect Workflow DAG")
-3. Check the **Output** panel (View > Output, select "chainskills DAG")
-4. Should show ASCII DAG:
+1. Avec `test-workflow.workflow.md` ouvert
+2. Cliquer sur l'icône 📊 (ou exécuter "Inspect Workflow DAG")
+3. Vérifier le panneau **Sortie** (Affichage > Sortie, sélectionner "chainskills DAG")
+4. Devrait afficher le DAG ASCII :
    ```
    ┌─────────────────────┐
    │ test-workflow       │
@@ -94,115 +99,117 @@ In the Extension Development Host window:
    └─────────────────────┘
    ```
 
-#### Test Execution (Dry Run)
+#### Test d'Exécution (Simulation)
 
-1. With `test-workflow.workflow.md` open
-2. Run command: "chainskills: Run Workflow (Dry Run)"
-3. Check **Output** panel (select "chainskills")
-4. Should show:
+1. Avec `test-workflow.workflow.md` ouvert
+2. Exécuter la commande : "chainskills: Run Workflow (Dry Run)"
+3. Vérifier le panneau **Sortie** (sélectionner "chainskills")
+4. Devrait afficher :
    ```
    Running workflow: test-workflow.workflow.md
    [DRY RUN] Workflow executed successfully
    ```
 
-#### Test Execution (Real)
+#### Test d'Exécution (Réelle)
 
-1. With `test-workflow.workflow.md` open
-2. Click ▶️ icon (or run "chainskills: Run Workflow")
-3. Enter input: `target=example.com`
-4. Check **Output** panel
-5. Should show:
-   - Step execution logs
-   - Variable substitutions
-   - Final output
+1. Avec `test-workflow.workflow.md` ouvert
+2. Cliquer sur l'icône ▶️ (ou exécuter "chainskills: Run Workflow")
+3. Entrer l'entrée : `target=example.com`
+4. Vérifier le panneau **Sortie**
+5. Devrait afficher :
+   - Logs d'exécution des étapes
+   - Substitutions de variables
+   - Sortie finale
 
-### 4. Test TreeView Interactions
+### 4. Tester les Interactions TreeView
 
-1. In Explorer, find "CHAINSKILLS WORKFLOWS"
-2. Right-click on test-workflow
-3. Context menu should show:
+1. Dans l'Explorateur, trouver "CHAINSKILLS WORKFLOWS"
+2. Clic droit sur test-workflow
+3. Le menu contextuel devrait afficher :
    - Run Workflow
    - Run Workflow (Dry Run)
    - Validate Workflow
    - Inspect Workflow DAG
 
-### 5. Test Configuration
+### 5. Tester la Configuration
 
-1. Open Settings (Ctrl+,)
-2. Search "chainskills"
-3. Should see 5 settings:
-   - **CLI Path**: chainskills (default)
-   - **Executor**: mastra (dropdown: simple | mastra)
-   - **Auto Validate**: true (checkbox)
-   - **Show DAG on Inspect**: true (checkbox)
-   - **Templates Path**: (empty string)
+1. Ouvrir les Paramètres (Ctrl+,)
+2. Rechercher "chainskills"
+3. Devrait voir 5 paramètres :
+   - **CLI Path** : chainskills (par défaut)
+   - **Executor** : mastra (liste déroulante : simple | mastra)
+   - **Auto Validate** : true (case à cocher)
+   - **Show DAG on Inspect** : true (case à cocher)
+   - **Templates Path** : (chaîne vide)
 
-## Full Test Suite (15 minutes)
+## Suite de Tests Complète (15 minutes)
 
-### Test 1: Auto-Validation on Save
+### Test 1 : Auto-Validation à la Sauvegarde
 
-1. Open `test-workflow.workflow.md`
-2. Make sure "Auto Validate" is enabled in settings
-3. Add a syntax error: `@invalid_directive`
-4. Save (Ctrl+S)
-5. **Expected**: Problems panel shows error immediately
+1. Ouvrir `test-workflow.workflow.md`
+2. S'assurer que "Auto Validate" est activé dans les paramètres
+3. Ajouter une erreur de syntaxe : `@invalid_directive`
+4. Sauvegarder (Ctrl+S)
+5. **Attendu** : Le panneau Problèmes affiche l'erreur immédiatement
 
-### Test 2: File Watcher
+### Test 2 : Observateur de Fichiers
 
-1. Create a new file: `new-workflow.workflow.md`
-2. Add minimal frontmatter:
+1. Créer un nouveau fichier : `new-workflow.workflow.md`
+2. Ajouter un frontmatter minimal :
+
    ```yaml
    ---
    name: new-workflow
    version: 1.0.0
    ---
-   
-   # Step 1
-   
+   # Étape 1
+
    Test
    ```
-3. Save
-4. **Expected**: TreeView refreshes, shows new-workflow
 
-### Test 3: Execution Control (requires long-running workflow)
+3. Sauvegarder
+4. **Attendu** : La TreeView se rafraîchit et affiche new-workflow
 
-Create `long-workflow.workflow.md`:
+### Test 3 : Contrôle d'Exécution (nécessite un workflow long)
+
+Créer `long-workflow.workflow.md` :
+
 ```markdown
 ---
 name: long-workflow
 version: 1.0.0
 ---
 
-# Step 1
+# Étape 1
 
 @repeat max:10 until false:
-  Long running step...
+Étape de longue durée...
 ```
 
-1. Run the workflow
-2. While running, click **Pause** button in status bar
-3. **Expected**: Process paused (SIGSTOP)
-4. Click **Resume**
-5. **Expected**: Execution continues
-6. Click **Stop**
-7. **Expected**: Process terminated (SIGTERM)
+1. Exécuter le workflow
+2. Pendant l'exécution, cliquer sur le bouton **Pause** dans la barre d'état
+3. **Attendu** : Processus mis en pause (SIGSTOP)
+4. Cliquer sur **Resume**
+5. **Attendu** : L'exécution continue
+6. Cliquer sur **Stop**
+7. **Attendu** : Processus terminé (SIGTERM)
 
-### Test 4: Template Browser
+### Test 4 : Navigateur de Templates
 
-1. Set `chainskills.templatesPath` to `/home/TheWatcher01/projects/chainskills/templates`
-2. Run "chainskills: Browse Workflow Templates"
-3. Should show 5 templates:
+1. Définir `chainskills.templatesPath` à `/home/TheWatcher01/projects/chainskills/cli-mcp-core/templates`
+2. Exécuter "chainskills: Browse Workflow Templates"
+3. Devrait afficher 5 templates :
    - Code Review
    - TDD Cycle
    - Domain Reconnaissance
    - Vulnerability Scan
    - Grant Application
-4. Select one
-5. **Expected**: Opens the template file
+4. En sélectionner un
+5. **Attendu** : Ouvre le fichier template
 
-### Test 5: Problem Matcher Integration
+### Test 5 : Intégration Problem Matcher
 
-1. Create `.vscode/tasks.json` in the Extension Development Host workspace:
+1. Créer `.vscode/tasks.json` dans l'espace de travail Extension Development Host :
    ```json
    {
      "version": "2.0.0",
@@ -217,85 +224,86 @@ version: 1.0.0
      ]
    }
    ```
-2. Open a workflow with errors
-3. Run task: Terminal > Run Task > "Run Workflow"
-4. **Expected**: Errors in Problems panel with clickable links
+2. Ouvrir un workflow avec des erreurs
+3. Exécuter la tâche : Terminal > Exécuter la tâche > "Run Workflow"
+4. **Attendu** : Erreurs dans le panneau Problèmes avec liens cliquables
 
-## Debug Extension Code
+## Déboguer le Code de l'Extension
 
-To debug the extension TypeScript code:
+Pour déboguer le code TypeScript de l'extension :
 
-1. Set breakpoints in `src/extension.ts`, `src/commands.ts`, etc.
-2. Press F5 to launch Extension Development Host
-3. Trigger the code path (e.g., run a command)
-4. Debugger will pause at breakpoints
-5. Inspect variables, step through code
+1. Définir des points d'arrêt dans `src/extension.ts`, `src/commands.ts`, etc.
+2. Appuyer sur F5 pour lancer l'Extension Development Host
+3. Déclencher le chemin de code (ex : exécuter une commande)
+4. Le débogueur se mettra en pause aux points d'arrêt
+5. Inspecter les variables, parcourir le code
 
-## Package Extension for Distribution
+## Empaqueter l'Extension pour Distribution
 
 ```bash
-cd /home/TheWatcher01/projects/chainskills-vscode
+cd /home/TheWatcher01/projects/chainskills/vscode
 npm run package
 ```
 
-This creates: `chainskills-vscode-0.4.0.vsix`
+Cela crée : `chainskills-vscode-0.4.0.vsix`
 
-Install manually:
+Installation manuelle :
+
 ```bash
 code --install-extension chainskills-vscode-0.4.0.vsix
 ```
 
-## Troubleshooting
+## Dépannage
 
-### Extension not activating
+### L'extension ne s'active pas
 
-**Check**: Output panel > "Extension Host"
-**Look for**: "chainskills extension is now active"
+**Vérifier** : Panneau Sortie > "Extension Host"
+**Chercher** : "chainskills extension is now active"
 
-### Commands not showing
+### Les commandes n'apparaissent pas
 
-**Check**: `package.json` > `activationEvents`
-**Ensure**: `onLanguage:markdown` or `workspaceContains:**/*.workflow.md`
+**Vérifier** : `package.json` > `activationEvents`
+**S'assurer** : `onLanguage:markdown` ou `workspaceContains:**/*.workflow.md`
 
-### TreeView empty
+### TreeView vide
 
-**Check**: Are there `.workflow.md` files in workspace?
-**Debug**: Set breakpoint in `WorkflowTreeProvider.getChildren()`
+**Vérifier** : Y a-t-il des fichiers `.workflow.md` dans l'espace de travail ?
+**Déboguer** : Définir un point d'arrêt dans `WorkflowTreeProvider.getChildren()`
 
-### CLI not found
+### CLI introuvable
 
-**Check**: Settings > chainskills.cliPath
-**Verify**: Run `which chainskills` in terminal
-**Fix**: Run `npm link` in chainskills repo
+**Vérifier** : Paramètres > chainskills.cliPath
+**Vérifier** : Exécuter `which chainskills` dans le terminal
+**Corriger** : Exécuter `npm link` dans le dépôt chainskills
 
-### Syntax highlighting not working
+### La coloration syntaxique ne fonctionne pas
 
-**Check**: `syntaxes/workflow.tmLanguage.json` registered in `package.json`
-**Verify**: File language is "Workflow Markdown" (bottom right status bar)
+**Vérifier** : `syntaxes/workflow.tmLanguage.json` enregistré dans `package.json`
+**Vérifier** : Le langage du fichier est "Workflow Markdown" (barre d'état en bas à droite)
 
-## Test Checklist
+## Checklist de Test
 
-- [ ] Extension activates without errors
-- [ ] TreeView shows workflows in Explorer
-- [ ] Syntax highlighting for directives and variables
-- [ ] 10 commands appear in Command Palette
-- [ ] Validate command shows errors in Problems panel
-- [ ] Inspect command shows DAG in Output panel
-- [ ] Run command executes workflow
-- [ ] Dry run simulates execution
-- [ ] Editor toolbar shows 3 icons
-- [ ] TreeView context menu works
-- [ ] Auto-validate on save triggers
-- [ ] File watcher refreshes tree
-- [ ] Template browser opens templates
-- [ ] Configuration settings persist
-- [ ] Problem Matcher parses errors
+- [ ] L'extension s'active sans erreurs
+- [ ] TreeView affiche les workflows dans l'Explorateur
+- [ ] Coloration syntaxique pour les directives et variables
+- [ ] 10 commandes apparaissent dans la Palette de Commandes
+- [ ] La commande Validate affiche les erreurs dans le panneau Problèmes
+- [ ] La commande Inspect affiche le DAG dans le panneau Sortie
+- [ ] La commande Run exécute le workflow
+- [ ] Le dry run simule l'exécution
+- [ ] La barre d'outils affiche 3 icônes
+- [ ] Le menu contextuel TreeView fonctionne
+- [ ] L'auto-validation à la sauvegarde se déclenche
+- [ ] L'observateur de fichiers rafraîchit l'arbre
+- [ ] Le navigateur de templates ouvre les templates
+- [ ] Les paramètres de configuration persistent
+- [ ] Le Problem Matcher analyse les erreurs
 
-## Next Steps
+## Prochaines Étapes
 
-After successful testing:
+Après des tests réussis :
 
-1. **Commit Phase 2**: Git commit the extension skeleton
-2. **Update ROADMAP.md**: Mark Phase 2 as completed
-3. **Phase 3 Planning**: Webview panels (DAG visualizer, execution monitor)
-4. **Phase 4 Planning**: Copilot Chat integration (@chainskills participant)
+1. **Commiter Phase 2** : Commit git du squelette d'extension
+2. **Mettre à jour ROADMAP.md** : Marquer Phase 2 comme complétée
+3. **Planification Phase 3** : Panneaux Webview (visualiseur DAG, moniteur d'exécution)
+4. **Planification Phase 4** : Intégration Copilot Chat (participant @chainskills)

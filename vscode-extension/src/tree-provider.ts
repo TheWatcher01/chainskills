@@ -12,7 +12,7 @@ export class WorkflowTreeProvider implements vscode.TreeDataProvider<WorkflowIte
     private _onDidChangeTreeData = new vscode.EventEmitter<WorkflowItem | undefined | void>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    constructor() {}
+    constructor() { }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -57,19 +57,19 @@ export class WorkflowTreeProvider implements vscode.TreeDataProvider<WorkflowIte
         try {
             const content = await fs.promises.readFile(uri.fsPath, 'utf-8');
             const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-            
+
             if (frontmatterMatch) {
                 const yaml = frontmatterMatch[1];
                 const name = yaml.match(/^name:\s*(.+)$/m)?.[1]?.trim();
                 const description = yaml.match(/^description:\s*(.+)$/m)?.[1]?.trim();
                 const version = yaml.match(/^version:\s*(.+)$/m)?.[1]?.trim();
-                
+
                 return { name, description, version };
             }
         } catch (error) {
             console.error('Failed to parse workflow metadata:', error);
         }
-        
+
         return {};
     }
 }
@@ -88,7 +88,7 @@ class WorkflowItem extends vscode.TreeItem {
         public readonly version?: string
     ) {
         super(label, vscode.TreeItemCollapsibleState.None);
-        
+
         this.tooltip = this.createTooltip();
         this.contextValue = 'workflow';
         this.iconPath = new vscode.ThemeIcon('symbol-misc');

@@ -15,18 +15,18 @@ VS Code extension for [chainskills](https://github.com/chainskills/chainskills) 
 
 ## Commands
 
-| Command | Description | Shortcut |
-|---|---|---|
-| `chainskills: Run Workflow` | Execute workflow with chainskills CLI | - |
-| `chainskills: Run Workflow (Dry Run)` | Simulate execution without side effects | - |
-| `chainskills: Validate Workflow` | Check workflow syntax and structure | - |
-| `chainskills: Inspect Workflow DAG` | Show workflow DAG visualization | - |
-| `chainskills: Pause Execution` | Pause running workflow | - |
-| `chainskills: Resume Execution` | Resume paused workflow | - |
-| `chainskills: Stop Execution` | Cancel running workflow | - |
-| `chainskills: Step Through Execution` | Execute next step in debug mode | - |
-| `chainskills: Browse Workflow Templates` | Open template selection menu | - |
-| `chainskills: Refresh Workflows` | Reload workflow tree view | - |
+| Command                                  | Description                             | Shortcut |
+| ---------------------------------------- | --------------------------------------- | -------- |
+| `chainskills: Run Workflow`              | Execute workflow with chainskills CLI   | -        |
+| `chainskills: Run Workflow (Dry Run)`    | Simulate execution without side effects | -        |
+| `chainskills: Validate Workflow`         | Check workflow syntax and structure     | -        |
+| `chainskills: Inspect Workflow DAG`      | Show workflow DAG visualization         | -        |
+| `chainskills: Pause Execution`           | Pause running workflow                  | -        |
+| `chainskills: Resume Execution`          | Resume paused workflow                  | -        |
+| `chainskills: Stop Execution`            | Cancel running workflow                 | -        |
+| `chainskills: Step Through Execution`    | Execute next step in debug mode         | -        |
+| `chainskills: Browse Workflow Templates` | Open template selection menu            | -        |
+| `chainskills: Refresh Workflows`         | Reload workflow tree view               | -        |
 
 ## Configuration
 
@@ -52,7 +52,7 @@ VS Code extension for [chainskills](https://github.com/chainskills/chainskills) 
 
 ```bash
 # Build extension
-cd chainskills-vscode
+cd vscode           # ou chainskills/vscode depuis la racine
 npm install
 npm run package
 
@@ -89,9 +89,9 @@ version: 1.0.0
 @call pdf.extract($input) → $text
 
 @if $text != "":
-  Process extracted text...
+Process extracted text...
 @else:
-  Handle empty result...
+Handle empty result...
 ```
 
 ### Highlighted Elements
@@ -132,15 +132,14 @@ Errors will appear in the Problems panel with clickable links to the source line
 ```bash
 # Clone repos
 git clone https://github.com/chainskills/chainskills.git
-git clone https://github.com/chainskills/chainskills-vscode.git
 
 # Install dependencies
-cd chainskills && pnpm install && pnpm run build
-cd ../chainskills-vscode && npm install
+cd chainskills/cli-mcp-core && pnpm install && pnpm run build
+cd ../vscode-extension && npm install
 
 # Link chainskills CLI (optional for development)
-cd ../chainskills && npm link
-cd ../chainskills-vscode
+cd ../cli-mcp-core && npm link
+cd ../vscode-extension
 
 # Run extension in development mode
 npm run watch       # Terminal 1: compile on change
@@ -151,12 +150,14 @@ code .              # Terminal 2: open in VS Code
 ## Roadmap
 
 **Phase 1** (v0.4.0) - Core Integration ✅
+
 - ✅ ExecutionController API (pause/resume/cancel)
 - ✅ StateStore serialization
 - ✅ @breakpoint directive
 - ✅ --format=vscode CLI flag
 
-**Phase 2** (v0.5.0) - Extension Skeleton 🔄 *In Progress*
+**Phase 2** (v0.5.0) - Extension Skeleton 🔄 _In Progress_
+
 - ✅ package.json manifest with 10 commands
 - ✅ TreeView provider for workflows
 - ✅ Command handlers (run, validate, inspect)
@@ -164,7 +165,8 @@ code .              # Terminal 2: open in VS Code
 - ⏳ Webview panels (DAG visualizer, execution monitor)
 - ⏳ Debugging adapter protocol integration
 
-**Phase 3** (v0.6.0) - Advanced Features 📋 *Planned*
+**Phase 3** (v0.6.0) - Advanced Features 📋 _Planned_
+
 - Copilot Chat participant (`@chainskills`)
 - Inline completion provider for directives
 - Workflow snippets and scaffolding
@@ -179,4 +181,4 @@ MIT © chainskills
 
 - [chainskills CLI](https://github.com/chainskills/chainskills)
 - [Documentation](https://chainskills.dev)
-- [Issue Tracker](https://github.com/chainskills/chainskills-vscode/issues)
+- [Issue Tracker](https://github.com/chainskills/chainskills/issues)

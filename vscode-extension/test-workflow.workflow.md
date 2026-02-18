@@ -25,9 +25,9 @@ Test workflow for chainskills VS Code extension.
 # Step 2: Execute Test
 
 @if $target != "":
-  Execute test on target...
+Execute test on target...
 @else:
-  No target specified.
+No target specified.
 
 # Step 3: Output
 

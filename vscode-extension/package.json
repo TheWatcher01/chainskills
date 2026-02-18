@@ -1,313 +1,313 @@
 {
-  "name": "chainskills-vscode",
-  "displayName": "chainskills",
-  "description": "AI workflow orchestration in Markdown - VS Code Extension",
-  "version": "0.4.0",
-  "publisher": "chainskills",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/chainskills/chainskills-vscode"
-  },
-  "engines": {
-    "vscode": "^1.90.0"
-  },
-  "categories": [
-    "Programming Languages",
-    "Debuggers",
-    "Other"
-  ],
-  "keywords": [
-    "workflow",
-    "ai",
-    "agents",
-    "orchestration",
-    "markdown"
-  ],
-  "activationEvents": [
-    "onLanguage:markdown",
-    "workspaceContains:**/*.workflow.md"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "languages": [
-      {
-        "id": "workflow-markdown",
-        "aliases": [
-          "Workflow Markdown",
-          "workflow"
-        ],
-        "extensions": [
-          ".workflow.md"
-        ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "workflow-markdown",
-        "scopeName": "text.html.markdown.workflow",
-        "path": "./syntaxes/workflow.tmLanguage.json"
-      }
-    ],
-    "commands": [
-      {
-        "command": "chainskills.runWorkflow",
-        "title": "Run Workflow",
-        "category": "chainskills",
-        "icon": "$(play)"
-      },
-      {
-        "command": "chainskills.runWorkflowDryRun",
-        "title": "Run Workflow (Dry Run)",
-        "category": "chainskills",
-        "icon": "$(debug-alt-small)"
-      },
-      {
-        "command": "chainskills.validateWorkflow",
-        "title": "Validate Workflow",
-        "category": "chainskills",
-        "icon": "$(check)"
-      },
-      {
-        "command": "chainskills.inspectWorkflow",
-        "title": "Inspect Workflow DAG",
-        "category": "chainskills",
-        "icon": "$(graph)"
-      },
-      {
-        "command": "chainskills.pauseExecution",
-        "title": "Pause Execution",
-        "category": "chainskills",
-        "icon": "$(debug-pause)"
-      },
-      {
-        "command": "chainskills.resumeExecution",
-        "title": "Resume Execution",
-        "category": "chainskills",
-        "icon": "$(debug-continue)"
-      },
-      {
-        "command": "chainskills.stopExecution",
-        "title": "Stop Execution",
-        "category": "chainskills",
-        "icon": "$(debug-stop)"
-      },
-      {
-        "command": "chainskills.stepExecution",
-        "title": "Step Through Execution",
-        "category": "chainskills",
-        "icon": "$(debug-step-over)"
-      },
-      {
-        "command": "chainskills.openTemplates",
-        "title": "Browse Workflow Templates",
-        "category": "chainskills",
-        "icon": "$(library)"
-      },
-      {
-        "command": "chainskills.refreshWorkflows",
-        "title": "Refresh Workflows",
-        "category": "chainskills",
-        "icon": "$(refresh)"
-      }
-    ],
-    "views": {
-      "explorer": [
-        {
-          "id": "chainskillsWorkflows",
-          "name": "Workflows",
-          "icon": "$(symbol-misc)",
-          "contextualTitle": "chainskills Workflows"
-        }
-      ]
+    "name": "chainskills-vscode",
+    "displayName": "chainskills",
+    "description": "AI workflow orchestration in Markdown - VS Code Extension",
+    "version": "0.4.0",
+    "publisher": "chainskills",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/chainskills/chainskills-vscode"
     },
-    "viewsWelcome": [
-      {
-        "view": "chainskillsWorkflows",
-        "contents": "No workflows found in workspace.\n[Create Workflow](command:chainskills.openTemplates)"
-      }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "chainskills.refreshWorkflows",
-          "when": "view == chainskillsWorkflows",
-          "group": "navigation"
-        },
-        {
-          "command": "chainskills.openTemplates",
-          "when": "view == chainskillsWorkflows",
-          "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "chainskills.runWorkflow",
-          "when": "view == chainskillsWorkflows && viewItem == workflow",
-          "group": "inline"
-        },
-        {
-          "command": "chainskills.validateWorkflow",
-          "when": "view == chainskillsWorkflows && viewItem == workflow",
-          "group": "inline"
-        },
-        {
-          "command": "chainskills.inspectWorkflow",
-          "when": "view == chainskillsWorkflows && viewItem == workflow"
-        },
-        {
-          "command": "chainskills.runWorkflowDryRun",
-          "when": "view == chainskillsWorkflows && viewItem == workflow"
-        }
-      ],
-      "editor/title": [
-        {
-          "command": "chainskills.runWorkflow",
-          "when": "resourceExtname == .workflow.md",
-          "group": "navigation@1"
-        },
-        {
-          "command": "chainskills.validateWorkflow",
-          "when": "resourceExtname == .workflow.md",
-          "group": "navigation@2"
-        },
-        {
-          "command": "chainskills.inspectWorkflow",
-          "when": "resourceExtname == .workflow.md",
-          "group": "navigation@3"
-        }
-      ],
-      "commandPalette": [
-        {
-          "command": "chainskills.runWorkflow",
-          "when": "resourceExtname == .workflow.md"
-        },
-        {
-          "command": "chainskills.validateWorkflow",
-          "when": "resourceExtname == .workflow.md"
-        },
-        {
-          "command": "chainskills.inspectWorkflow",
-          "when": "resourceExtname == .workflow.md"
-        },
-        {
-          "command": "chainskills.pauseExecution",
-          "when": "chainskills.isExecuting"
-        },
-        {
-          "command": "chainskills.resumeExecution",
-          "when": "chainskills.isPaused"
-        },
-        {
-          "command": "chainskills.stopExecution",
-          "when": "chainskills.isExecuting"
-        },
-        {
-          "command": "chainskills.stepExecution",
-          "when": "chainskills.isPaused"
-        }
-      ]
+    "engines": {
+        "vscode": "^1.90.0"
     },
-    "problemMatchers": [
-      {
-        "name": "chainskills",
-        "owner": "chainskills",
-        "fileLocation": [
-          "absolute"
-        ],
-        "pattern": {
-          "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
-        }
-      }
+    "categories": [
+        "Programming Languages",
+        "Debuggers",
+        "Other"
     ],
-    "taskDefinitions": [
-      {
-        "type": "chainskills",
-        "required": [
-          "workflow"
-        ],
-        "properties": {
-          "workflow": {
-            "type": "string",
-            "description": "Path to the .workflow.md file"
-          },
-          "inputs": {
-            "type": "object",
-            "description": "Input variables as key-value pairs"
-          },
-          "dryRun": {
-            "type": "boolean",
-            "description": "Run in dry-run mode without side effects",
-            "default": false
-          }
-        }
-      }
+    "keywords": [
+        "workflow",
+        "ai",
+        "agents",
+        "orchestration",
+        "markdown"
     ],
-    "configuration": {
-      "title": "chainskills",
-      "properties": {
-        "chainskills.cliPath": {
-          "type": "string",
-          "default": "chainskills",
-          "description": "Path to the chainskills CLI executable"
+    "activationEvents": [
+        "onLanguage:markdown",
+        "workspaceContains:**/*.workflow.md"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "workflow-markdown",
+                "aliases": [
+                    "Workflow Markdown",
+                    "workflow"
+                ],
+                "extensions": [
+                    ".workflow.md"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "workflow-markdown",
+                "scopeName": "text.html.markdown.workflow",
+                "path": "./syntaxes/workflow.tmLanguage.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "chainskills.runWorkflow",
+                "title": "Run Workflow",
+                "category": "chainskills",
+                "icon": "$(play)"
+            },
+            {
+                "command": "chainskills.runWorkflowDryRun",
+                "title": "Run Workflow (Dry Run)",
+                "category": "chainskills",
+                "icon": "$(debug-alt-small)"
+            },
+            {
+                "command": "chainskills.validateWorkflow",
+                "title": "Validate Workflow",
+                "category": "chainskills",
+                "icon": "$(check)"
+            },
+            {
+                "command": "chainskills.inspectWorkflow",
+                "title": "Inspect Workflow DAG",
+                "category": "chainskills",
+                "icon": "$(graph)"
+            },
+            {
+                "command": "chainskills.pauseExecution",
+                "title": "Pause Execution",
+                "category": "chainskills",
+                "icon": "$(debug-pause)"
+            },
+            {
+                "command": "chainskills.resumeExecution",
+                "title": "Resume Execution",
+                "category": "chainskills",
+                "icon": "$(debug-continue)"
+            },
+            {
+                "command": "chainskills.stopExecution",
+                "title": "Stop Execution",
+                "category": "chainskills",
+                "icon": "$(debug-stop)"
+            },
+            {
+                "command": "chainskills.stepExecution",
+                "title": "Step Through Execution",
+                "category": "chainskills",
+                "icon": "$(debug-step-over)"
+            },
+            {
+                "command": "chainskills.openTemplates",
+                "title": "Browse Workflow Templates",
+                "category": "chainskills",
+                "icon": "$(library)"
+            },
+            {
+                "command": "chainskills.refreshWorkflows",
+                "title": "Refresh Workflows",
+                "category": "chainskills",
+                "icon": "$(refresh)"
+            }
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "chainskillsWorkflows",
+                    "name": "Workflows",
+                    "icon": "$(symbol-misc)",
+                    "contextualTitle": "chainskills Workflows"
+                }
+            ]
         },
-        "chainskills.executor": {
-          "type": "string",
-          "enum": [
-            "simple",
-            "mastra"
-          ],
-          "default": "mastra",
-          "description": "Workflow executor engine (simple = sequential, mastra = DAG)"
+        "viewsWelcome": [
+            {
+                "view": "chainskillsWorkflows",
+                "contents": "No workflows found in workspace.\n[Create Workflow](command:chainskills.openTemplates)"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "chainskills.refreshWorkflows",
+                    "when": "view == chainskillsWorkflows",
+                    "group": "navigation"
+                },
+                {
+                    "command": "chainskills.openTemplates",
+                    "when": "view == chainskillsWorkflows",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "chainskills.runWorkflow",
+                    "when": "view == chainskillsWorkflows && viewItem == workflow",
+                    "group": "inline"
+                },
+                {
+                    "command": "chainskills.validateWorkflow",
+                    "when": "view == chainskillsWorkflows && viewItem == workflow",
+                    "group": "inline"
+                },
+                {
+                    "command": "chainskills.inspectWorkflow",
+                    "when": "view == chainskillsWorkflows && viewItem == workflow"
+                },
+                {
+                    "command": "chainskills.runWorkflowDryRun",
+                    "when": "view == chainskillsWorkflows && viewItem == workflow"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "chainskills.runWorkflow",
+                    "when": "resourceExtname == .workflow.md",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "chainskills.validateWorkflow",
+                    "when": "resourceExtname == .workflow.md",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "chainskills.inspectWorkflow",
+                    "when": "resourceExtname == .workflow.md",
+                    "group": "navigation@3"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "chainskills.runWorkflow",
+                    "when": "resourceExtname == .md || resourceExtname == .workflow.md"
+                },
+                {
+                    "command": "chainskills.validateWorkflow",
+                    "when": "resourceExtname == .md || resourceExtname == .workflow.md"
+                },
+                {
+                    "command": "chainskills.inspectWorkflow",
+                    "when": "resourceExtname == .md || resourceExtname == .workflow.md"
+                },
+                {
+                    "command": "chainskills.pauseExecution",
+                    "when": "chainskills.isExecuting"
+                },
+                {
+                    "command": "chainskills.resumeExecution",
+                    "when": "chainskills.isPaused"
+                },
+                {
+                    "command": "chainskills.stopExecution",
+                    "when": "chainskills.isExecuting"
+                },
+                {
+                    "command": "chainskills.stepExecution",
+                    "when": "chainskills.isPaused"
+                }
+            ]
         },
-        "chainskills.autoValidate": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically validate workflows on save"
-        },
-        "chainskills.showDagOnInspect": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show DAG visualization when inspecting workflows"
-        },
-        "chainskills.templatesPath": {
-          "type": "string",
-          "default": "",
-          "description": "Custom path to workflow templates directory"
+        "problemMatchers": [
+            {
+                "name": "chainskills",
+                "owner": "chainskills",
+                "fileLocation": [
+                    "absolute"
+                ],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
+        ],
+        "taskDefinitions": [
+            {
+                "type": "chainskills",
+                "required": [
+                    "workflow"
+                ],
+                "properties": {
+                    "workflow": {
+                        "type": "string",
+                        "description": "Path to the .workflow.md file"
+                    },
+                    "inputs": {
+                        "type": "object",
+                        "description": "Input variables as key-value pairs"
+                    },
+                    "dryRun": {
+                        "type": "boolean",
+                        "description": "Run in dry-run mode without side effects",
+                        "default": false
+                    }
+                }
+            }
+        ],
+        "configuration": {
+            "title": "chainskills",
+            "properties": {
+                "chainskills.cliPath": {
+                    "type": "string",
+                    "default": "chainskills",
+                    "description": "Path to the chainskills CLI executable"
+                },
+                "chainskills.executor": {
+                    "type": "string",
+                    "enum": [
+                        "simple",
+                        "mastra"
+                    ],
+                    "default": "mastra",
+                    "description": "Workflow executor engine (simple = sequential, mastra = DAG)"
+                },
+                "chainskills.autoValidate": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically validate workflows on save"
+                },
+                "chainskills.showDagOnInspect": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show DAG visualization when inspecting workflows"
+                },
+                "chainskills.templatesPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Custom path to workflow templates directory"
+                }
+            }
         }
-      }
-    }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.90.0",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
-    "@vscode/test-cli": "^0.0.9",
-    "@vscode/test-electron": "^2.3.9",
-    "eslint": "^8.57.0",
-    "ts-loader": "^9.5.1",
-    "typescript": "^5.4.5",
-    "webpack": "^5.91.0",
-    "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {}
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "vscode-test"
+    },
+    "devDependencies": {
+        "@types/mocha": "^10.0.6",
+        "@types/node": "20.x",
+        "@types/vscode": "^1.90.0",
+        "@typescript-eslint/eslint-plugin": "^7.7.1",
+        "@typescript-eslint/parser": "^7.7.1",
+        "@vscode/test-cli": "^0.0.9",
+        "@vscode/test-electron": "^2.3.9",
+        "eslint": "^8.57.0",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.4.5",
+        "webpack": "^5.91.0",
+        "webpack-cli": "^5.1.4"
+    },
+    "dependencies": {}
 }

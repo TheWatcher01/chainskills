@@ -1,94 +1,94 @@
 {
-  "scopeName": "text.html.markdown.workflow",
-  "patterns": [
-    {
-      "include": "text.html.markdown"
-    },
-    {
-      "include": "#workflow-frontmatter"
-    },
-    {
-      "include": "#workflow-directives"
+    "scopeName": "text.html.markdown.workflow",
+    "patterns": [
+        {
+            "include": "#workflow-frontmatter"
+        },
+        {
+            "include": "#workflow-directives"
+        },
+        {
+            "include": "text.html.markdown"
+        }
+    ],
+    "repository": {
+        "workflow-frontmatter": {
+            "name": "meta.frontmatter.workflow",
+            "begin": "\\A(---)",
+            "end": "^(---)",
+            "beginCaptures": {
+                "1": {
+                    "name": "punctuation.definition.frontmatter.workflow"
+                }
+            },
+            "endCaptures": {
+                "1": {
+                    "name": "punctuation.definition.frontmatter.workflow"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "source.yaml"
+                }
+            ]
+        },
+        "workflow-directives": {
+            "patterns": [
+                {
+                    "name": "meta.directive.workflow",
+                    "match": "(@)(use|call|if|else|for|repeat|parallel|try|on-error|assert|breakpoint|output|workflow|env|agent|handoff)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "punctuation.definition.directive.workflow"
+                        },
+                        "2": {
+                            "name": "keyword.control.directive.workflow"
+                        }
+                    }
+                },
+                {
+                    "name": "variable.other.workflow",
+                    "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*"
+                },
+                {
+                    "name": "meta.directive.call.workflow",
+                    "match": "(@call)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\.([a-zA-Z_][a-zA-Z0-9_]*)",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.directive.workflow"
+                        },
+                        "2": {
+                            "name": "entity.name.type.tool.workflow"
+                        },
+                        "3": {
+                            "name": "entity.name.function.method.workflow"
+                        }
+                    }
+                },
+                {
+                    "name": "comment.line.directive-block.workflow",
+                    "begin": ":::(if|for|parallel|try|workflow)",
+                    "end": ":::",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.block.workflow"
+                        },
+                        "1": {
+                            "name": "keyword.control.block.workflow"
+                        }
+                    },
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.block.workflow"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                }
+            ]
+        }
     }
-  ],
-  "repository": {
-    "workflow-frontmatter": {
-      "name": "meta.frontmatter.workflow",
-      "begin": "\\A(---)",
-      "end": "^(---)",
-      "beginCaptures": {
-        "1": {
-          "name": "punctuation.definition.frontmatter.workflow"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.frontmatter.workflow"
-        }
-      },
-      "patterns": [
-        {
-          "include": "source.yaml"
-        }
-      ]
-    },
-    "workflow-directives": {
-      "patterns": [
-        {
-          "name": "meta.directive.workflow",
-          "match": "(@)(use|call|if|else|for|repeat|parallel|try|on-error|assert|breakpoint|output|workflow|env|agent|handoff)\\b",
-          "captures": {
-            "1": {
-              "name": "punctuation.definition.directive.workflow"
-            },
-            "2": {
-              "name": "keyword.control.directive.workflow"
-            }
-          }
-        },
-        {
-          "name": "variable.other.workflow",
-          "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*"
-        },
-        {
-          "name": "meta.directive.call.workflow",
-          "match": "(@call)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\.([a-zA-Z_][a-zA-Z0-9_]*)",
-          "captures": {
-            "1": {
-              "name": "keyword.control.directive.workflow"
-            },
-            "2": {
-              "name": "entity.name.type.tool.workflow"
-            },
-            "3": {
-              "name": "entity.name.function.method.workflow"
-            }
-          }
-        },
-        {
-          "name": "comment.line.directive-block.workflow",
-          "begin": ":::(if|for|parallel|try|workflow)",
-          "end": ":::",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.definition.block.workflow"
-            },
-            "1": {
-              "name": "keyword.control.block.workflow"
-            }
-          },
-          "endCaptures": {
-            "0": {
-              "name": "punctuation.definition.block.workflow"
-            }
-          },
-          "patterns": [
-            {
-              "include": "$self"
-            }
-          ]
-        }
-      ]
-    }
-  }
 }

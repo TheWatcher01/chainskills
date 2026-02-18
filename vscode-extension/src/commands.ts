@@ -165,11 +165,11 @@ async function validateWorkflow(uri: vscode.Uri) {
 
     try {
         const { stdout, stderr } = await execAsync(`${cliPath} validate "${uri.fsPath}" --format=vscode`);
-        
+
         // Parse VS Code format errors
         const diagnostics: vscode.Diagnostic[] = [];
         const lines = (stdout + stderr).split('\n').filter(Boolean);
-        
+
         for (const line of lines) {
             const match = line.match(/^(.+):(\d+):(\d+):\s+(error|warning):\s+(.+)$/);
             if (match) {
