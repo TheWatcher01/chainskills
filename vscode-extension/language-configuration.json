@@ -1,0 +1,81 @@
+{
+    "comments": {
+        "lineComment": "//",
+        "blockComment": [
+            "<!--",
+            "-->"
+        ]
+    },
+    "brackets": [
+        [
+            "(",
+            ")"
+        ],
+        [
+            "[",
+            "]"
+        ],
+        [
+            "{",
+            "}"
+        ]
+    ],
+    "autoClosingPairs": [
+        {
+            "open": "(",
+            "close": ")"
+        },
+        {
+            "open": "[",
+            "close": "]"
+        },
+        {
+            "open": "{",
+            "close": "}"
+        },
+        {
+            "open": "\"",
+            "close": "\""
+        },
+        {
+            "open": "'",
+            "close": "'"
+        },
+        {
+            "open": "`",
+            "close": "`"
+        }
+    ],
+    "surroundingPairs": [
+        [
+            "(",
+            ")"
+        ],
+        [
+            "[",
+            "]"
+        ],
+        [
+            "{",
+            "}"
+        ],
+        [
+            "\"",
+            "\""
+        ],
+        [
+            "'",
+            "'"
+        ],
+        [
+            "`",
+            "`"
+        ]
+    ],
+    "folding": {
+        "markers": {
+            "start": "^\\s*:::(if|for|parallel|try|workflow)",
+            "end": "^\\s*:::"
+        }
+    }
+}
