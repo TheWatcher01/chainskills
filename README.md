@@ -20,22 +20,27 @@ inputs: { repo_path: string, branch: string }
 @use security-scanner
 
 # Step 1 — Get changed files
+
 @call git.diff($repo_path, "main", $branch) → $changed_files
 
 # Step 2 — Check everything in parallel
+
 @parallel:
 
 ## Lint
+
 @call eslint-analyzer.check($changed_files) → $lint
 
 ## Security
+
 @call security-scanner.scan($changed_files) → $security
 
 # Step 3 — Evaluate
+
 @if $security.critical_count > 0:
-  $passed = false
+$passed = false
 @else:
-  $passed = $lint.error_count == 0
+$passed = $lint.error_count == 0
 
 @output: $passed
 ```
@@ -50,10 +55,10 @@ chainskills/
 └── vscode-extension/    # VS Code extension for .workflow.md IDE support
 ```
 
-| Package | Description | Tech |
-|---|---|---|
-| [`cli-mcp-core`](cli-mcp-core/) | CLI, DAG engine, MCP server/client, `@agent` integration | TypeScript, Citty, Mastra, MCP SDK |
-| [`vscode-extension`](vscode-extension/) | Syntax highlighting, Workflow Explorer, 10 commands | VS Code API, Webpack |
+| Package                                 | Description                                              | Tech                               |
+| --------------------------------------- | -------------------------------------------------------- | ---------------------------------- |
+| [`cli-mcp-core`](cli-mcp-core/)         | CLI, DAG engine, MCP server/client, `@agent` integration | TypeScript, Citty, Mastra, MCP SDK |
+| [`vscode-extension`](vscode-extension/) | Syntax highlighting, Workflow Explorer, 10 commands      | VS Code API, Webpack               |
 
 ---
 
@@ -86,28 +91,29 @@ pnpm exec tsx src/cli/index.ts serve --port 3001
 
 17 `@` directives let you express any workflow logic in plain Markdown:
 
-| Directive | Purpose |
-|---|---|
-| `@use` | Import a skill, tool, or sub-workflow |
-| `@call expr → $var` | Call a tool and capture the result |
-| `@if` / `@else` | Conditional branching |
-| `@for $item in $list:` | Bounded iteration |
-| `@repeat max:N until $cond:` | Loop with stop condition |
-| `@parallel:` | Execute sibling steps in parallel |
-| `@try:` / `@on-error:` | Error handling |
-| `@assert $expr` | Inline validation checkpoint |
-| `@output: $a, $b` | Declare workflow outputs |
-| `@env VAR_NAME` | Reference an environment variable |
-| `@workflow name:` | Inline sub-workflow |
-| `@agent copilot: "task"` | Delegate to an AI agent (OpenAI-compatible) |
-| `@handoff review-agent:` | Transfer control to another agent |
-| `@breakpoint $condition` | Conditional debugging breakpoint |
+| Directive                    | Purpose                                     |
+| ---------------------------- | ------------------------------------------- |
+| `@use`                       | Import a skill, tool, or sub-workflow       |
+| `@call expr → $var`          | Call a tool and capture the result          |
+| `@if` / `@else`              | Conditional branching                       |
+| `@for $item in $list:`       | Bounded iteration                           |
+| `@repeat max:N until $cond:` | Loop with stop condition                    |
+| `@parallel:`                 | Execute sibling steps in parallel           |
+| `@try:` / `@on-error:`       | Error handling                              |
+| `@assert $expr`              | Inline validation checkpoint                |
+| `@output: $a, $b`            | Declare workflow outputs                    |
+| `@env VAR_NAME`              | Reference an environment variable           |
+| `@workflow name:`            | Inline sub-workflow                         |
+| `@agent copilot: "task"`     | Delegate to an AI agent (OpenAI-compatible) |
+| `@handoff review-agent:`     | Transfer control to another agent           |
+| `@breakpoint $condition`     | Conditional debugging breakpoint            |
 
 ---
 
 ## Features
 
 ### Engine
+
 - **DAG Orchestration** — Auto-parallelization by variable dependency analysis via [Mastra](https://mastra.ai)
 - **Dual Executor** — `SimpleExecutor` (sequential) or `MastraExecutor` (DAG) — swap via `CHAINSKILLS_EXECUTOR`
 - **Execution Control** — `pause()`, `resume()`, `cancel()`, `step()` with typed event system (11 events)
@@ -115,26 +121,29 @@ pnpm exec tsx src/cli/index.ts serve --port 3001
 - **Result<T,E> Monad** — `map`, `flatMap`, `mapErr`, `unwrapOr`, `match` utilities
 
 ### AI & Interoperability
+
 - **MCP Server** — `chainskills serve` exposes 5 tools + 2 prompts + dynamic resources (stdio + HTTP)
 - **MCP Client** — `@call mcp.tool_name()` invokes tools on any external MCP server
 - **`@agent` / `@handoff`** — Delegate tasks to any OpenAI-compatible LLM (OpenAI, Claude, Ollama, Groq)
 - **Copilot-ready** — `.vscode/mcp.json` auto-discovery for GitHub Copilot
 
 ### VS Code Extension
+
 - **Syntax Highlighting** — TextMate grammar covering all 17 directives, `$variables`, `:::blocks`
 - **Workflow Explorer** — TreeView with frontmatter metadata
 - **10 Commands** — Run, Validate, Inspect, Pause, Resume, Stop, Step, Dry Run, Templates, Refresh
 - **Auto-validate on Save** — Configurable background validation
 
 ### Templates
+
 Pre-built workflows in [`cli-mcp-core/templates/`](cli-mcp-core/templates/):
 
-| Category | Workflows |
-|---|---|
-| `dev/` | `code-review`, `tdd-cycle`, `nextjs-app-builder` |
-| `cybersec/` | `recon-target`, `vuln-scan` |
-| `osint/` | `domain-recon` |
-| `ess/` | `grant-application` |
+| Category    | Workflows                                        |
+| ----------- | ------------------------------------------------ |
+| `dev/`      | `code-review`, `tdd-cycle`, `nextjs-app-builder` |
+| `cybersec/` | `recon-target`, `vuln-scan`                      |
+| `osint/`    | `domain-recon`                                   |
+| `ess/`      | `grant-application`                              |
 
 ---
 
@@ -187,32 +196,32 @@ See [`.env.example`](cli-mcp-core/.env.example) for the full list.
 
 ## Roadmap
 
-| Phase | Version | Highlights | Status |
-|---|---|---|---|
-| 1 | v0.1.0 | MVP — Parse + sequential run + CLI | ✅ |
-| 2 | v0.2.0 | DAG (Mastra), full control flow, event system | ✅ |
-| 3 | v0.3.0 | MCP server/client, `@agent` LLM | ✅ |
-| 4 | v0.4.0 | VS Code extension, ExecutionController, `@breakpoint` | ✅ |
-| 5 | v0.5.0 | CodeLens, Diagnostics, Autocomplete, Hover | 🔄 |
-| 6 | v0.6.0 | Copilot Chat `@chainskills`, Agent Mode, DAG Webview | ⏳ |
-| 7 | v0.7.0 | Debug Adapter (DAP), Test Controller | ⏳ |
-| 8 | v0.8.0 | Registry & distribution (npm-like) | ⏳ |
-| 9 | v1.0.0 | Production & scale (SQLite, Redis) | ⏳ |
+| Phase | Version | Highlights                                            | Status |
+| ----- | ------- | ----------------------------------------------------- | ------ |
+| 1     | v0.1.0  | MVP — Parse + sequential run + CLI                    | ✅     |
+| 2     | v0.2.0  | DAG (Mastra), full control flow, event system         | ✅     |
+| 3     | v0.3.0  | MCP server/client, `@agent` LLM                       | ✅     |
+| 4     | v0.4.0  | VS Code extension, ExecutionController, `@breakpoint` | ✅     |
+| 5     | v0.5.0  | CodeLens, Diagnostics, Autocomplete, Hover            | 🔄     |
+| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode, DAG Webview  | ⏳     |
+| 7     | v0.7.0  | Debug Adapter (DAP), Test Controller                  | ⏳     |
+| 8     | v0.8.0  | Registry & distribution (npm-like)                    | ⏳     |
+| 9     | v1.0.0  | Production & scale (SQLite, Redis)                    | ⏳     |
 
 ---
 
 ## Stack
 
-| Layer | Package |
-|---|---|
-| CLI | `citty` |
-| Parser | `unified` + `remark-parse` + `remark-directive` + `gray-matter` |
-| DAG orchestration | `@mastra/core` |
-| MCP interop | `@modelcontextprotocol/sdk` |
-| Validation | `zod` |
-| Build | `obuild` (Rolldown) |
-| Tests | `vitest` |
-| Package manager | `pnpm` |
+| Layer             | Package                                                         |
+| ----------------- | --------------------------------------------------------------- |
+| CLI               | `citty`                                                         |
+| Parser            | `unified` + `remark-parse` + `remark-directive` + `gray-matter` |
+| DAG orchestration | `@mastra/core`                                                  |
+| MCP interop       | `@modelcontextprotocol/sdk`                                     |
+| Validation        | `zod`                                                           |
+| Build             | `obuild` (Rolldown)                                             |
+| Tests             | `vitest`                                                        |
+| Package manager   | `pnpm`                                                          |
 
 ---
 
