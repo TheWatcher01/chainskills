@@ -1,4 +1,3 @@
-```skill
 ---
 name: monorepo-sync
 description: Synchronize roadmaps, AGENTS.md, versions, and documentation across chainskills monorepo packages. Use when updating version numbers, syncing roadmap status between cli-mcp-core and root ROADMAP.md, updating AGENTS.md cross-references, or keeping documentation consistent across both packages.
@@ -64,5 +63,3 @@ Keeps all documentation and version metadata consistent across the `cli-mcp-core
 - ❌ Adding agent to project AGENTS.md but not root AGENTS.md
 - ❌ Different phase statuses between canonical and portfolio roadmaps
 - ❌ Version bumped in package.json but not in ROADMAP.md changelog
-
-```

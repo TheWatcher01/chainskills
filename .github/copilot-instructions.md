@@ -1,19 +1,18 @@
-````instructions
-```instructions
 # Copilot Instructions — chainskills (Monorepo)
 
 ## Workspace Structure
 
 This is a **monorepo** with two packages:
 
-| Package | Path | Purpose |
-|---------|------|---------|
-| **cli-mcp-core** | `cli-mcp-core/` | TypeScript CLI + core library — workflow parsing, execution, MCP |
-| **vscode-extension** | `vscode-extension/` | VS Code extension — language features, Copilot Chat integration |
+| Package              | Path                | Purpose                                                          |
+| -------------------- | ------------------- | ---------------------------------------------------------------- |
+| **cli-mcp-core**     | `cli-mcp-core/`     | TypeScript CLI + core library — workflow parsing, execution, MCP |
+| **vscode-extension** | `vscode-extension/` | VS Code extension — language features, Copilot Chat integration  |
 
 ## Shared Architecture Principles
 
 **Hexagonal (Ports & Adapters)** — applies to both packages:
+
 - Core domain: zero external dependencies
 - Dependencies point inward: adapters → core, never reverse
 - Every integration uses a port (interface) + adapter (implementation)
@@ -52,7 +51,3 @@ cd vscode-extension && npm run compile
 - **CLI/Core**: [cli-mcp-core/AGENTS.md](../cli-mcp-core/AGENTS.md)
 - **Extension**: [vscode-extension/AGENTS.md](../vscode-extension/AGENTS.md)
 - **Roadmap**: [ROADMAP.md](../ROADMAP.md)
-
-```
-
-````

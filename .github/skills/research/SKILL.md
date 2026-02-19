@@ -1,5 +1,3 @@
-````skill
-```skill
 ---
 name: research
 description: Structured multi-source research protocol with data freshness validation. Use when gathering factual data from the web, GitHub, npm, or docs. Produces sourced, timestamped, cross-referenced findings ready to hand off to a planning or implementation step.
@@ -81,6 +79,3 @@ Produce a report with:
 {Handoff-ready actions}
 ```
 
-```
-
-````
