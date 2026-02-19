@@ -110,4 +110,4 @@ Both packages follow **Hexagonal (Ports & Adapters)**:
 | 7 | v0.7.0 | ⏳ Planifié — Debug Adapter + Test Controller |
 | 8+ | v0.8.0+ | ⏳ Planifié — Registry + Community |
 
-**Portfolio**: [ROADMAP.md](ROADMAP.md) | **Canonical**: [cli-mcp-core/.github/ROADMAP.md](cli-mcp-core/.github/ROADMAP.md)
+**Roadmap**: [ROADMAP.md](ROADMAP.md)

@@ -16,25 +16,21 @@ Keeps all documentation and version metadata consistent across the `cli-mcp-core
 
 | File | Purpose | Syncs With |
 |------|---------|------------|
-| `ROADMAP.md` (root) | Portfolio summary | `cli-mcp-core/.github/ROADMAP.md` (canonical) |
+| `ROADMAP.md` (root) | Canonical roadmap — phases, changelog, decisions | — |
 | `AGENTS.md` (root) | Monorepo index | `cli-mcp-core/AGENTS.md` + `vscode-extension/AGENTS.md` |
-| `cli-mcp-core/package.json` | CLI version | `cli-mcp-core/.github/ROADMAP.md` changelog |
-| `vscode-extension/package.json` | Extension version | `cli-mcp-core/.github/ROADMAP.md` changelog |
+| `cli-mcp-core/package.json` | CLI version | `ROADMAP.md` changelog |
+| `vscode-extension/package.json` | Extension version | `ROADMAP.md` changelog |
 
 ## Sync Protocol
 
 ### On Version Milestone Completion
 
-1. **Mark phase complete** in canonical roadmap (`cli-mcp-core/.github/ROADMAP.md`):
+1. **Mark phase complete** in canonical roadmap (`ROADMAP.md`):
    - Update phase status: `🔄 En cours` → `✅ Complété (YYYY-MM-DD)`
    - Add changelog entry with features list and metrics
    - Update "Phase suivante" section
 
-2. **Update portfolio roadmap** (`ROADMAP.md` root):
-   - Match status emoji and date to canonical roadmap
-   - Keep table compact (no detailed breakdown)
-
-3. **Update AGENTS.md files**:
+2. **Update AGENTS.md files**:
    - Root `AGENTS.md`: update phase status in roadmap table
    - `cli-mcp-core/AGENTS.md`: same update
    - Check that agent/skill references are still valid
@@ -58,7 +54,7 @@ Keeps all documentation and version metadata consistent across the `cli-mcp-core
 ## Consistency Rules
 
 - **No duplication**: Root AGENTS.md = index only. Project AGENTS.md = project details.
-- **Single source of truth**: Canonical roadmap = `cli-mcp-core/.github/ROADMAP.md`. Root = summary.
+- **Single source of truth**: `ROADMAP.md` (root) — canonical roadmap for all packages.
 - **Version parity**: Both package versions should bump together for cross-cutting changes.
 - **Link integrity**: All markdown links in AGENTS.md files must resolve correctly.
 

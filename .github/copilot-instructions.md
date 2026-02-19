@@ -51,7 +51,7 @@ cd vscode-extension && npm run compile
 
 - **CLI/Core**: [cli-mcp-core/AGENTS.md](../cli-mcp-core/AGENTS.md)
 - **Extension**: [vscode-extension/AGENTS.md](../vscode-extension/AGENTS.md)
-- **Roadmap**: [ROADMAP.md](../ROADMAP.md) (portfolio) | [cli-mcp-core ROADMAP](../cli-mcp-core/.github/ROADMAP.md) (canonical)
+- **Roadmap**: [ROADMAP.md](../ROADMAP.md)
 
 ```
 

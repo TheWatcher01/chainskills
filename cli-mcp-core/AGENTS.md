@@ -133,7 +133,7 @@ pnpm exec tsc --noEmit  # Type check
 
 ## Roadmap
 
-**Canonical**: [.github/ROADMAP.md](.github/ROADMAP.md) (811 lines — phases, checkboxes, changelog, decisions)
+**Canonical**: [../ROADMAP.md](../ROADMAP.md) (810 lines — phases, checkboxes, changelog, decisions)
 
 | Phase | Version       | Status                                        |
 | ----- | ------------- | --------------------------------------------- |

@@ -106,7 +106,7 @@ npm run compile    # webpack → dist/extension.js (77KB)
 
 ## Roadmap
 
-[Canonical roadmap](../cli-mcp-core/.github/ROADMAP.md) | [Portfolio](../ROADMAP.md)
+[Roadmap](../ROADMAP.md)
 
 | Phase                                  | Status                 |
 | -------------------------------------- | ---------------------- |
