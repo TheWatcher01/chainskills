@@ -179,6 +179,73 @@ describe('Container directives — @assert', () => {
         expect(assertDir).toBeDefined();
         expect(assertDir!.args['expression']).toBe('$total == $expected');
     });
+
+    it('should parse @assert with trailing message', () => {
+        const steps = parseSteps(`${FRONTMATTER}
+# Validate
+
+@assert $max_skills > 0 "max_skills must be positive"
+`);
+
+        const step = steps.find((s) => s.id === 'validate');
+        expect(step).toBeDefined();
+
+        const assertDir = step!.directives.find((d) => d.type === 'assert');
+        expect(assertDir).toBeDefined();
+        expect(assertDir!.args['expression']).toBe('$max_skills > 0');
+    });
+
+    it('should keep quoted string literal when no trailing message exists', () => {
+        const steps = parseSteps(`${FRONTMATTER}
+# Validate
+
+@assert $status == "not ready"
+`);
+
+        const step = steps.find((s) => s.id === 'validate');
+        expect(step).toBeDefined();
+
+        const assertDir = step!.directives.find((d) => d.type === 'assert');
+        expect(assertDir).toBeDefined();
+        expect(assertDir!.args['expression']).toBe('$status == "not ready"');
+    });
+
+    it('should parse consecutive @assert directives without blank lines', () => {
+        const steps = parseSteps(`${FRONTMATTER}
+# Validate
+
+@assert $domain != ""
+@assert $max_skills > 0
+@assert $quality_threshold >= 0
+`);
+
+        const step = steps.find((s) => s.id === 'validate');
+        expect(step).toBeDefined();
+
+        const assertDirectives = step!.directives.filter((d) => d.type === 'assert');
+        expect(assertDirectives).toHaveLength(3);
+        expect(assertDirectives[0]!.args['expression']).toBe('$domain != ""');
+        expect(assertDirectives[1]!.args['expression']).toBe('$max_skills > 0');
+        expect(assertDirectives[2]!.args['expression']).toBe('$quality_threshold >= 0');
+    });
+
+    it('should keep multiline @call directive as a single directive', () => {
+        const steps = parseSteps(`${FRONTMATTER}
+# Write
+
+@call shell.exec("cat > out.txt << 'EOF'
+$content
+EOF") → $write_result
+`);
+
+        const step = steps.find((s) => s.id === 'write');
+        expect(step).toBeDefined();
+
+        const callDirectives = step!.directives.filter((d) => d.type === 'call');
+        expect(callDirectives).toHaveLength(1);
+        expect(callDirectives[0]!.raw).toContain('EOF');
+        expect(callDirectives[0]!.args['capture']).toBe('write_result');
+    });
 });
 
 // ─── @use Directive ──────────────────────────────────────────────────────────

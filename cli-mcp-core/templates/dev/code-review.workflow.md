@@ -23,7 +23,9 @@ tags:
 
 Identify the files to review and establish the review scope.
 
-@call shell.exec(find $target -type f -name "_.ts" -o -name "_.js" | head -20) → $files
+@call shell.exec(find $target -type f -name "\*.ts") → $ts_files
+
+@call shell.exec(find $target -type f -name "\*.js") → $js_files
 
 # Analyze
 
@@ -31,17 +33,23 @@ Run multiple analysis passes in parallel for faster feedback.
 
 @parallel:
 
-@call shell.exec(echo "Lint check on: $files") → $lint_results
+### Lint Pass
 
-@call shell.exec(echo "Security scan on: $files with focus=$focus") → $security_results
+@call shell.exec(echo "Lint check on target=$target focus=$focus") → $lint_results
 
-@call shell.exec(echo "Complexity analysis on: $files") → $complexity_results
+### Security Pass
+
+@call shell.exec(echo "Security scan on target=$target focus=$focus") → $security_results
+
+### Complexity Pass
+
+@call shell.exec(echo "Complexity analysis on target=$target") → $complexity_results
 
 # Synthesize
 
 Merge parallel results into a single review summary.
 
-@call shell.exec(echo "Lint: $lint_results | Security: $security_results | Complexity: $complexity_results") → $report
+@call shell.exec(echo "Lint=$lint_results Security=$security_results Complexity=$complexity_results") → $report
 
 # Report
 

@@ -60,11 +60,19 @@ metadata:
 
 @parallel:
 
+### Web & Official Docs
+
 @agent copilot: "Search the web for '$domain': official documentation, getting started guides, best practices, key concepts. Retrieve from official sources only (official site, MDN, spec). Include exact URLs and page titles. Depth: $depth." → $web_knowledge
+
+### GitHub Ecosystem
 
 @agent copilot: "Search GitHub for '$domain': top repositories (stars > 500), awesome-\* lists, official org repos. For each: name, stars, last commit date, key features, license. Include GitHub URLs." → $github_knowledge
 
+### npm Registry
+
 @agent copilot: "Search npm for packages related to '$domain'. For each relevant package: current version, weekly downloads, last publish date, known CVEs. Use registry.npmjs.org for authoritative version data." → $npm_knowledge
+
+### Community & Forums
 
 @agent copilot: "Search community resources for '$domain': StackOverflow top questions, Reddit discussions, Discord/Slack community insights, common gotchas, migration pain points. Summarize recurring themes." → $community_knowledge
 
@@ -72,7 +80,9 @@ metadata:
 
 @agent copilot: "Apply data freshness validation to all research findings. For each factual claim in $web_knowledge, $github_knowledge, $npm_knowledge, $community_knowledge: assign freshness status (🟢 FRESH <90d / 🟡 AGING 90d-1yr / 🟠 STALE 1-2yr / 🔴 EXPIRED >2yr / ⚪ UNVERIFIED). Flag items missing URLs or retrieval dates. Return validated claims table." → $freshness_report
 
-@assert $freshness_report.verified_count > 0 "No verified sources found — cannot proceed"
+@try:
+@assert $freshness_report.verified_count > 0 "No verified sources found"
+@on-error: log and continue
 
 ## 6. Synthesize Knowledge Base
 
@@ -90,35 +100,7 @@ metadata:
 
 @output: $knowledge_base, $dependency_audit, $freshness_report, $recommended_skills
 
-@agent copilot: "Produce the final research report in this format:
-
-# Research Report — $domain — $research_date
-
-## Workspace Findings
-
-{$workspace_scan summary}
-
-## External Findings
-
-| Claim | Source | URL | Date | Freshness | Confidence |
-| ----- | ------ | --- | ---- | --------- | ---------- |
-
-{table from $freshness_report}
-
-## Dependency Audit
-
-| Package | Pinned | Latest | Gap | Advisory |
-| ------- | ------ | ------ | --- | -------- |
-
-{from $dependency_audit}
-
-## Key Concepts
-
-{from $knowledge_base.core_concepts}
-
-## Recommended Skills to Create
-
-{from $recommended_skills}
+@agent copilot: "Produce a structured research report for '$domain' dated $research_date. Include: (1) Workspace Findings from $workspace_scan, (2) External Findings table from $freshness_report with columns Claim/Source/URL/Date/Freshness/Confidence, (3) Dependency Audit table from $dependency_audit with columns Package/Pinned/Latest/Gap/Advisory, (4) Key Concepts from $knowledge_base.core_concepts, (5) Recommended Skills from $recommended_skills, (6) Stale/Unverified items flagged with warning." → $final_report
 
 ## ⚠️ Stale / Unverified Data
 

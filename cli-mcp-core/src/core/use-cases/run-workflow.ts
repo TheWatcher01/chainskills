@@ -131,6 +131,41 @@ function parseAndValidate(
 }
 
 /**
+ * Resolve execution inputs with frontmatter defaults and required checks.
+ */
+function resolveExecutionInputs(
+    workflow: Workflow,
+    providedInputs: Record<string, unknown>,
+): Result<Record<string, unknown>, SDKError> {
+    const resolved: Record<string, unknown> = { ...providedInputs };
+
+    for (const inputDef of workflow.inputs) {
+        const value = resolved[inputDef.name];
+        const hasValue = value !== undefined
+            && value !== null
+            && !(typeof value === 'string' && value.length === 0);
+
+        if (hasValue) continue;
+
+        if (inputDef.default !== undefined) {
+            resolved[inputDef.name] = inputDef.default;
+            continue;
+        }
+
+        if (inputDef.required) {
+            return err({
+                code: 'MISSING_REQUIRED_INPUT',
+                message: `Missing required input: ${inputDef.name}`,
+                phase: 'validate',
+                details: { input: inputDef.name },
+            });
+        }
+    }
+
+    return ok(resolved);
+}
+
+/**
  * Run a workflow from a file path.
  *
  * Orchestrates: read → parse → validate → execute.
@@ -174,9 +209,15 @@ export async function runWorkflow(
         dryRun: options?.dryRun ?? false,
     };
 
-    const execResult = await container.executor.execute(
+    const resolvedInputsResult = resolveExecutionInputs(
         workflow,
         options?.inputs ?? {},
+    );
+    if (!resolvedInputsResult.ok) return resolvedInputsResult;
+
+    const execResult = await container.executor.execute(
+        workflow,
+        resolvedInputsResult.value,
         execOptions,
     );
 

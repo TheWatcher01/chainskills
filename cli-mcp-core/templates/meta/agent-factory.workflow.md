@@ -49,7 +49,9 @@ metadata:
 ## 1. Validate & Initialize
 
 @assert $domain != "" "domain is required"
+
 @assert $max_skills > 0 "max_skills must be positive"
+
 @assert $quality_threshold >= 0 "quality_threshold must be between 0 and 1"
 
 @call shell.exec("date -I") → $build_date
@@ -84,10 +86,13 @@ depth: $depth
 
 @parallel:
 
-    @agent copilot: "Write a complete SKILL.md for the skill '$skill_spec.name'. Use this specification: $skill_spec. Follow the chainskills skill format exactly: outer ````skill fence, inner ```skill fence, YAML frontmatter (name, description, metadata.version='1.0.0', metadata.author='$domain-expert', metadata.agent_support=['copilot','claude','cursor']), then Markdown body with Protocol steps, Anti-patterns, and Output template sections. Body must be under 500 lines." → $skill_content
+### Generate SKILL.md
 
-    @call shell.exec("cat > '$output_path/skills/$skill_spec.name/SKILL.md' << 'SKILLEOF'
+@agent copilot: "Write a complete SKILL.md for the skill '$skill_spec.name'. Use this specification: $skill_spec. Follow the chainskills skill format exactly: outer ````skill fence, inner ```skill fence, YAML frontmatter (name, description, metadata.version='1.0.0', metadata.author='$domain-expert', metadata.agent_support=['copilot','claude','cursor']), then Markdown body with Protocol steps, Anti-patterns, and Output template sections. Body must be under 500 lines." → $skill_content
 
+### Write to Disk
+
+@call shell.exec("mkdir -p '$output_path/skills/$skill_spec.name' && cat > '$output_path/skills/$skill_spec.name/SKILL.md' << 'SKILLEOF'
 $skill_content
 SKILLEOF") → $skill_write_result
 

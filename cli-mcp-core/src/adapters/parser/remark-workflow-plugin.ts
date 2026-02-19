@@ -163,7 +163,22 @@ function parseDirectiveArgs(
             break;
         }
         case 'assert': {
-            const assertion = raw.replace(/^@assert\s+/, '').trim();
+            const assertionRaw = raw.replace(/^@assert\s+/, '').trim();
+
+            // Support optional trailing message:
+            // @assert $x > 0 "message"
+            // while preserving quoted literals inside expression:
+            // @assert $status == "not ready"
+            let assertion = assertionRaw;
+            const trailingMessageMatch = assertionRaw.match(/^(.*)\s+"[^"]*"$/);
+            if (trailingMessageMatch) {
+                const candidate = trailingMessageMatch[1]!.trim();
+                const endsWithOperator = /(?:==|!=|>=|<=|>|<)\s*$/.test(candidate);
+                if (candidate.length > 0 && !endsWithOperator) {
+                    assertion = candidate;
+                }
+            }
+
             args['expression'] = assertion;
             break;
         }
@@ -220,6 +235,64 @@ function parseDirectiveArgs(
     }
 
     return args;
+}
+
+/**
+ * Parse a single raw `@directive ...` string into a Directive entity.
+ */
+function parseDirectiveRaw(
+    raw: string,
+    attributes: Record<string, string>,
+): Directive | null {
+    const trimmed = raw.trim();
+    const directiveMatch = trimmed.match(/^@(\S+)\s*(.*)/);
+    if (!directiveMatch) return null;
+
+    const name = directiveMatch[1]!.replace(/:$/, '');
+    const normalizedName = name.replace(/^on-error$/, 'on-error');
+    if (!isDirectiveType(normalizedName)) return null;
+
+    return {
+        type: normalizedName as DirectiveType,
+        raw: trimmed,
+        args: parseDirectiveArgs(
+            normalizedName as DirectiveType,
+            trimmed,
+            attributes,
+        ),
+    };
+}
+
+/**
+ * Parse directives from a paragraph fallback text.
+ *
+ * Supports both:
+ * - single directive paragraphs (possibly multiline payload)
+ * - consecutive directive lines without blank separators
+ */
+function parseDirectivesFromParagraph(text: string): Directive[] {
+    const trimmed = text.trim();
+    if (trimmed.length === 0 || !trimmed.startsWith('@')) {
+        return [];
+    }
+
+    const lines = trimmed
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    if (lines.length > 1 && lines.every((line) => line.startsWith('@'))) {
+        const directives = lines
+            .map((line) => parseDirectiveRaw(line, {}))
+            .filter((directive): directive is Directive => directive !== null);
+
+        if (directives.length > 0) {
+            return directives;
+        }
+    }
+
+    const single = parseDirectiveRaw(trimmed, {});
+    return single ? [single] : [];
 }
 
 // ─── Container Directive Processing ──────────────────────────────────────────
@@ -419,23 +492,10 @@ function blockNodesToSteps(
         if (node.type === 'paragraph' && node.children) {
             const text = extractText(node.children as PhrasingContent[]);
 
-            const directiveMatch = text.match(/^@(\S+)\s*(.*)/);
-            if (directiveMatch) {
-                const name = directiveMatch[1]!.replace(/:$/, '');
-                const normalizedName = name.replace(/^on-error$/, 'on-error');
-                if (isDirectiveType(normalizedName)) {
-                    const raw = text.trim();
-                    currentDirectives.push({
-                        type: normalizedName as DirectiveType,
-                        raw,
-                        args: parseDirectiveArgs(
-                            normalizedName as DirectiveType,
-                            raw,
-                            {},
-                        ),
-                    });
-                    continue;
-                }
+            const directives = parseDirectivesFromParagraph(text);
+            if (directives.length > 0) {
+                currentDirectives.push(...directives);
+                continue;
             }
 
             currentDescParts.push(text);
@@ -667,25 +727,10 @@ export const remarkWorkflowPlugin: Plugin<[], Root> = function () {
                     (node as { children: PhrasingContent[] }).children,
                 );
 
-                // Check if paragraph starts with @directive
-                const directiveMatch = text.match(/^@(\S+)\s*(.*)/);
-                if (directiveMatch) {
-                    const name = directiveMatch[1]!.replace(/:$/, '');
-                    // Handle on-error which contains a hyphen
-                    const normalizedName = name.replace(/^on-error$/, 'on-error');
-                    if (isDirectiveType(normalizedName)) {
-                        const raw = text.trim();
-                        target.directives.push({
-                            type: normalizedName as DirectiveType,
-                            raw,
-                            args: parseDirectiveArgs(
-                                normalizedName as DirectiveType,
-                                raw,
-                                {},
-                            ),
-                        });
-                        continue;
-                    }
+                const directives = parseDirectivesFromParagraph(text);
+                if (directives.length > 0) {
+                    target.directives.push(...directives);
+                    continue;
                 }
 
                 // Regular paragraph — add to description

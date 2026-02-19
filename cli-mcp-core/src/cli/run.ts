@@ -17,6 +17,30 @@ import { validateWorkflow } from '#core/use-cases/validate-workflow.js';
 import type { ExecutionEvent } from '#core/ports/execution-events.port.js';
 import { readFileSync } from 'node:fs';
 
+/** Collect all `--input` occurrences from raw argv (supports repeatable flags). */
+function collectInputPairs(argv: string[]): string[] {
+    const pairs: string[] = [];
+
+    for (let i = 0; i < argv.length; i++) {
+        const token = argv[i]!;
+
+        if (token === '--input') {
+            const next = argv[i + 1];
+            if (next && !next.startsWith('-')) {
+                pairs.push(next);
+                i++;
+            }
+            continue;
+        }
+
+        if (token.startsWith('--input=')) {
+            pairs.push(token.slice('--input='.length));
+        }
+    }
+
+    return pairs;
+}
+
 export const runCommand = defineCommand({
     meta: {
         name: 'run',
@@ -64,11 +88,22 @@ export const runCommand = defineCommand({
 
         // Parse inputs
         const inputs: Record<string, string> = {};
-        if (args.input) {
-            const pairs = Array.isArray(args.input)
+        const pairs = collectInputPairs(process.argv.slice(2));
+        for (const pair of pairs) {
+            const eqIdx = pair.indexOf('=');
+            if (eqIdx > 0) {
+                const key = pair.slice(0, eqIdx);
+                const value = pair.slice(eqIdx + 1);
+                inputs[key] = value;
+            }
+        }
+
+        // Backward compatibility if argv extraction did not capture any --input
+        if (pairs.length === 0 && args.input) {
+            const fallbackPairs = Array.isArray(args.input)
                 ? args.input
                 : [args.input];
-            for (const pair of pairs) {
+            for (const pair of fallbackPairs) {
                 const eqIdx = pair.indexOf('=');
                 if (eqIdx > 0) {
                     const key = pair.slice(0, eqIdx);
