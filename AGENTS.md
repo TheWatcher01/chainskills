@@ -7,10 +7,10 @@
 
 **chainskills** is a monorepo with two packages:
 
-| Package | Path | Purpose |
-|---------|------|---------|
-| **cli-mcp-core** | `cli-mcp-core/` | TypeScript CLI + core library — workflow parsing, execution, MCP |
-| **vscode-extension** | `vscode-extension/` | VS Code extension — language features, Copilot Chat integration |
+| Package              | Path                | Purpose                                                          |
+| -------------------- | ------------------- | ---------------------------------------------------------------- |
+| **cli-mcp-core**     | `cli-mcp-core/`     | TypeScript CLI + core library — workflow parsing, execution, MCP |
+| **vscode-extension** | `vscode-extension/` | VS Code extension — language features, Copilot Chat integration  |
 
 ### Build Commands
 
@@ -23,13 +23,13 @@ cd vscode-extension && npm run compile        # Extension
 
 ## Shared Agents (`.github/agents/`)
 
-| Agent | Role | Scope |
-|-------|------|-------|
-| **Research** | Deep research — web, npm, GitHub, VS Code API, MCP spec | Both packages |
-| **Plan** | Read-only exploration, implementation plans | Both packages |
-| **Review** | Quality assurance, architecture compliance | Both packages |
-| **Orchestrator** | Supervisor — routes to specialized agents | Both packages |
-| **Extension** | VS Code API specialist — providers, Chat, Agent Mode | `vscode-extension/` |
+| Agent            | Role                                                    | Scope               |
+| ---------------- | ------------------------------------------------------- | ------------------- |
+| **Research**     | Deep research — web, npm, GitHub, VS Code API, MCP spec | Both packages       |
+| **Plan**         | Read-only exploration, implementation plans             | Both packages       |
+| **Review**       | Quality assurance, architecture compliance              | Both packages       |
+| **Orchestrator** | Supervisor — routes to specialized agents               | Both packages       |
+| **Extension**    | VS Code API specialist — providers, Chat, Agent Mode    | `vscode-extension/` |
 
 ---
 
@@ -37,47 +37,48 @@ cd vscode-extension && npm run compile        # Extension
 
 ### Global Skills (`~/.agents/skills/`)
 
-| Skill | Purpose |
-|-------|---------|
+| Skill                 | Purpose                                                              |
+| --------------------- | -------------------------------------------------------------------- |
 | **agentic-workspace** | SOTA agentic workspace setup — agents, skills, instructions layering |
 
 ### Workspace Skills (`.github/skills/`)
 
-| Skill | Purpose |
-|-------|---------|
+| Skill             | Purpose                                                    |
+| ----------------- | ---------------------------------------------------------- |
 | **monorepo-sync** | Keep roadmaps, AGENTS.md, versions in sync across packages |
-| **smart** | Auto-learning from development errors |
-| **smart-commit** | Grouped commits with architecture-aware scopes |
-| **research** | Multi-source research protocol with freshness validation |
+| **smart**         | Auto-learning from development errors                      |
+| **smart-commit**  | Grouped commits with architecture-aware scopes             |
+| **research**      | Multi-source research protocol with freshness validation   |
 
 ---
 
 ## Instructions (`.github/instructions/`)
 
-| File | `applyTo` | Purpose |
-|------|-----------|---------|
-| `core.instructions.md` | `cli-mcp-core/src/core/**` | Zero deps, Result pattern, immutability |
-| `cli.instructions.md` | `cli-mcp-core/src/cli/**` | Citty conventions, one-file-per-command, DI |
-| `adapters.instructions.md` | `cli-mcp-core/src/adapters/**` | Ports & adapters, DI, no domain logic |
-| `tests.instructions.md` | `**/tests/**` | Vitest conventions, unit vs integration |
-| `extension.instructions.md` | `vscode-extension/**` | VS Code API, Disposable, webpack |
+| File                        | `applyTo`                           | Purpose                                     |
+| --------------------------- | ----------------------------------- | ------------------------------------------- |
+| `core.instructions.md`      | `cli-mcp-core/src/core/**`          | Zero deps, Result pattern, immutability     |
+| `cli.instructions.md`       | `cli-mcp-core/src/cli/**`           | Citty conventions, one-file-per-command, DI |
+| `adapters.instructions.md`  | `cli-mcp-core/src/adapters/**`      | Ports & adapters, DI, no domain logic       |
+| `tests.instructions.md`     | `**/tests/**`                       | Vitest conventions, unit vs integration     |
+| `extension.instructions.md` | `vscode-extension/**`               | VS Code API, Disposable, webpack            |
 | `providers.instructions.md` | `vscode-extension/src/providers/**` | Provider interfaces, WorkflowDocument cache |
 
 ---
 
 ## Prompts (`.github/prompts/`)
 
-| Prompt | Agent | Purpose |
-|--------|-------|---------|
-| **smart-commit** | agent | Monorepo-aware grouped commits with pre-commit audit |
-| **smart-review** | Review | Cross-package architecture compliance review |
-| **chainskills-plan** | agent | Complete project blueprint (491 lines) |
+| Prompt               | Agent  | Purpose                                              |
+| -------------------- | ------ | ---------------------------------------------------- |
+| **smart-commit**     | agent  | Monorepo-aware grouped commits with pre-commit audit |
+| **smart-review**     | Review | Cross-package architecture compliance review         |
+| **chainskills-plan** | agent  | Complete project blueprint (491 lines)               |
 
 ---
 
 ## Cross-Package Architecture
 
 Both packages follow **Hexagonal (Ports & Adapters)**:
+
 - Core domain: zero external dependencies
 - Dependencies point inward: adapters → core, never reverse
 - Every integration uses a port (interface) + adapter (implementation)
@@ -103,11 +104,11 @@ Both packages follow **Hexagonal (Ports & Adapters)**:
 
 ## Roadmap
 
-| Phase | Version | Status |
-|-------|---------|--------|
-| 1–5 | v0.1.0–v0.5.0 | ✅ All completed |
-| 6 | v0.6.0 | 🔄 En cours — Copilot Chat + Agent Mode |
-| 7 | v0.7.0 | ⏳ Planifié — Debug Adapter + Test Controller |
-| 8+ | v0.8.0+ | ⏳ Planifié — Registry + Community |
+| Phase | Version       | Status                                        |
+| ----- | ------------- | --------------------------------------------- |
+| 1–5   | v0.1.0–v0.5.0 | ✅ All completed                              |
+| 6     | v0.6.0        | 🔄 En cours — Copilot Chat + Agent Mode       |
+| 7     | v0.7.0        | ⏳ Planifié — Debug Adapter + Test Controller |
+| 8+    | v0.8.0+       | ⏳ Planifié — Registry + Community            |
 
 **Roadmap**: [ROADMAP.md](ROADMAP.md)
