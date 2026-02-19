@@ -4,14 +4,14 @@ description: Architecture-aware planner for chainskills — Hexagonal design, Po
 user-invokable: true
 disable-model-invocation: false
 tools:
-  - readFile
-  - listDirectory
-  - fileSearch
-  - textSearch
-  - codebase
-  - usages
-  - problems
-  - todos
+  - read/readFile
+  - search/listDirectory
+  - search/fileSearch
+  - search/textSearch
+  - search/codebase
+  - search/usages
+  - read/problems
+  - todo
 handoffs:
     - label: Request Research
       agent: Research

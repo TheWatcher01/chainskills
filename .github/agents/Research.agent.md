@@ -4,13 +4,13 @@ description: Deep research specialist — web + codebase + dependencies, sourced
 user-invokable: true
 disable-model-invocation: false
 tools:
-  - readFile
-  - listDirectory
-  - fileSearch
-  - textSearch
-  - codebase
-  - fetch
-  - todos
+  - read/readFile
+  - search/listDirectory
+  - search/fileSearch
+  - search/textSearch
+  - search/codebase
+  - web/fetch
+  - todo
 handoffs:
   - label: Plan Implementation
     agent: Architect

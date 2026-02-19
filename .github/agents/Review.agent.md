@@ -4,15 +4,15 @@ description: Review and validate completed work for quality, architecture compli
 user-invokable: true
 disable-model-invocation: false
 tools:
-  - readFile
-  - listDirectory
-  - fileSearch
-  - textSearch
-  - codebase
-  - usages
-  - problems
-  - changes
-  - todos
+  - read/readFile
+  - search/listDirectory
+  - search/fileSearch
+  - search/textSearch
+  - search/codebase
+  - search/usages
+  - read/problems
+  - search/changes
+  - todo
 handoffs:
   - label: Plan Improvements
     agent: Architect

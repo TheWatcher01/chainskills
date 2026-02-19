@@ -4,9 +4,9 @@ description: Task orchestrator for chainskills — analyzes requests and routes 
 user-invokable: true
 disable-model-invocation: false
 tools:
-  - readFile
-  - codebase
-  - todos
+  - read/readFile
+  - search/codebase
+  - todo
   - agent
 agents:
   - Research

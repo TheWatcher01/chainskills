@@ -4,16 +4,14 @@ description: VS Code GitHub Copilot Chat expert — custom agents, toolsets, hoo
 user-invokable: true
 disable-model-invocation: false
 tools:
-  [
-    "readFile",
-    "listDirectory",
-    "fileSearch",
-    "textSearch",
-    "codebase",
-    "fetch",
-    "todos",
-    "usages",
-  ]
+  - read/readFile
+  - search/listDirectory
+  - search/fileSearch
+  - search/textSearch
+  - search/codebase
+  - web/fetch
+  - todo
+  - search/usages
 handoffs:
   - label: Implement Changes
     agent: agent

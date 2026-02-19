@@ -21,13 +21,13 @@
     "readonly": {
         // Read-only exploration — for Research, Architect, Review, CopilotExpert
         "tools": [
-            "readFile",
-            "listDirectory",
-            "fileSearch",
-            "textSearch",
-            "codebase",
-            "usages",
-            "problems"
+            "read/readFile",
+            "search/listDirectory",
+            "search/fileSearch",
+            "search/textSearch",
+            "search/codebase",
+            "search/usages",
+            "read/problems"
         ],
         "description": "Read-only codebase exploration — no writes, no side effects",
         "icon": "search"
@@ -35,17 +35,17 @@
     "editing": {
         // Full editing — for Extension agent (implementation tasks)
         "tools": [
-            "readFile",
-            "listDirectory",
-            "fileSearch",
-            "textSearch",
-            "codebase",
-            "usages",
-            "problems",
-            "editFiles",
-            "createFile",
-            "createDirectory",
-            "runInTerminal"
+            "read/readFile",
+            "search/listDirectory",
+            "search/fileSearch",
+            "search/textSearch",
+            "search/codebase",
+            "search/usages",
+            "read/problems",
+            "edit/editFiles",
+            "edit/createFile",
+            "edit/createDirectory",
+            "execute/runInTerminal"
         ],
         "description": "Full editing capabilities — read + write + terminal",
         "icon": "edit"
@@ -53,11 +53,11 @@
     "research": {
         // Research + web access — for Research agent
         "tools": [
-            "readFile",
-            "codebase",
-            "fetch",
-            "textSearch",
-            "fileSearch"
+            "read/readFile",
+            "search/codebase",
+            "web/fetch",
+            "search/textSearch",
+            "search/fileSearch"
         ],
         "description": "Web research + codebase — fetch external docs + local context",
         "icon": "globe"

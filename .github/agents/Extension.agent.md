@@ -4,18 +4,18 @@ description: VS Code extension specialist for chainskills — providers, Copilot
 user-invokable: true
 disable-model-invocation: false
 tools:
-  - readFile
-  - listDirectory
-  - fileSearch
-  - textSearch
-  - codebase
-  - editFiles
-  - createFile
-  - createDirectory
-  - runInTerminal
-  - problems
-  - usages
-  - todos
+  - read/readFile
+  - search/listDirectory
+  - search/fileSearch
+  - search/textSearch
+  - search/codebase
+  - edit/editFiles
+  - edit/createFile
+  - edit/createDirectory
+  - execute/runInTerminal
+  - read/problems
+  - search/usages
+  - todo
 handoffs:
     - label: Review Extension Changes
       agent: Review
