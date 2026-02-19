@@ -7,18 +7,18 @@
 
 **cli-mcp-core** is the TypeScript CLI + core library of chainskills — parses `.workflow.md` files, executes them as Mastra DAG workflows, exposes an MCP server, and provides a public API consumed by the VS Code extension.
 
-| Key | Value |
-|-----|-------|
-| **Language** | TypeScript (strict) — Node.js ≥ 20 |
-| **CLI** | Citty ^0.2.1 |
-| **Orchestration** | Mastra DAG (.then/.parallel/.branch/.foreach) |
-| **Parsing** | unified + remark-parse + remark-directive + gray-matter |
-| **MCP** | @modelcontextprotocol/sdk — 5 tools, 2 prompts |
-| **Validation** | Zod ^3.25 |
-| **Tests** | Vitest ^4.0 (197 tests) |
-| **Build** | obuild ^0.4.22 (Rolldown) — 5 bundles, 770 KB |
-| **Package manager** | pnpm |
-| **Architecture** | Hexagonal (Ports & Adapters) |
+| Key                 | Value                                                   |
+| ------------------- | ------------------------------------------------------- |
+| **Language**        | TypeScript (strict) — Node.js ≥ 20                      |
+| **CLI**             | Citty ^0.2.1                                            |
+| **Orchestration**   | Mastra DAG (.then/.parallel/.branch/.foreach)           |
+| **Parsing**         | unified + remark-parse + remark-directive + gray-matter |
+| **MCP**             | @modelcontextprotocol/sdk — 5 tools, 2 prompts          |
+| **Validation**      | Zod ^3.25                                               |
+| **Tests**           | Vitest ^4.0 (197 tests)                                 |
+| **Build**           | obuild ^0.4.22 (Rolldown) — 5 bundles, 770 KB           |
+| **Package manager** | pnpm                                                    |
+| **Architecture**    | Hexagonal (Ports & Adapters)                            |
 
 ---
 
@@ -68,20 +68,20 @@ env: [API_KEY]
 tags: [dev, research]
 ---
 
-## Step 1 — Title      ← H2 heading = step boundary
+## Step 1 — Title ← H2 heading = step boundary
 
 Step description in natural language.
 
-@use my-skill            ← load a skill
-@call tool-name arg      ← call a tool
-@if $mode == "fast"      ← conditional
-@for $item in $list      ← loop
-:::parallel              ← parallel block
-  @call tool-a
-  @call tool-b
+@use my-skill ← load a skill
+@call tool-name arg ← call a tool
+@if $mode == "fast" ← conditional
+@for $item in $list ← loop
+:::parallel ← parallel block
+@call tool-a
+@call tool-b
 :::
-@assert $result != null  ← assertion
-@output result $report   ← capture output
+@assert $result != null ← assertion
+@output result $report ← capture output
 ```
 
 ---
@@ -104,8 +104,15 @@ chainskills init [name]          # Create a new workflow
 **Configuration**: `.vscode/mcp.json` → auto-discovered by GitHub Copilot
 
 ```json
-{ "servers": { "chainskills": { "type": "stdio", "command": "node",
-  "args": ["./bin/cli.mjs", "serve", "--stdio"] } } }
+{
+  "servers": {
+    "chainskills": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["./bin/cli.mjs", "serve", "--stdio"]
+    }
+  }
+}
 ```
 
 **5 tools**: `run_workflow`, `validate_workflow`, `list_workflows`, `inspect_workflow`, `get_skill`
@@ -128,9 +135,9 @@ pnpm exec tsc --noEmit  # Type check
 
 **Canonical**: [.github/ROADMAP.md](.github/ROADMAP.md) (811 lines — phases, checkboxes, changelog, decisions)
 
-| Phase | Version | Status |
-|-------|---------|--------|
-| 1–5 | v0.1.0–v0.5.0 | ✅ All completed |
-| 6 | v0.6.0 | 🔄 En cours — Copilot Chat + Agent Mode |
-| 7 | v0.7.0 | ⏳ Planifié — Debug Adapter + Test Controller |
-| 8+ | v0.8.0+ | ⏳ Planifié — Registry + Community |
+| Phase | Version       | Status                                        |
+| ----- | ------------- | --------------------------------------------- |
+| 1–5   | v0.1.0–v0.5.0 | ✅ All completed                              |
+| 6     | v0.6.0        | 🔄 En cours — Copilot Chat + Agent Mode       |
+| 7     | v0.7.0        | ⏳ Planifié — Debug Adapter + Test Controller |
+| 8+    | v0.8.0+       | ⏳ Planifié — Registry + Community            |
