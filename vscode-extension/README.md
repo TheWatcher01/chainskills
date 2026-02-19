@@ -156,7 +156,7 @@ code .              # Terminal 2: open in VS Code
 - ✅ @breakpoint directive
 - ✅ --format=vscode CLI flag
 
-**Phase 2** (v0.5.0) - IDE Language Features 🔄 _In Progress_
+**Phase 2** (v0.5.0) - IDE Language Features ✅ _Completed_
 
 - ✅ package.json manifest with core commands
 - ✅ TreeView provider for workflows

@@ -228,8 +228,8 @@ npx chainskills run workflow.md
 
 ## Roadmap
 
-> **Roadmap portfolio (root)** : [ROADMAP.md](ROADMAP.md) — vue globale multi-projets.
-> **Roadmap canonique CLI/Core** : [cli-mcp-core/.github/ROADMAP.md](cli-mcp-core/.github/ROADMAP.md) — suivi détaillé phases/checklists/changelog.
+> **Roadmap canonique CLI/Core** : [ROADMAP.md](ROADMAP.md) — suivi détaillé phases/checklists/changelog.
+> **Roadmap portfolio (root)** : [../../ROADMAP.md](../../ROADMAP.md) — vue globale multi-projets.
 > Toute mise à jour de statut doit synchroniser la roadmap portfolio et la roadmap canonique impactée.
 
 | Phase | Version | Contenu                                                          | Statut      | Date       |
@@ -238,8 +238,8 @@ npx chainskills run workflow.md
 | 2     | v0.2.0  | Orchestration DAG (Mastra), `@parallel` réel                     | ✅ Complété | 2026-02-13 |
 | 3     | v0.3.0  | MCP client/server, `@agent` LLM, composite tools                 | ✅ Complété | 2026-02-13 |
 | 4     | v0.4.0  | Extension VS Code skeleton, core enhancements                    | ✅ Complété | 2026-02-13 |
-| 5     | v0.5.0  | IDE Language Features (CodeLens, Completion, Hover, Diagnostics) | 🔄 En cours | Q2 2026    |
-| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG Webview       | ⏳ Planifié | Q2 2026    |
+| 5     | v0.5.0  | IDE Language Features (CodeLens, Completion, Hover, Diagnostics) | ✅ Complété | 2026-02-19 |
+| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG Webview       | 🔄 En cours | Q2 2026    |
 | 7     | v0.7.0  | Debug Adapter (DAP), Test Controller, Rename/References          | ⏳ Planifié | Q3 2026    |
 | 8     | v0.8.0  | Registry npm-like, résolution distante/git                       | ⏳ Planifié | Q3 2026    |
 | 9     | v0.9.0  | Polish, integration tests, marketplace publish                   | ⏳ Planifié | Q4 2026    |
@@ -339,7 +339,7 @@ npx chainskills run workflow.md
 - CLI: 197/197 tests passing, 0 erreurs typecheck
 - Extension: 490 lignes TS → 23 KB bundle, 18 fichiers créés
 
-### v0.5.0 — IDE Language Features (En cours)
+### v0.5.0 — IDE Language Features ✅ COMPLÉTÉ (2026-02-19)
 
 **Objectif** : Transformer l'extension en vrai IDE pour `.workflow.md`
 

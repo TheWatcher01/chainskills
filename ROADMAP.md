@@ -28,8 +28,8 @@
 | 2.1   | v0.2.1  | Security hardening, Result monad utilities                       | ✅ Completed   | `cli-mcp-core/.github/ROADMAP.md` |
 | 3     | v0.3.0  | MCP server/client, `@agent` support, SDK API                     | ✅ Completed   | `cli-mcp-core/.github/ROADMAP.md` |
 | 4     | v0.4.0  | VS Code extension skeleton, `@breakpoint`, execution controller  | ✅ Completed   | `cli-mcp-core/.github/ROADMAP.md` |
-| 5     | v0.5.0  | IDE language features (CodeLens, diagnostics, completion, hover) | 🔄 In progress | `cli-mcp-core/.github/ROADMAP.md` |
-| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG webview       | ⏳ Planned     | `cli-mcp-core/.github/ROADMAP.md` |
+| 5     | v0.5.0  | IDE language features (CodeLens, diagnostics, completion, hover) | ✅ Completed   | `cli-mcp-core/.github/ROADMAP.md` |
+| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG webview       | 🔄 In progress | `cli-mcp-core/.github/ROADMAP.md` |
 | 7     | v0.7.0  | Debug Adapter (DAP), Test Controller, rename/references          | ⏳ Planned     | `cli-mcp-core/.github/ROADMAP.md` |
 | 8     | v0.8.0  | Registry & remote/git workflow distribution                      | ⏳ Planned     | `cli-mcp-core/.github/ROADMAP.md` |
 | 9     | v0.9.0  | Polish: integration tests, marketplace publish, performance      | ⏳ Planned     | `cli-mcp-core/.github/ROADMAP.md` |

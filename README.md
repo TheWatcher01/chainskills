@@ -204,8 +204,8 @@ Canonical portfolio roadmap: [ROADMAP.md](ROADMAP.md)
 | 2     | v0.2.0  | DAG (Mastra), full control flow, event system         | ✅     |
 | 3     | v0.3.0  | MCP server/client, `@agent` LLM                       | ✅     |
 | 4     | v0.4.0  | VS Code extension, ExecutionController, `@breakpoint` | ✅     |
-| 5     | v0.5.0  | CodeLens, Diagnostics, Autocomplete, Hover            | 🔄     |
-| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode, DAG Webview  | ⏳     |
+| 5     | v0.5.0  | CodeLens, Diagnostics, Autocomplete, Hover            | ✅     |
+| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode, DAG Webview  | 🔄     |
 | 7     | v0.7.0  | Debug Adapter (DAP), Test Controller                  | ⏳     |
 | 8     | v0.8.0  | Registry & distribution (npm-like)                    | ⏳     |
 | 9     | v0.9.0  | Polish, integration tests, marketplace publish        | ⏳     |

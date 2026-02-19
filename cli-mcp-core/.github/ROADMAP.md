@@ -14,8 +14,8 @@
 | v0.3.0-α | MCP          | MCP server, SDK API, `--json` mode, `serve` command               | ✅ Complété |
 | v0.3.0   | MCP+Agent    | MCP client, `@agent` LLM, composite tools                         | ✅ Complété |
 | v0.4.0   | VS Code Ext  | Extension skeleton, core enhancements, syntax highlighting        | ✅ Complété |
-| v0.5.0   | IDE Features | Language Features (CodeLens, Completion, Hover, Diagnostics)      | 🔄 En cours |
-| v0.6.0   | Copilot AI   | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | ⏳ Planifié |
+| v0.5.0   | IDE Features | Language Features (CodeLens, Completion, Hover, Diagnostics)      | ✅ Complété | 2026-02-19 |
+| v0.6.0   | Copilot AI   | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | 🔄 En cours | Q2 2026 |
 | v0.7.0   | Debug & Test | Debug Adapter (DAP), Test Controller, Variable Inspector          | ⏳ Planifié |
 | v0.8.0   | Registry     | npm-like registry, `@use` résolution distante/git                 | ⏳ Planifié |
 | v0.9.0   | Polish       | Marketplace publish, integration tests, performance               | ⏳ Planifié |
@@ -187,7 +187,7 @@
 | 2026-02-13 | v0.3.0 | @agent LLM + MCP client + composite tools              | 6 fichiers créés, 10 modifiés, 179 tests          |
 | 2026-02-13 | v0.4.0 | Phase 1: Core enhancements (ExecutionController, etc.) | 8 fichiers créés/modifiés, 197 tests              |
 | 2026-02-13 | v0.4.0 | Phase 2: Extension VS Code skeleton                    | 18 fichiers, repo ../vscode-extension/            |
-| 2026-02-13 | v0.5.0 | Research: 15 VS Code API integration points identifiés | ROADMAP, AGENTS.md, README.md mis à jour          |
+| 2026-02-19 | v0.5.0 | 8 language feature providers + StatusBar, 77 KB bundle | CodeLens, Completion, Hover, Diagnostics, Folding, Link, Symbol, FileDecoration |
 
 ---
 
