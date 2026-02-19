@@ -156,14 +156,14 @@ code .              # Terminal 2: open in VS Code
 - ✅ @breakpoint directive
 - ✅ --format=vscode CLI flag
 
-**Phase 2** (v0.5.0) - Extension Skeleton 🔄 _In Progress_
+**Phase 2** (v0.5.0) - IDE Language Features 🔄 _In Progress_
 
-- ✅ package.json manifest with 10 commands
+- ✅ package.json manifest with core commands
 - ✅ TreeView provider for workflows
 - ✅ Command handlers (run, validate, inspect)
 - ✅ TextMate grammar for syntax highlighting
+- ⏳ CodeLens / Diagnostics / Completion / Hover (in progress)
 - ⏳ Webview panels (DAG visualizer, execution monitor)
-- ⏳ Debugging adapter protocol integration
 
 **Phase 3** (v0.6.0) - Advanced Features 📋 _Planned_
 

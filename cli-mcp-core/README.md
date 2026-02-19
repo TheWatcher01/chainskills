@@ -312,6 +312,10 @@ pnpm exec tsx src/cli/index.ts inspect path/to/workflow.md
 
 ## Roadmap
 
+Canonical roadmap: [`.github/ROADMAP.md`](.github/ROADMAP.md)
+
+Portfolio roadmap: [`../ROADMAP.md`](../ROADMAP.md)
+
 | Phase | Version | Features                                                         | Status |
 | ----- | ------- | ---------------------------------------------------------------- | ------ |
 | 1     | v0.1.0  | MVP — Parse + sequential run + CLI + 86 tests                    | ✅     |

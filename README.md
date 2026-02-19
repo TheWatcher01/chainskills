@@ -196,6 +196,8 @@ See [`.env.example`](cli-mcp-core/.env.example) for the full list.
 
 ## Roadmap
 
+Canonical portfolio roadmap: [ROADMAP.md](ROADMAP.md)
+
 | Phase | Version | Highlights                                            | Status |
 | ----- | ------- | ----------------------------------------------------- | ------ |
 | 1     | v0.1.0  | MVP — Parse + sequential run + CLI                    | ✅     |
@@ -206,7 +208,8 @@ See [`.env.example`](cli-mcp-core/.env.example) for the full list.
 | 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode, DAG Webview  | ⏳     |
 | 7     | v0.7.0  | Debug Adapter (DAP), Test Controller                  | ⏳     |
 | 8     | v0.8.0  | Registry & distribution (npm-like)                    | ⏳     |
-| 9     | v1.0.0  | Production & scale (SQLite, Redis)                    | ⏳     |
+| 9     | v0.9.0  | Polish, integration tests, marketplace publish        | ⏳     |
+| 10    | v1.0.0  | Production & scale (SQLite, Redis)                    | ⏳     |
 
 ---
 

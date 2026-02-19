@@ -186,7 +186,7 @@
 | 2026-02-13 | v0.3α  | MCP server, SDK API, `serve`, `--json`, config MCP     | 6 fichiers créés, 8 modifiés, 149 tests           |
 | 2026-02-13 | v0.3.0 | @agent LLM + MCP client + composite tools              | 6 fichiers créés, 10 modifiés, 179 tests          |
 | 2026-02-13 | v0.4.0 | Phase 1: Core enhancements (ExecutionController, etc.) | 8 fichiers créés/modifiés, 197 tests              |
-| 2026-02-13 | v0.4.0 | Phase 2: Extension VS Code skeleton                    | 18 fichiers, repo ../vscode-extension/                      |
+| 2026-02-13 | v0.4.0 | Phase 2: Extension VS Code skeleton                    | 18 fichiers, repo ../vscode-extension/            |
 | 2026-02-13 | v0.5.0 | Research: 15 VS Code API integration points identifiés | ROADMAP, AGENTS.md, README.md mis à jour          |
 
 ---
@@ -578,7 +578,7 @@ vscode/              # ../vscode-extension/ depuis cli-mcp-core/
 
 ---
 
-## v0.5.0 — IDE Language Features (Planifié — Q2 2026)
+## v0.5.0 — IDE Language Features (En cours — Q2 2026)
 
 > Transformer l'extension en vrai IDE pour `.workflow.md` grâce aux Language Features VS Code.
 

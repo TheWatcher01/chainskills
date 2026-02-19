@@ -228,8 +228,9 @@ npx chainskills run workflow.md
 
 ## Roadmap
 
-> **Fichier de suivi détaillé** : [.github/ROADMAP.md](ROADMAP.md) — phases, checkboxes, décisions, changelog, métriques.
-> Toute mise à jour de roadmap doit aussi mettre à jour ce fichier.
+> **Roadmap portfolio (root)** : [ROADMAP.md](ROADMAP.md) — vue globale multi-projets.
+> **Roadmap canonique CLI/Core** : [cli-mcp-core/.github/ROADMAP.md](cli-mcp-core/.github/ROADMAP.md) — suivi détaillé phases/checklists/changelog.
+> Toute mise à jour de statut doit synchroniser la roadmap portfolio et la roadmap canonique impactée.
 
 | Phase | Version | Contenu                                                          | Statut      | Date       |
 | ----- | ------- | ---------------------------------------------------------------- | ----------- | ---------- |
@@ -241,7 +242,8 @@ npx chainskills run workflow.md
 | 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode tools, DAG Webview       | ⏳ Planifié | Q2 2026    |
 | 7     | v0.7.0  | Debug Adapter (DAP), Test Controller, Rename/References          | ⏳ Planifié | Q3 2026    |
 | 8     | v0.8.0  | Registry npm-like, résolution distante/git                       | ⏳ Planifié | Q3 2026    |
-| 9     | v1.0.0  | Production & Scale (SQLite, Redis, enterprise)                   | ⏳ Planifié | Q4 2026    |
+| 9     | v0.9.0  | Polish, integration tests, marketplace publish                   | ⏳ Planifié | Q4 2026    |
+| 10    | v1.0.0  | Production & Scale (SQLite, Redis, enterprise)                   | ⏳ Planifié | Q4 2026    |
 
 ### v0.1.0 — MVP Complété
 
