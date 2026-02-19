@@ -1,4 +1,6 @@
 {
+    "chat.hooks.enabled": true,
+    "chat.customAgentInSubagent.enabled": true,
     "chat.tools.terminal.autoApprove": {
         "pnpm build": true,
         "pnpm test": true,

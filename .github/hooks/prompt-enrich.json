@@ -1,0 +1,10 @@
+{
+    "hooks": {
+        "event": "UserPromptSubmit",
+        "command": [
+            "bash",
+            "${workspaceFolder}/scripts/hooks/prompt-enrich.sh"
+        ],
+        "description": "Append current git branch and changed files to user prompts for context"
+    }
+}

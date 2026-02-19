@@ -14,7 +14,7 @@
 | **Engine**       | VS Code ^1.90.0 (→ ^1.99.0 for v0.6.0)            |
 | **Language ID**  | `workflow-markdown`                               |
 | **Bundle**       | Webpack 5 — 77KB (v0.5.0)                         |
-| **Build**        | `npm run compile`                                 |
+| **Build**        | `pnpm compile`                                    |
 | **Architecture** | VS Code Extension (Disposable + Provider pattern) |
 
 ---
@@ -99,7 +99,7 @@ It knows the full API surface, current state, and v0.6.0 planned features.
 
 ```bash
 cd vscode-extension
-npm run compile    # webpack → dist/extension.js (77KB)
+pnpm compile    # webpack → dist/extension.js (77KB)
 ```
 
 ---

@@ -1,0 +1,11 @@
+{
+    "hooks": {
+        "event": "PostToolUse",
+        "tool": "editFiles",
+        "command": [
+            "bash",
+            "${workspaceFolder}/scripts/hooks/post-edit.sh"
+        ],
+        "description": "Run TypeScript check on modified files after every file edit"
+    }
+}

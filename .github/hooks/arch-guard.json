@@ -1,0 +1,11 @@
+{
+    "hooks": {
+        "event": "PreToolUse",
+        "tool": "editFiles",
+        "command": [
+            "bash",
+            "${workspaceFolder}/scripts/hooks/arch-guard.sh"
+        ],
+        "description": "Enforce Hexagonal Architecture Dependency Rule: block core→adapter imports before any file edit"
+    }
+}

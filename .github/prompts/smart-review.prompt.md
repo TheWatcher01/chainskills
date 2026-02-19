@@ -41,7 +41,7 @@ cd cli-mcp-core && pnpm build && pnpm test && pnpm lint
 
 **Build check:**
 ```bash
-cd vscode-extension && npm run compile
+cd vscode-extension && pnpm compile
 ```
 
 ### If changes are in `.github/` (agents, skills, instructions):

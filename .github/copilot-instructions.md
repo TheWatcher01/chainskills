@@ -25,7 +25,7 @@ This is a **monorepo** with two packages:
 cd cli-mcp-core && pnpm build && pnpm test
 
 # VS Code Extension
-cd vscode-extension && npm run compile
+cd vscode-extension && pnpm compile
 ```
 
 ## Cross-Package Conventions

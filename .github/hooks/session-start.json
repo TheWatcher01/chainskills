@@ -1,0 +1,10 @@
+{
+    "hooks": {
+        "event": "SessionStart",
+        "command": [
+            "bash",
+            "${workspaceFolder}/scripts/hooks/session-start.sh"
+        ],
+        "description": "Inject chainskills architecture context at the start of every Copilot Chat session"
+    }
+}

@@ -16,21 +16,21 @@
 
 ```bash
 cd cli-mcp-core && pnpm build && pnpm test   # CLI/Core
-cd vscode-extension && npm run compile        # Extension
+cd vscode-extension && pnpm compile        # Extension
 ```
 
 ---
 
 ## Shared Agents (`.github/agents/`)
 
-| Agent            | Role                                                    | Scope               |
-| ---------------- | ------------------------------------------------------- | ------------------- |
-| **Research**     | Deep research — web, npm, GitHub, VS Code API, MCP spec | Both packages       |
-| **Architect**    | Architecture-aware planning, read-only exploration      | Both packages       |
-| **Review**       | Quality assurance, architecture compliance              | Both packages       |
-| **Orchestrator** | Supervisor — routes to specialized agents               | Both packages       |
-| **Extension**    | VS Code API specialist — providers, Chat, Agent Mode    | `vscode-extension/` |
-| **CopilotExpert**| Copilot Chat expert — agents, toolsets, hooks, config   | Both packages       |
+| Agent             | Role                                                    | Scope               |
+| ----------------- | ------------------------------------------------------- | ------------------- |
+| **Research**      | Deep research — web, npm, GitHub, VS Code API, MCP spec | Both packages       |
+| **Architect**     | Architecture-aware planning, read-only exploration      | Both packages       |
+| **Review**        | Quality assurance, architecture compliance              | Both packages       |
+| **Orchestrator**  | Supervisor — routes to specialized agents               | Both packages       |
+| **Extension**     | VS Code API specialist — providers, Chat, Agent Mode    | `vscode-extension/` |
+| **CopilotExpert** | Copilot Chat expert — agents, toolsets, hooks, config   | Both packages       |
 
 ---
 

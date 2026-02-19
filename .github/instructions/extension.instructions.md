@@ -112,7 +112,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
 ```bash
 cd vscode-extension
-npm run compile    # webpack production build → dist/extension.js
+pnpm compile    # webpack production build → dist/extension.js
 ```
 
 Bundle size target: < 200KB (currently 77KB at v0.5.0)
