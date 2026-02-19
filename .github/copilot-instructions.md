@@ -48,6 +48,6 @@ cd vscode-extension && npm run compile
 
 ## Detailed Context
 
-- **CLI/Core**: [cli-mcp-core/AGENTS.md](../cli-mcp-core/AGENTS.md)
-- **Extension**: [vscode-extension/AGENTS.md](../vscode-extension/AGENTS.md)
-- **Roadmap**: [ROADMAP.md](../ROADMAP.md)
+- **CLI/Core**: see `cli-mcp-core/AGENTS.md`
+- **Extension**: see `vscode-extension/AGENTS.md`
+- **Roadmap**: see `ROADMAP.md`
