@@ -1,6 +1,3 @@
-`````chatagent
-````chatagent
-```chatagent
 ---
 name: Research
 description: Deep research specialist — web + codebase + dependencies, sourced and timestamped findings for chainskills
@@ -89,8 +86,3 @@ Items to re-verify before acting.
 #### Recommended Next Steps
 Handoff-ready actions.
 
-```
-
-````
-
-`````

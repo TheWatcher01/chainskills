@@ -1,5 +1,3 @@
-````chatagent
-```chatagent
 ---
 name: Orchestrator
 description: Task orchestrator for chainskills — analyzes requests and routes to the right specialist agent (Research, Plan, Review, Extension). Use when you want intelligent routing of complex tasks, or when unsure which agent to use.
@@ -68,7 +66,3 @@ When routing, provide the target agent with:
 - ❌ Write implementation code
 - ❌ Make architecture decisions (that's Plan's job)
 - ❌ Skip Research for tasks involving external dependencies
-
-```
-
-````

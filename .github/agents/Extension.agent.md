@@ -1,5 +1,3 @@
-````chatagent
-```chatagent
 ---
 name: Extension
 description: VS Code extension specialist for chainskills — providers, Copilot Chat participant, Agent Mode tools, DAG webview, webpack, package.json manifest. Use for all vscode-extension/ work.
@@ -98,7 +96,3 @@ When adding new APIs, always update `package.json`:
 cd vscode-extension
 npm run compile    # webpack build (outputs to dist/)
 ```
-
-```
-
-````

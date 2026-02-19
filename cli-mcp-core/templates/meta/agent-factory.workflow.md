@@ -98,7 +98,7 @@ SKILLEOF") → $skill_write_result
 
 ## 6. Assemble Agent Definition
 
-@agent copilot: "Write a complete .agent.md for an expert '$domain' agent for chainskills. Use the exact .chatagent format: outer ````chatagent fence, inner ```chatagent fence. Frontmatter: name='$domain-expert' (PascalCase), description (one sentence), user-invokable=true, disable-model-invocation=false, handoffs to Plan and Research agents. Body sections: role, capabilities (list the $max_skills skills it uses), project context, workflow (7 steps), guidelines (include NEVER/ALWAYS rules), output format. The agent is a domain expert that leverages the skills in: $output_path/skills/." → $agent_definition_content
+@agent copilot: "Write a complete .agent.md for an expert '$domain' agent for chainskills. Use plain YAML frontmatter format: file starts with --- on line 1, then YAML fields, then closing ---. Frontmatter fields: name='$domain-expert' (PascalCase), description (one sentence), user-invokable=true, disable-model-invocation=false, handoffs to Plan and Research agents with label/agent/prompt/send fields. Body (after closing ---): Markdown sections for role, capabilities (list the $max_skills skills it uses), project context, workflow (7 steps), guidelines (include NEVER/ALWAYS rules), output format. NO chatagent code fences — VS Code requires plain frontmatter. The agent is a domain expert that leverages the skills in: $output_path/skills/." → $agent_definition_content
 
 @call shell.exec("cat > '$output_path/agents/$domain-expert.agent.md' << 'AGENTEOF'
 $agent_definition_content
@@ -118,7 +118,7 @@ PROMPTEOF")
 
 @agent copilot: "Review the generated artifacts for '$domain' expert agent:
 
-1. Agent file: '$output_path/agents/$domain-expert.agent.md' — check .chatagent format, handoffs, role clarity
+1. Agent file: '$output_path/agents/$domain-expert.agent.md' — check YAML frontmatter format (--- on line 1), handoffs, role clarity
 2. Skills (up to $max_skills): '$output_path/skills/' — check SKILL.md format, body length <500 lines, no extraneous files
 3. Prompt: '$output_path/prompts/$domain-expert.prompt.md' — check conciseness
 

@@ -1,5 +1,3 @@
-````chatagent
-```chatagent
 ---
 name: Review
 description: Review and validate completed work for quality, architecture compliance, and correctness — covers both cli-mcp-core and vscode-extension packages
@@ -102,7 +100,3 @@ grep -rn "password\|secret\|api_key" --include="*.ts" cli-mcp-core/src/ vscode-e
 - **Findings**: Specific issues (file path + line refs from workspace root)
 - **Suggestions**: Non-blocking improvements
 - **Verdict**: Ship / Revise / Block
-
-```
-
-````

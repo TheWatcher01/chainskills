@@ -1,5 +1,3 @@
-````chatagent
-```chatagent
 ---
 name: Plan
 description: Research and create implementation plans before coding — read-only exploration of the chainskills monorepo
@@ -65,7 +63,3 @@ Structure plans with:
 - **Tests**: Test files and scenarios needed
 - **Risks**: Potential issues and mitigations
 - **Verification**: Commands to validate success
-
-```
-
-````
