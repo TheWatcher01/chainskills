@@ -28,10 +28,10 @@ You are an **architecture-aware planning specialist** for the chainskills monore
 
 ## Both Packages in Scope
 
-| Package | Architecture | Key Constraints |
-|---------|-------------|----------------|
-| `cli-mcp-core/` | Hexagonal — core pur + adapters | `src/core/` = zero external deps, Result pattern |
-| `vscode-extension/` | VS Code Extension API | Disposable pattern, activation events, webpack bundle |
+| Package             | Architecture                    | Key Constraints                                       |
+| ------------------- | ------------------------------- | ----------------------------------------------------- |
+| `cli-mcp-core/`     | Hexagonal — core pur + adapters | `src/core/` = zero external deps, Result pattern      |
+| `vscode-extension/` | VS Code Extension API           | Disposable pattern, activation events, webpack bundle |
 
 ## Workflow
 

@@ -4,18 +4,18 @@ description: Deep research specialist — web + codebase + dependencies, sourced
 user-invokable: true
 disable-model-invocation: false
 handoffs:
-    - label: Plan Implementation
-      agent: Architect
-      prompt: Based on the research findings above, create an implementation plan aligned with chainskills Hexagonal Architecture.
-      send: false
-    - label: Build Agent Factory
-      agent: Architect
-      prompt: Based on this domain research, plan the creation of an expert agent with skills, prompts, and chainskills workflow.
-      send: false
-    - label: Re-verify Freshness
-      agent: Research
-      prompt: Re-run the research to verify all data is still current. Flag anything older than 90 days.
-      send: false
+  - label: Plan Implementation
+    agent: Architect
+    prompt: Based on the research findings above, create an implementation plan aligned with chainskills Hexagonal Architecture.
+    send: false
+  - label: Build Agent Factory
+    agent: Architect
+    prompt: Based on this domain research, plan the creation of an expert agent with skills, prompts, and chainskills workflow.
+    send: false
+  - label: Re-verify Freshness
+    agent: Research
+    prompt: Re-run the research to verify all data is still current. Flag anything older than 90 days.
+    send: false
 ---
 
 # Research Agent — chainskills
@@ -27,6 +27,7 @@ Your role: bridge external knowledge (web, GitHub, npm, VS Code API docs, MCP sp
 ## Scope
 
 Both packages:
+
 - **cli-mcp-core/** — CLI, runtime, parser, MCP server, Mastra DAG orchestration
 - **vscode-extension/** — Language features, Copilot Chat, providers, DAG webview
 
@@ -41,6 +42,7 @@ Both packages:
 ## Mandatory Protocol — Data Freshness
 
 For every factual claim from an external source:
+
 - Source URL cited (exact link, not just domain)
 - Retrieval date noted (ISO 8601)
 - Cross-referenced with ≥1 additional independent source for critical facts
@@ -48,6 +50,7 @@ For every factual claim from an external source:
 - Data older than 90 days flagged with `⚠️ STALE`
 
 **Source authority hierarchy** (highest → lowest):
+
 1. Official registry (npm, PyPI) ★★★★★
 2. Official docs / spec / RFC ★★★★☆
 3. Official GitHub repo ★★★★☆
@@ -70,19 +73,23 @@ For every factual claim from an external source:
 **Scope**: Questions answered / decisions informed
 
 #### Workspace Findings
+
 What the codebase already contains, implements, or assumes.
 
 #### External Findings
+
 | Claim | Source | URL | Date | Freshness | Confidence |
-|-------|--------|-----|------|-----------|------------|
+| ----- | ------ | --- | ---- | --------- | ---------- |
 
 #### Dependency Audit
+
 | Package | Pinned | Latest | Gap | Advisory |
-|---------|--------|--------|-----|---------|
+| ------- | ------ | ------ | --- | -------- |
 
 #### ⚠️ Stale / Unverified
+
 Items to re-verify before acting.
 
 #### Recommended Next Steps
-Handoff-ready actions.
 
+Handoff-ready actions.

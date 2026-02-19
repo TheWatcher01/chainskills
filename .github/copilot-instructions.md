@@ -40,7 +40,7 @@ cd vscode-extension && npm run compile
 
 ## Agentic Infrastructure
 
-- **Agents**: `.github/agents/` — shared across both packages (Research, Architect, Review, Orchestrator, Extension)
+- **Agents**: `.github/agents/` — shared across both packages (Research, Architect, Review, Orchestrator, Extension, CopilotExpert)
 - **Skills**: `.github/skills/` — workspace-level; `~/.agents/skills/` — global
 - **Instructions**: `.github/instructions/` — all path-specific instructions (6 files with `applyTo` globs)
 - **Prompts**: `.github/prompts/` — all prompts (smart-commit, smart-review, chainskills-plan)

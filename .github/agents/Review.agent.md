@@ -4,10 +4,10 @@ description: Review and validate completed work for quality, architecture compli
 user-invokable: true
 disable-model-invocation: false
 handoffs:
-    - label: Plan Improvements
-      agent: Architect
-      prompt: Plan improvements based on the review findings above.
-      send: false
+  - label: Plan Improvements
+    agent: Architect
+    prompt: Plan improvements based on the review findings above.
+    send: false
 ---
 
 # Review Agent — chainskills
