@@ -7,7 +7,7 @@
 ## Versions planifiées
 
 | Version  | Phase        | Contenu                                                           | Statut      |
-| -------- | ------------ | ----------------------------------------------------------------- | ----------- |
+| -------- | ------------ | ----------------------------------------------------------------- | ----------- | ---------- |
 | v0.1.0   | MVP          | Parse + Run séquentiel + Shell tools + CLI                        | ✅ Complété |
 | v0.2.0   | DAG          | Orchestration DAG (Mastra), full control flow, inspect, streaming | ✅ Complété |
 | v0.2.1   | Security     | Hardening sécurité, Result monad utilities, architecture fixes    | ✅ Complété |
@@ -15,7 +15,7 @@
 | v0.3.0   | MCP+Agent    | MCP client, `@agent` LLM, composite tools                         | ✅ Complété |
 | v0.4.0   | VS Code Ext  | Extension skeleton, core enhancements, syntax highlighting        | ✅ Complété |
 | v0.5.0   | IDE Features | Language Features (CodeLens, Completion, Hover, Diagnostics)      | ✅ Complété | 2026-02-19 |
-| v0.6.0   | Copilot AI   | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | 🔄 En cours | Q2 2026 |
+| v0.6.0   | Copilot AI   | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | 🔄 En cours | Q2 2026    |
 | v0.7.0   | Debug & Test | Debug Adapter (DAP), Test Controller, Variable Inspector          | ⏳ Planifié |
 | v0.8.0   | Registry     | npm-like registry, `@use` résolution distante/git                 | ⏳ Planifié |
 | v0.9.0   | Polish       | Marketplace publish, integration tests, performance               | ⏳ Planifié |
@@ -170,23 +170,23 @@
 
 ## Changelog
 
-| Date       | Phase  | Action                                                 | Fichiers                                          |
-| ---------- | ------ | ------------------------------------------------------ | ------------------------------------------------- |
-| 2026-02-13 | 0      | Création du fichier de suivi                           | `.github/ROADMAP.md`                              |
-| 2026-02-13 | 0-10   | Implémentation MVP complète                            | ~40 fichiers src/ + 6 fichiers tests/             |
-| 2026-02-13 | 10.5   | Migration imports → `#alias` subpath                   | ~25 fichiers mis à jour                           |
-| 2026-02-13 | 11     | Tests CLI                                              | `tests/cli/commands.test.ts`                      |
-| 2026-02-13 | 12     | Root export + 4 templates                              | `src/index.ts` + `templates/**/*.workflow.md`     |
-| 2026-02-13 | 13     | Build, typecheck, E2E, fix build pipeline              | `build.config.mjs`, `bin/cli.mjs`, `package.json` |
-| 2026-02-13 | v0.2   | Phase 1-8 : DAG, parser blocs, executors, events, CLI  | ~15 fichiers créés/modifiés                       |
-| 2026-02-13 | v0.2   | Phase 9 : Tests (55 nouveaux, 141 total)               | 4 nouveaux fichiers tests                         |
-| 2026-02-13 | v0.2   | Phase 10 : Templates enrichis (2 new, 2 updated)       | `templates/**/*.workflow.md`                      |
-| 2026-02-13 | v0.2   | Phase 11-12 : Exports, build, docs, vérification       | `src/index.ts`, `AGENTS.md`, `README.md`          |
-| 2026-02-13 | v0.2.1 | Security hardening + Result monad + arch fixes         | 10 fichiers modifiés, 1 créé                      |
-| 2026-02-13 | v0.3α  | MCP server, SDK API, `serve`, `--json`, config MCP     | 6 fichiers créés, 8 modifiés, 149 tests           |
-| 2026-02-13 | v0.3.0 | @agent LLM + MCP client + composite tools              | 6 fichiers créés, 10 modifiés, 179 tests          |
-| 2026-02-13 | v0.4.0 | Phase 1: Core enhancements (ExecutionController, etc.) | 8 fichiers créés/modifiés, 197 tests              |
-| 2026-02-13 | v0.4.0 | Phase 2: Extension VS Code skeleton                    | 18 fichiers, repo ../vscode-extension/            |
+| Date       | Phase  | Action                                                 | Fichiers                                                                        |
+| ---------- | ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| 2026-02-13 | 0      | Création du fichier de suivi                           | `.github/ROADMAP.md`                                                            |
+| 2026-02-13 | 0-10   | Implémentation MVP complète                            | ~40 fichiers src/ + 6 fichiers tests/                                           |
+| 2026-02-13 | 10.5   | Migration imports → `#alias` subpath                   | ~25 fichiers mis à jour                                                         |
+| 2026-02-13 | 11     | Tests CLI                                              | `tests/cli/commands.test.ts`                                                    |
+| 2026-02-13 | 12     | Root export + 4 templates                              | `src/index.ts` + `templates/**/*.workflow.md`                                   |
+| 2026-02-13 | 13     | Build, typecheck, E2E, fix build pipeline              | `build.config.mjs`, `bin/cli.mjs`, `package.json`                               |
+| 2026-02-13 | v0.2   | Phase 1-8 : DAG, parser blocs, executors, events, CLI  | ~15 fichiers créés/modifiés                                                     |
+| 2026-02-13 | v0.2   | Phase 9 : Tests (55 nouveaux, 141 total)               | 4 nouveaux fichiers tests                                                       |
+| 2026-02-13 | v0.2   | Phase 10 : Templates enrichis (2 new, 2 updated)       | `templates/**/*.workflow.md`                                                    |
+| 2026-02-13 | v0.2   | Phase 11-12 : Exports, build, docs, vérification       | `src/index.ts`, `AGENTS.md`, `README.md`                                        |
+| 2026-02-13 | v0.2.1 | Security hardening + Result monad + arch fixes         | 10 fichiers modifiés, 1 créé                                                    |
+| 2026-02-13 | v0.3α  | MCP server, SDK API, `serve`, `--json`, config MCP     | 6 fichiers créés, 8 modifiés, 149 tests                                         |
+| 2026-02-13 | v0.3.0 | @agent LLM + MCP client + composite tools              | 6 fichiers créés, 10 modifiés, 179 tests                                        |
+| 2026-02-13 | v0.4.0 | Phase 1: Core enhancements (ExecutionController, etc.) | 8 fichiers créés/modifiés, 197 tests                                            |
+| 2026-02-13 | v0.4.0 | Phase 2: Extension VS Code skeleton                    | 18 fichiers, repo ../vscode-extension/                                          |
 | 2026-02-19 | v0.5.0 | 8 language feature providers + StatusBar, 77 KB bundle | CodeLens, Completion, Hover, Diagnostics, Folding, Link, Symbol, FileDecoration |
 
 ---
