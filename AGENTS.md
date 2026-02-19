@@ -1,163 +1,107 @@
-# AGENTS.md — cli-mcp-core
+# AGENTS.md — chainskills (Monorepo)
 
-> Project-specific context for the CLI + Core library package.
-> Shared agents & monorepo index → [../../AGENTS.md](../../AGENTS.md)
+> Universal entry point for all AI agents. Indexes the complete agentic architecture.
+> Each package has its own AGENTS.md with project-specific context (nearest-file-wins).
 
-## Package
+## Workspace
 
-**cli-mcp-core** is the TypeScript CLI + core library of chainskills — parses `.workflow.md` files, executes them as Mastra DAG workflows, exposes an MCP server, and provides a public API consumed by the VS Code extension.
+**chainskills** is a monorepo with two packages:
 
-| Key | Value |
-|-----|-------|
-| **Language** | TypeScript (strict) — Node.js ≥ 20 |
-| **CLI** | Citty ^0.2.1 |
-| **Orchestration** | Mastra DAG (.then/.parallel/.branch/.foreach) |
-| **Parsing** | unified + remark-parse + remark-directive + gray-matter |
-| **MCP** | @modelcontextprotocol/sdk — 5 tools, 2 prompts |
-| **Validation** | Zod ^3.25 |
-| **Tests** | Vitest ^4.0 (197 tests) |
-| **Build** | obuild ^0.4.22 (Rolldown) — 5 bundles, 770 KB |
-| **Package manager** | pnpm |
-| **Architecture** | Hexagonal (Ports & Adapters) |
+| Package | Path | Purpose |
+|---------|------|---------|
+| **cli-mcp-core** | `cli-mcp-core/` | TypeScript CLI + core library — workflow parsing, execution, MCP |
+| **vscode-extension** | `vscode-extension/` | VS Code extension — language features, Copilot Chat integration |
 
----
-
-## Architecture
-
-```
-src/
-├── core/            ← Pure domain: entities, use-cases, services, ports (ZERO external deps)
-│   ├── entities/    ← Workflow, Step, Directive, Variable (readonly, immutable)
-│   ├── use-cases/   ← parse-workflow, build-dag, validate-workflow, resolve-imports
-│   ├── services/    ← template-engine, condition-parser
-│   └── ports/       ← Interfaces only: WorkflowParser, WorkflowExecutor, SkillResolver…
-├── adapters/        ← Concrete implementations (can import from npm)
-│   ├── parser/      ← remark + plugins for @ directives
-│   ├── executor/    ← Mastra DAG + simple sequential fallback
-│   ├── tools/       ← MCP client/server, shell tool
-│   ├── skills/      ← local resolver, git registry
-│   ├── agents/      ← OpenAI agent adapter
-│   └── state/       ← memory store (dev), ready for SQLite/Redis
-├── cli/             ← Citty commands (run, validate, init, inspect, list, serve)
-├── config/          ← DI container, env validation, defaults
-└── infrastructure/  ← Logger (structured JSON), event emitter, errors
-```
-
----
-
-## Key Architecture Rules
-
-1. **Dependency Rule** — `src/core/` has ZERO external imports. Only `src/core/` imports allowed.
-2. **Result pattern** — Use cases return `Result<T, E>`, never `throw` for business logic.
-3. **Ports = interfaces** — `src/core/ports/` contains ONLY interfaces, never implementations.
-4. **DI only** — Adapters instantiated only in `src/config/container.ts`, injected everywhere else.
-5. **ESM only** — No CommonJS, no `require()`.
-
----
-
-## `.workflow.md` Format
-
-```markdown
----                          # Frontmatter YAML (required)
-name: my-workflow
-description: What it does
-version: "1.0.0"
-inputs: [target, mode]
-outputs: [report]
-env: [API_KEY]
-tags: [dev, research]
----
-
-## Step 1 — Title      ← H2 heading = step boundary
-
-Step description in natural language.
-
-@use my-skill            ← load a skill
-@call tool-name arg      ← call a tool
-@if $mode == "fast"      ← conditional
-@for $item in $list      ← loop
-:::parallel              ← parallel block
-  @call tool-a
-  @call tool-b
-:::
-@assert $result != null  ← assertion
-@output result $report   ← capture output
-```
-
----
-
-## CLI Commands
+### Build Commands
 
 ```bash
-chainskills run <workflow>       # Execute a .workflow.md
-chainskills validate <workflow>  # Validate without running
-chainskills inspect <workflow>   # Show parsed AST + DAG
-chainskills list [dir]           # List available workflows
-chainskills serve [--port]       # Start MCP server (HTTP/stdio)
-chainskills init [name]          # Create a new workflow
+cd cli-mcp-core && pnpm build && pnpm test   # CLI/Core
+cd vscode-extension && npm run compile        # Extension
 ```
 
 ---
 
-## Project-Local Skills (`.github/skills/`)
+## Shared Agents (`.github/agents/`)
+
+| Agent | Role | Scope |
+|-------|------|-------|
+| **Research** | Deep research — web, npm, GitHub, VS Code API, MCP spec | Both packages |
+| **Plan** | Read-only exploration, implementation plans | Both packages |
+| **Review** | Quality assurance, architecture compliance | Both packages |
+| **Orchestrator** | Supervisor — routes to specialized agents | Both packages |
+| **Extension** | VS Code API specialist — providers, Chat, Agent Mode | `vscode-extension/` |
+
+---
+
+## Skills Ecosystem
+
+### Global Skills (`~/.agents/skills/`)
 
 | Skill | Purpose |
 |-------|---------|
-| **smart** | Auto-learning from chainskills development errors |
-| **smart-commit** | Grouped commits with CLI-specific scopes |
-| **research** | Multi-source research protocol for this project |
+| **agentic-workspace** | SOTA agentic workspace setup — agents, skills, instructions layering |
+
+### Workspace Skills (`.github/skills/`)
+
+| Skill | Purpose |
+|-------|---------|
+| **monorepo-sync** | Keep roadmaps, AGENTS.md, versions in sync across packages |
+| **smart** | Auto-learning from development errors |
+| **smart-commit** | Grouped commits with architecture-aware scopes |
+| **research** | Multi-source research protocol with freshness validation |
 
 ---
 
-## Project-Local Prompts (`.github/prompts/`)
+## Instructions (`.github/instructions/`)
+
+| File | `applyTo` | Purpose |
+|------|-----------|---------|
+| `core.instructions.md` | `cli-mcp-core/src/core/**` | Zero deps, Result pattern, immutability |
+| `cli.instructions.md` | `cli-mcp-core/src/cli/**` | Citty conventions, one-file-per-command, DI |
+| `adapters.instructions.md` | `cli-mcp-core/src/adapters/**` | Ports & adapters, DI, no domain logic |
+| `tests.instructions.md` | `**/tests/**` | Vitest conventions, unit vs integration |
+| `extension.instructions.md` | `vscode-extension/**` | VS Code API, Disposable, webpack |
+| `providers.instructions.md` | `vscode-extension/src/providers/**` | Provider interfaces, WorkflowDocument cache |
+
+---
+
+## Prompts (`.github/prompts/`)
 
 | Prompt | Agent | Purpose |
 |--------|-------|---------|
-| **smart-commit** | agent | CLI-specific scopes: core, parser, executor, mcp, cli |
-| **smart-review** | Review | Hexagonal compliance + code quality |
+| **smart-commit** | agent | Monorepo-aware grouped commits with pre-commit audit |
+| **smart-review** | Review | Cross-package architecture compliance review |
 | **chainskills-plan** | agent | Complete project blueprint (491 lines) |
 
 ---
 
-## Path-Specific Instructions (`.github/instructions/`)
+## Cross-Package Architecture
 
-| Pattern | File | Purpose |
-|---------|------|---------|
-| `src/core/**` | [core.instructions.md](instructions/core.instructions.md) | Zero deps, Result pattern, immutability |
-| `src/cli/**` | [cli.instructions.md](instructions/cli.instructions.md) | Citty conventions, one-file-per-command, DI |
+Both packages follow **Hexagonal (Ports & Adapters)**:
+- Core domain: zero external dependencies
+- Dependencies point inward: adapters → core, never reverse
+- Every integration uses a port (interface) + adapter (implementation)
+- Result/Either pattern for error handling — never `throw` for business logic
 
-Cross-package instructions (adapters, tests) → [../../.github/instructions/](../../.github/instructions/)
+### Conventions
 
----
-
-## MCP Server
-
-**Configuration**: `.vscode/mcp.json` → auto-discovered by GitHub Copilot
-
-```json
-{ "servers": { "chainskills": { "type": "stdio", "command": "node",
-  "args": ["./bin/cli.mjs", "serve", "--stdio"] } } }
-```
-
-**5 tools**: `run_workflow`, `validate_workflow`, `list_workflows`, `inspect_workflow`, `get_skill`
-**2 prompts**: `create_workflow`, `workflow_best_practices`
+- **Language**: TypeScript strict everywhere
+- **Imports**: ESM only (`import`/`export`), no CommonJS
+- **Naming**: kebab-case files, PascalCase classes, camelCase functions
+- **Types**: Strong typing, generics, `unknown` over `any`
+- **Config**: All params via environment variables, no hardcoded values
+- **Secrets**: Never in code or git. `.env` = dev only → `.gitignore`
 
 ---
 
-## Build & Test
+## Project-Specific Context
 
-```bash
-pnpm build      # obuild → dist/ (5 bundles, 770 KB)
-pnpm test       # Vitest (197 tests across 14 files)
-pnpm lint       # ESLint
-pnpm exec tsc --noEmit  # Type check
-```
+- **CLI/Core**: [cli-mcp-core/AGENTS.md](cli-mcp-core/AGENTS.md)
+- **Extension**: [vscode-extension/AGENTS.md](vscode-extension/AGENTS.md)
 
 ---
 
 ## Roadmap
-
-**Canonical**: [ROADMAP.md](ROADMAP.md) (811 lines — phases, checkboxes, changelog, decisions)
 
 | Phase | Version | Status |
 |-------|---------|--------|
@@ -165,3 +109,5 @@ pnpm exec tsc --noEmit  # Type check
 | 6 | v0.6.0 | 🔄 En cours — Copilot Chat + Agent Mode |
 | 7 | v0.7.0 | ⏳ Planifié — Debug Adapter + Test Controller |
 | 8+ | v0.8.0+ | ⏳ Planifié — Registry + Community |
+
+**Portfolio**: [ROADMAP.md](ROADMAP.md) | **Canonical**: [cli-mcp-core/.github/ROADMAP.md](cli-mcp-core/.github/ROADMAP.md)

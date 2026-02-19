@@ -17,7 +17,7 @@ Keeps all documentation and version metadata consistent across the `cli-mcp-core
 | File | Purpose | Syncs With |
 |------|---------|------------|
 | `ROADMAP.md` (root) | Portfolio summary | `cli-mcp-core/.github/ROADMAP.md` (canonical) |
-| `AGENTS.md` (root) | Monorepo index | `cli-mcp-core/.github/AGENTS.md` + `vscode-extension/AGENTS.md` |
+| `AGENTS.md` (root) | Monorepo index | `cli-mcp-core/AGENTS.md` + `vscode-extension/AGENTS.md` |
 | `cli-mcp-core/package.json` | CLI version | `cli-mcp-core/.github/ROADMAP.md` changelog |
 | `vscode-extension/package.json` | Extension version | `cli-mcp-core/.github/ROADMAP.md` changelog |
 
@@ -36,7 +36,7 @@ Keeps all documentation and version metadata consistent across the `cli-mcp-core
 
 3. **Update AGENTS.md files**:
    - Root `AGENTS.md`: update phase status in roadmap table
-   - `cli-mcp-core/.github/AGENTS.md`: same update
+   - `cli-mcp-core/AGENTS.md`: same update
    - Check that agent/skill references are still valid
 
 4. **Bump package versions** (if applicable):
@@ -46,7 +46,7 @@ Keeps all documentation and version metadata consistent across the `cli-mcp-core
 ### On New Agent/Skill/Instruction Added
 
 1. Add entry to root `AGENTS.md` (agents table or skills table)
-2. Add entry to relevant project AGENTS.md (`cli-mcp-core/.github/AGENTS.md` or `vscode-extension/AGENTS.md`)
+2. Add entry to relevant project AGENTS.md (`cli-mcp-core/AGENTS.md` or `vscode-extension/AGENTS.md`)
 3. Verify `applyTo` patterns don't conflict with existing instructions
 
 ### On README Update

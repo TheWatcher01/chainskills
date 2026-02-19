@@ -1,6 +1,6 @@
 ---
-description: Instructions for chainskills core domain code
-applyTo: "src/core/**"
+description: Instructions for chainskills core domain — zero deps, Result pattern, immutability
+applyTo: "cli-mcp-core/src/core/**"
 ---
 
 # Core Domain Instructions — chainskills
@@ -26,9 +26,9 @@ Le dossier `src/core/` contient le domaine pur du framework chainskills.
 ```typescript
 // Exemple — entité Workflow
 export interface Workflow {
-  readonly name: string;        // kebab-case, 1-64 chars
+  readonly name: string; // kebab-case, 1-64 chars
   readonly description: string;
-  readonly version: string;     // semver
+  readonly version: string; // semver
   readonly steps: readonly Step[];
   readonly inputs: readonly InputDef[];
   readonly outputs: readonly OutputDef[];
@@ -43,7 +43,10 @@ export interface Workflow {
 ```typescript
 // Exemple — port executor
 export interface WorkflowExecutor {
-  execute(workflow: WorkflowIR, inputs: Record<string, unknown>): Promise<Result<ExecutionResult, ExecutionError>>;
+  execute(
+    workflow: WorkflowIR,
+    inputs: Record<string, unknown>,
+  ): Promise<Result<ExecutionResult, ExecutionError>>;
 }
 ```
 

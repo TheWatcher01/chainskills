@@ -8,13 +8,13 @@
 
 **vscode-extension** is the VS Code extension of chainskills — provides language features, syntax highlighting, Copilot Chat integration, and a DAG visualizer for `.workflow.md` files.
 
-| Key | Value |
-|-----|-------|
-| **Language** | TypeScript (strict) |
-| **Engine** | VS Code ^1.90.0 (→ ^1.99.0 for v0.6.0) |
-| **Language ID** | `workflow-markdown` |
-| **Bundle** | Webpack 5 — 77KB (v0.5.0) |
-| **Build** | `npm run compile` |
+| Key              | Value                                             |
+| ---------------- | ------------------------------------------------- |
+| **Language**     | TypeScript (strict)                               |
+| **Engine**       | VS Code ^1.90.0 (→ ^1.99.0 for v0.6.0)            |
+| **Language ID**  | `workflow-markdown`                               |
+| **Bundle**       | Webpack 5 — 77KB (v0.5.0)                         |
+| **Build**        | `npm run compile`                                 |
 | **Architecture** | VS Code Extension (Disposable + Provider pattern) |
 
 ---
@@ -68,30 +68,30 @@ It knows the full API surface, current state, and v0.6.0 planned features.
 
 ## Current Features (v0.5.0)
 
-| Feature | Status | File |
-|---------|--------|------|
-| 10 commands | ✅ | `commands.ts` |
-| TreeView (Explorer) | ✅ | `tree-provider.ts` |
-| CodeLens (Run/Validate/DAG) | ✅ | `providers/code-lens.provider.ts` |
-| Completion (@directives, $vars) | ✅ | `providers/completion.provider.ts` |
-| Diagnostics (live validation) | ✅ | `providers/diagnostics.provider.ts` |
-| Document Links | ✅ | `providers/document-link.provider.ts` |
-| File Decorations | ✅ | `providers/file-decoration.provider.ts` |
-| Folding Ranges | ✅ | `providers/folding.provider.ts` |
-| Hover Documentation | ✅ | `providers/hover.provider.ts` |
-| Document Symbols | ✅ | `providers/symbols.provider.ts` |
-| StatusBar | ✅ | `views/status-bar.ts` |
-| TextMate Grammar | ✅ | `syntaxes/workflow.tmLanguage.json` |
+| Feature                         | Status | File                                    |
+| ------------------------------- | ------ | --------------------------------------- |
+| 10 commands                     | ✅     | `commands.ts`                           |
+| TreeView (Explorer)             | ✅     | `tree-provider.ts`                      |
+| CodeLens (Run/Validate/DAG)     | ✅     | `providers/code-lens.provider.ts`       |
+| Completion (@directives, $vars) | ✅     | `providers/completion.provider.ts`      |
+| Diagnostics (live validation)   | ✅     | `providers/diagnostics.provider.ts`     |
+| Document Links                  | ✅     | `providers/document-link.provider.ts`   |
+| File Decorations                | ✅     | `providers/file-decoration.provider.ts` |
+| Folding Ranges                  | ✅     | `providers/folding.provider.ts`         |
+| Hover Documentation             | ✅     | `providers/hover.provider.ts`           |
+| Document Symbols                | ✅     | `providers/symbols.provider.ts`         |
+| StatusBar                       | ✅     | `views/status-bar.ts`                   |
+| TextMate Grammar                | ✅     | `syntaxes/workflow.tmLanguage.json`     |
 
 ## Planned Features (v0.6.0+)
 
-| Feature | API | Priority |
-|---------|-----|---------|
-| Chat Participant `@chainskills` | `vscode.chat.createChatParticipant()` | P0 |
-| Agent Mode Tools (6 tools) | `vscode.lm.registerTool()` | P0 |
-| DAG Webview (D3.js + dagre) | `vscode.window.createWebviewPanel()` | P1 |
-| Debug Adapter (v0.7.0) | `DebugAdapterDescriptorFactory` | P2 |
-| Test Controller (v0.7.0) | `vscode.tests.createTestController()` | P2 |
+| Feature                         | API                                   | Priority |
+| ------------------------------- | ------------------------------------- | -------- |
+| Chat Participant `@chainskills` | `vscode.chat.createChatParticipant()` | P0       |
+| Agent Mode Tools (6 tools)      | `vscode.lm.registerTool()`            | P0       |
+| DAG Webview (D3.js + dagre)     | `vscode.window.createWebviewPanel()`  | P1       |
+| Debug Adapter (v0.7.0)          | `DebugAdapterDescriptorFactory`       | P2       |
+| Test Controller (v0.7.0)        | `vscode.tests.createTestController()` | P2       |
 
 ---
 
@@ -108,9 +108,9 @@ npm run compile    # webpack → dist/extension.js (77KB)
 
 [Canonical roadmap](../cli-mcp-core/.github/ROADMAP.md) | [Portfolio](../ROADMAP.md)
 
-| Phase | Status |
-|-------|--------|
-| v0.4.0 Extension skeleton | ✅ Complété |
+| Phase                                  | Status                 |
+| -------------------------------------- | ---------------------- |
+| v0.4.0 Extension skeleton              | ✅ Complété            |
 | v0.5.0 Language Features (8 providers) | ✅ Complété 2026-02-19 |
-| v0.6.0 Copilot Chat + Agent Mode | 🔄 En cours |
-| v0.7.0 Debug Adapter + Test Controller | ⏳ Planifié |
+| v0.6.0 Copilot Chat + Agent Mode       | 🔄 En cours            |
+| v0.7.0 Debug Adapter + Test Controller | ⏳ Planifié            |

@@ -42,14 +42,14 @@ cd vscode-extension && npm run compile
 ## Agentic Infrastructure
 
 - **Agents**: `.github/agents/` — shared across both packages (Research, Plan, Review, Orchestrator, Extension)
-- **Skills**: `cli-mcp-core/.github/skills/` — project-local; `~/.agents/skills/` — global
-- **Instructions**: `.github/instructions/` (root, cross-package) + `cli-mcp-core/.github/instructions/` (CLI-specific)
-- **Prompts**: `.github/prompts/` (shared) + `cli-mcp-core/.github/prompts/` (CLI-specific)
+- **Skills**: `.github/skills/` — workspace-level; `~/.agents/skills/` — global
+- **Instructions**: `.github/instructions/` — all path-specific instructions (6 files with `applyTo` globs)
+- **Prompts**: `.github/prompts/` — all prompts (smart-commit, smart-review, chainskills-plan)
 - **AGENTS.md**: Root = monorepo index. Project = project detail (nearest-wins).
 
 ## Detailed Context
 
-- **CLI/Core**: [cli-mcp-core/.github/AGENTS.md](../cli-mcp-core/.github/AGENTS.md)
+- **CLI/Core**: [cli-mcp-core/AGENTS.md](../cli-mcp-core/AGENTS.md)
 - **Extension**: [vscode-extension/AGENTS.md](../vscode-extension/AGENTS.md)
 - **Roadmap**: [ROADMAP.md](../ROADMAP.md) (portfolio) | [cli-mcp-core ROADMAP](../cli-mcp-core/.github/ROADMAP.md) (canonical)
 

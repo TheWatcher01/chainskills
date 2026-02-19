@@ -5,5 +5,7 @@
         "pnpm test": true,
         "npm run compile": true
     },
-    "chat.agentFilesLocations": [".github/agents"]
+    "chat.agentFilesLocations": [
+        ".github/agents"
+    ]
 }

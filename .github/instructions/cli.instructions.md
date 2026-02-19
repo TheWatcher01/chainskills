@@ -1,6 +1,6 @@
 ---
-description: Instructions for chainskills CLI commands
-applyTo: "src/cli/**"
+description: Instructions for chainskills CLI commands — Citty conventions, one-file-per-command, DI
+applyTo: "cli-mcp-core/src/cli/**"
 ---
 
 # CLI Instructions — chainskills
@@ -21,28 +21,28 @@ Toutes les commandes CLI utilisent [Citty](https://github.com/unjs/citty) (UnJS 
 ## Structure d'une commande
 
 ```typescript
-import { defineCommand } from 'citty';
-import pc from 'picocolors';
+import { defineCommand } from "citty";
+import pc from "picocolors";
 
 export default defineCommand({
   meta: {
-    name: 'run',
-    description: 'Execute a .workflow.md file',
+    name: "run",
+    description: "Execute a .workflow.md file",
   },
   args: {
     workflow: {
-      type: 'positional',
-      description: 'Path to the .workflow.md file',
+      type: "positional",
+      description: "Path to the .workflow.md file",
       required: true,
     },
     input: {
-      type: 'string',
-      description: 'Input parameters (key=value)',
-      alias: 'i',
+      type: "string",
+      description: "Input parameters (key=value)",
+      alias: "i",
     },
     dryRun: {
-      type: 'boolean',
-      description: 'Show execution plan without running',
+      type: "boolean",
+      description: "Show execution plan without running",
       default: false,
     },
   },
