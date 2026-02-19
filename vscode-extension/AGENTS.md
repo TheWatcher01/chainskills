@@ -1,7 +1,7 @@
 # AGENTS.md — vscode-extension
 
 > Project-specific context for the VS Code extension package.
-> Shared agents (Research, Plan, Review, Orchestrator, Extension) → [../.github/agents/](../.github/agents/)
+> Shared agents (Research, Architect, Review, Orchestrator, Extension) → [../.github/agents/](../.github/agents/)
 > Monorepo index → [../AGENTS.md](../AGENTS.md)
 
 ## Package

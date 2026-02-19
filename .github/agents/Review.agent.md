@@ -5,7 +5,7 @@ user-invokable: true
 disable-model-invocation: false
 handoffs:
     - label: Plan Improvements
-      agent: Plan
+      agent: Architect
       prompt: Plan improvements based on the review findings above.
       send: false
 ---
