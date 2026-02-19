@@ -1,5 +1,9 @@
 {
     "chat.tools.terminal.autoApprove": {
-        "npm run build": true
-    }
+        "npm run build": true,
+        "pnpm build": true,
+        "pnpm test": true,
+        "npm run compile": true
+    },
+    "chat.agentFilesLocations": [".github/agents"]
 }
