@@ -38,6 +38,10 @@ import {
 } from './directive-handlers.js';
 import type { Logger } from '#infra/logger.js';
 import type { AgentProvider } from '#core/ports/agent-provider.port.js';
+import type { RunHistory } from '#core/ports/run-history.port.js';
+import type { SnapshotManager } from '#core/ports/snapshot-manager.port.js';
+import type { RulesStore } from '#core/ports/rules-store.port.js';
+import type { ReflectionEngine } from '#core/services/reflection-engine.js';
 
 /**
  * Simple implementation of ExecutionController.
@@ -131,6 +135,10 @@ export interface SimpleExecutorDeps {
     readonly resolver?: SkillResolver;
     readonly parser?: WorkflowParser;
     readonly agent?: AgentProvider;
+    readonly history?: RunHistory;
+    readonly snapshots?: SnapshotManager;
+    readonly rulesStore?: RulesStore;
+    readonly reflectionEngine?: ReflectionEngine;
 }
 
 /**
@@ -142,7 +150,7 @@ export interface SimpleExecutorDeps {
 export function createSimpleExecutor(
     deps: SimpleExecutorDeps,
 ): WorkflowExecutor {
-    const { store, tools, logger, emitter, resolver, parser, agent } = deps;
+    const { store, tools, logger, emitter, resolver, parser, agent, history, snapshots, rulesStore, reflectionEngine } = deps;
 
     return {
         async execute(
@@ -155,9 +163,29 @@ export function createSimpleExecutor(
             const stepResults: StepResult[] = [];
             const controller = new SimpleExecutionController();
 
+            // Start run history recording
+            const runId = history?.startRun(
+                workflow.name,
+                inputs,
+                undefined,
+                workflow.version,
+            );
+
             // Seed store with inputs
             for (const [key, value] of Object.entries(inputs)) {
                 store.set(key, value);
+            }
+
+            // Record events to history if available
+            if (runId && history && emitter) {
+                emitter.on((event) => {
+                    history.recordEvent(
+                        runId,
+                        event.type,
+                        'stepId' in event ? (event as { stepId?: string }).stepId : undefined,
+                        event as unknown as Record<string, unknown>,
+                    );
+                });
             }
 
             logger?.info(`Executing workflow: ${workflow.name}`, {
@@ -185,6 +213,7 @@ export function createSimpleExecutor(
                         success: false,
                         duration: Date.now() - startTime,
                     });
+                    if (runId) history?.endRun(runId, 'cancelled');
                     return err(
                         executionError(
                             'CANCELLED',
@@ -212,6 +241,12 @@ export function createSimpleExecutor(
                     resolver,
                     parser,
                     agent,
+                    workflow.outputSchema,
+                    snapshots,
+                    runId,
+                    rulesStore,
+                    reflectionEngine,
+                    workflow.name,
                 );
                 stepResults.push(stepResult);
 
@@ -231,6 +266,8 @@ export function createSimpleExecutor(
                         success: false,
                         duration: Date.now() - startTime,
                     });
+
+                    if (runId) history?.endRun(runId, 'failed', undefined, stepResult.error);
 
                     return err(
                         executionError(
@@ -259,6 +296,8 @@ export function createSimpleExecutor(
                 duration,
                 outputs,
             });
+
+            if (runId) history?.endRun(runId, 'completed', outputs);
 
             return ok({
                 outputs,
@@ -308,6 +347,12 @@ async function executeStep(
     resolver?: SkillResolver,
     parser?: WorkflowParser,
     agent?: AgentProvider,
+    outputSchema?: Readonly<Record<string, import('#core/ports/schema-validator.port.js').SchemaDefinition>>,
+    snapshots?: SnapshotManager,
+    runId?: string,
+    rulesStore?: RulesStore,
+    reflectionEngine?: ReflectionEngine,
+    workflowName?: string,
 ): Promise<StepResult> {
     const startTime = Date.now();
 
@@ -332,6 +377,12 @@ async function executeStep(
         agent,
         dryRun,
         stepId: step.id,
+        outputSchema,
+        snapshots,
+        runId,
+        rulesStore,
+        reflectionEngine,
+        workflowName,
     };
 
     try {

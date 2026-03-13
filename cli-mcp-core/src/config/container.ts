@@ -28,6 +28,11 @@ import type { ToolProvider } from '#core/ports/tool-provider.port.js';
 import type { SkillResolver } from '#core/ports/skill-resolver.port.js';
 import type { ExecutionEventEmitter } from '#core/ports/execution-events.port.js';
 import type { AgentProvider } from '#core/ports/agent-provider.port.js';
+import type { PersistenceStore } from '#core/ports/persistence.port.js';
+import type { RunHistory } from '#core/ports/run-history.port.js';
+import type { SnapshotManager } from '#core/ports/snapshot-manager.port.js';
+import type { RulesStore } from '#core/ports/rules-store.port.js';
+import type { ReflectionEngine } from '#core/services/reflection-engine.js';
 
 /** Container exposing all wired services. */
 export interface Container {
@@ -40,6 +45,11 @@ export interface Container {
     readonly resolver: SkillResolver;
     readonly emitter: ExecutionEventEmitter;
     readonly agent: AgentProvider;
+    readonly persistence?: PersistenceStore;
+    readonly history?: RunHistory;
+    readonly snapshots?: SnapshotManager;
+    readonly rulesStore?: RulesStore;
+    readonly reflectionEngine?: ReflectionEngine;
 }
 
 /**
@@ -107,7 +117,36 @@ export async function createContainer(
         }, logger)
         : createNoopAgent();
 
+    // Persistence layer — lazy init (only when recording/snapshots/rules are used)
+    let persistence: PersistenceStore | undefined;
+    let history: RunHistory | undefined;
+    let snapshots: SnapshotManager | undefined;
+    let rulesStore: RulesStore | undefined;
+    let reflectionEngine: ReflectionEngine | undefined;
+
+    try {
+        const { createSqlitePersistence } = await import('#adapters/state/sqlite-persistence.js');
+        const { createSqliteRunHistory } = await import('#adapters/state/sqlite-run-history.js');
+        const { createSqliteSnapshotManager } = await import('#adapters/state/sqlite-snapshot-manager.js');
+        const { createSqliteRulesStore } = await import('#adapters/state/sqlite-rules-store.js');
+        const { createReflectionEngine } = await import('#core/services/reflection-engine.js');
+
+        persistence = createSqlitePersistence();
+        history = createSqliteRunHistory(persistence);
+        snapshots = createSqliteSnapshotManager(persistence);
+        rulesStore = createSqliteRulesStore(persistence);
+
+        if (agentApiKey) {
+            reflectionEngine = createReflectionEngine(agent);
+        }
+
+        logger.debug('Persistence layer initialized');
+    } catch (e) {
+        logger.debug(`Persistence layer not available: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
     // Executor — strategy pattern via config
+    const executorDeps = { store, tools, logger, emitter, resolver, parser, agent, history, snapshots, rulesStore, reflectionEngine };
     let executor: WorkflowExecutor;
     if (config.executor === 'mastra') {
         try {
@@ -119,10 +158,10 @@ export async function createContainer(
         } catch {
             // Fallback to simple executor if Mastra is not available
             logger.warn('MastraExecutor not available, falling back to SimpleExecutor');
-            executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent });
+            executor = createSimpleExecutor(executorDeps);
         }
     } else {
-        executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent });
+        executor = createSimpleExecutor(executorDeps);
     }
 
     return {
@@ -135,5 +174,10 @@ export async function createContainer(
         resolver,
         emitter,
         agent,
+        persistence,
+        history,
+        snapshots,
+        rulesStore,
+        reflectionEngine,
     };
 }

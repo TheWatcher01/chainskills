@@ -14,6 +14,7 @@ import type { ParseError } from '#infra/errors.js';
 import { ok, err, parseError } from '#infra/errors.js';
 import type { InputDef, OutputDef } from '#core/entities/variable.js';
 import type { WorkflowMetadata } from '#core/entities/workflow.js';
+import type { SchemaDefinition } from '#core/ports/schema-validator.port.js';
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────
 
@@ -31,6 +32,12 @@ const OutputDefSchema = z.object({
     description: z.string().optional(),
 });
 
+const RunStatsSchema = z.object({
+    totalRuns: z.number().optional(),
+    successCount: z.number().optional(),
+    lastRunAt: z.string().optional(),
+}).optional();
+
 const FrontmatterSchema = z.object({
     name: z.string().min(1, 'Workflow name is required'),
     description: z.string().default(''),
@@ -42,6 +49,12 @@ const FrontmatterSchema = z.object({
     author: z.string().optional(),
     license: z.string().optional(),
     minChainskills: z.string().optional(),
+    status: z.enum(['draft', 'validated', 'deprecated']).optional(),
+    validatedBy: z.string().optional(),
+    validatedAt: z.string().optional(),
+    validationHash: z.string().optional(),
+    runStats: RunStatsSchema,
+    outputSchema: z.record(z.string(), z.any()).optional(),
 });
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -56,6 +69,7 @@ export interface WorkflowFrontmatter {
     readonly env: readonly string[];
     readonly tags: readonly string[];
     readonly metadata: WorkflowMetadata;
+    readonly outputSchema?: Readonly<Record<string, SchemaDefinition>>;
 }
 
 /** Result of parsing: frontmatter data + the remaining Markdown body. */
@@ -113,8 +127,19 @@ export function parseFrontmatter(
             author: data.author,
             license: data.license,
             minChainskills: data.minChainskills,
+            status: data.status,
+            validatedBy: data.validatedBy,
+            validatedAt: data.validatedAt,
+            validationHash: data.validationHash,
+            runStats: data.runStats,
         },
     };
+
+    // Attach outputSchema if present
+    if (data.outputSchema) {
+        (frontmatter as { outputSchema?: Record<string, SchemaDefinition> }).outputSchema =
+            data.outputSchema as Record<string, SchemaDefinition>;
+    }
 
     return ok({ frontmatter, body: parsed.content });
 }

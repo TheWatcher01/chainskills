@@ -23,6 +23,11 @@ export type ExecutionEventType =
     | 'parallel:start'
     | 'parallel:end'
     | 'loop:iteration'
+    | 'snapshot:created'
+    | 'snapshot:restored'
+    | 'reflection:complete'
+    | 'validation:passed'
+    | 'validation:failed'
     | 'error';
 
 /** Base event shape. */
@@ -120,6 +125,48 @@ export interface ErrorEvent extends BaseEvent {
     readonly code?: string;
 }
 
+/** Emitted when a state snapshot is created. */
+export interface SnapshotCreatedEvent extends BaseEvent {
+    readonly type: 'snapshot:created';
+    readonly stepId: string;
+    readonly label: string;
+    readonly snapshotId: number;
+}
+
+/** Emitted when a state snapshot is restored. */
+export interface SnapshotRestoredEvent extends BaseEvent {
+    readonly type: 'snapshot:restored';
+    readonly stepId: string;
+    readonly label: string;
+    readonly snapshotId: number;
+}
+
+/** Emitted when a reflection analysis completes. */
+export interface ReflectionCompleteEvent extends BaseEvent {
+    readonly type: 'reflection:complete';
+    readonly stepId: string;
+    readonly summary: string;
+    readonly rulesCount: number;
+    readonly suggestionsCount: number;
+}
+
+/** Emitted when a @validate check passes. */
+export interface ValidationPassedEvent extends BaseEvent {
+    readonly type: 'validation:passed';
+    readonly stepId: string;
+    readonly variable: string;
+    readonly schemaName: string;
+}
+
+/** Emitted when a @validate check fails. */
+export interface ValidationFailedEvent extends BaseEvent {
+    readonly type: 'validation:failed';
+    readonly stepId: string;
+    readonly variable: string;
+    readonly schemaName: string;
+    readonly issues: readonly string[];
+}
+
 /** Union of all execution event types. */
 export type ExecutionEvent =
     | WorkflowStartEvent
@@ -132,6 +179,11 @@ export type ExecutionEvent =
     | ParallelStartEvent
     | ParallelEndEvent
     | LoopIterationEvent
+    | SnapshotCreatedEvent
+    | SnapshotRestoredEvent
+    | ReflectionCompleteEvent
+    | ValidationPassedEvent
+    | ValidationFailedEvent
     | ErrorEvent;
 
 // ─── Event Emitter Interface ─────────────────────────────────────────────────

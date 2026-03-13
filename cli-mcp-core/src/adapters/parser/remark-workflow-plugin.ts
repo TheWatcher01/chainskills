@@ -54,6 +54,7 @@ const BLOCK_DIRECTIVE_TYPES = new Set<string>([
     'repeat',
     'try',
     'workflow',
+    'team',
 ]);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -226,6 +227,69 @@ function parseDirectiveArgs(
             const workflowMatch = raw.match(/^@workflow\s+([\w-]+)/);
             if (workflowMatch) {
                 args['ref'] = workflowMatch[1];
+            }
+            break;
+        }
+        case 'validate': {
+            // @validate $var against schema:Name
+            const validateMatch = raw.match(
+                /^@validate\s+(\$\w+)\s+against\s+schema:(\w+)/,
+            );
+            if (validateMatch) {
+                args['variable'] = validateMatch[1];
+                args['schema'] = validateMatch[2];
+            }
+            break;
+        }
+        case 'snapshot': {
+            // @snapshot "label"
+            const snapMatch = raw.match(/^@snapshot\s+"([^"]+)"/);
+            if (snapMatch) {
+                args['label'] = snapMatch[1];
+            }
+            break;
+        }
+        case 'restore': {
+            // @restore "label"
+            const restoreMatch = raw.match(/^@restore\s+"([^"]+)"/);
+            if (restoreMatch) {
+                args['label'] = restoreMatch[1];
+            }
+            break;
+        }
+        case 'reflect': {
+            // @reflect: "prompt" → $var
+            const reflectMatch = raw.match(
+                /^@reflect:\s*"([^"]*)"(?:\s*(?:→|->|>)\s*\$(\w+))?/,
+            );
+            if (reflectMatch) {
+                args['prompt'] = reflectMatch[1];
+                if (reflectMatch[2]) args['capture'] = reflectMatch[2];
+            }
+            break;
+        }
+        case 'team': {
+            // @team name concurrency:N:
+            const teamMatch = raw.match(/^@team\s+([\w-]+)/);
+            if (teamMatch) {
+                args['name'] = teamMatch[1];
+            }
+            const teamConcurrency = raw.match(/concurrency:(\d+)/);
+            if (teamConcurrency) {
+                args['concurrency'] = Number(teamConcurrency[1]);
+            }
+            break;
+        }
+        case 'vote': {
+            // @vote count:N: "prompt" → $var
+            const countMatch = raw.match(/count:(\d+)/);
+            if (countMatch) {
+                args['count'] = Number(countMatch[1]);
+            }
+            const votePromptMatch = raw.match(/"([^"]*)"(?:\s*(?:→|->|>)\s*\$(\w+))?/);
+            if (votePromptMatch) {
+                args['prompt'] = votePromptMatch[1];
+                if (votePromptMatch[2]) args['capture'] = votePromptMatch[2];
             }
             break;
         }

@@ -69,6 +69,15 @@ export function validateWorkflow(
         });
     }
 
+    // ── Validation Lifecycle ────────────────────────────────────────────
+    if (workflow.metadata.status === 'deprecated') {
+        diagnostics.push({
+            severity: 'warning',
+            code: 'DEPRECATED_WORKFLOW',
+            message: 'This workflow is marked as deprecated and should not be used in production',
+        });
+    }
+
     // ── Steps ─────────────────────────────────────────────────────────────
     if (workflow.steps.length === 0) {
         diagnostics.push({

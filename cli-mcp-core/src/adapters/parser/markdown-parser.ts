@@ -95,6 +95,7 @@ export function parseMarkdownWorkflow(
         env: frontmatter.env,
         tags: frontmatter.tags,
         metadata: frontmatter.metadata,
+        outputSchema: frontmatter.outputSchema,
     };
 
     return ok(workflow);

@@ -9,6 +9,17 @@
 
 import type { InputDef, OutputDef } from './variable.js';
 import type { Step } from './step.js';
+import type { SchemaDefinition } from '#core/ports/schema-validator.port.js';
+
+/** Workflow validation status. */
+export type WorkflowStatus = 'draft' | 'validated' | 'deprecated';
+
+/** Run statistics tracked across executions. */
+export interface RunStats {
+    readonly totalRuns?: number;
+    readonly successCount?: number;
+    readonly lastRunAt?: string;
+}
 
 /**
  * Workflow metadata from frontmatter optional fields.
@@ -18,6 +29,16 @@ export interface WorkflowMetadata {
     readonly license?: string;
     /** Minimum chainskills version required. */
     readonly minChainskills?: string;
+    /** Validation lifecycle status. */
+    readonly status?: WorkflowStatus;
+    /** Who validated this workflow. */
+    readonly validatedBy?: string;
+    /** When this workflow was validated (ISO 8601). */
+    readonly validatedAt?: string;
+    /** SHA-256 hash at validation time — detects post-validation changes. */
+    readonly validationHash?: string;
+    /** Aggregated run statistics. */
+    readonly runStats?: RunStats;
     /** Arbitrary extra metadata. */
     readonly [key: string]: unknown;
 }
@@ -47,4 +68,6 @@ export interface Workflow {
     readonly tags: readonly string[];
     /** Additional metadata. */
     readonly metadata: WorkflowMetadata;
+    /** Output validation schemas declared in frontmatter. */
+    readonly outputSchema?: Readonly<Record<string, SchemaDefinition>>;
 }

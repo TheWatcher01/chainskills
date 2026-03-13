@@ -98,6 +98,7 @@ export const listCommand = defineCommand({
             description: string;
             steps: number;
             tags: string[];
+            status: string;
         }> = [];
 
         for (const filePath of files) {
@@ -112,6 +113,7 @@ export const listCommand = defineCommand({
                         description: result.value.description,
                         steps: result.value.steps.length,
                         tags: [...result.value.tags],
+                        status: (result.value.metadata.status as string) ?? 'draft',
                     });
                 } else {
                     workflows.push({
@@ -121,6 +123,7 @@ export const listCommand = defineCommand({
                         description: result.error.message,
                         steps: 0,
                         tags: [],
+                        status: '-',
                     });
                 }
             } catch {
@@ -131,6 +134,7 @@ export const listCommand = defineCommand({
                     description: 'Failed to read file',
                     steps: 0,
                     tags: [],
+                    status: '-',
                 });
             }
         }
@@ -146,13 +150,18 @@ export const listCommand = defineCommand({
             const nameStr = pc.bold(wf.name);
             const versionStr = pc.dim(`v${wf.version}`);
             const stepsStr = pc.dim(`(${wf.steps} steps)`);
+            const statusStr = wf.status === 'validated'
+                ? pc.green('✓')
+                : wf.status === 'deprecated'
+                    ? pc.red('⊘')
+                    : pc.dim('○');
             const tagsStr =
                 wf.tags.length > 0
                     ? pc.blue(` [${wf.tags.join(', ')}]`)
                     : '';
             const pathStr = pc.dim(`  ${wf.path}`);
 
-            console.log(`  ${nameStr} ${versionStr} ${stepsStr}${tagsStr}`);
+            console.log(`  ${statusStr} ${nameStr} ${versionStr} ${stepsStr}${tagsStr}`);
             console.log(`  ${pc.dim(wf.description)}`);
             console.log(pathStr);
             console.log('');

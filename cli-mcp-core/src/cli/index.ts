@@ -13,11 +13,16 @@ import { initCommand } from './init.js';
 import { inspectCommand } from './inspect.js';
 import { listCommand } from './list.js';
 import { serveCommand } from './serve.js';
+import { certifyCommand } from './certify.js';
+import { historyCommand } from './history.js';
+import { replayCommand } from './replay.js';
+import { snapshotCommand } from './snapshot.js';
+import { rulesCommand } from './rules.js';
 
 const main = defineCommand({
     meta: {
         name: 'chainskills',
-        version: '0.3.0',
+        version: '0.7.0',
         description:
             'Compose, share, and run AI agent workflows written in natural language',
     },
@@ -28,6 +33,11 @@ const main = defineCommand({
         inspect: inspectCommand,
         list: listCommand,
         serve: serveCommand,
+        certify: certifyCommand,
+        history: historyCommand,
+        replay: replayCommand,
+        snapshot: snapshotCommand,
+        rules: rulesCommand,
     },
 });
 

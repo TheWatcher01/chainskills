@@ -19,6 +19,16 @@ import type { AgentProvider } from '#core/ports/agent-provider.port.js';
 import { substituteVariables } from '#core/services/template-engine.js';
 import { evaluateCondition } from '#core/services/condition-parser.js';
 import type { Logger } from '#infra/logger.js';
+import type { SchemaDefinition } from '#core/ports/schema-validator.port.js';
+import { createSchemaValidator } from '#core/services/schema-validator.js';
+import {
+    createIsolatedContext,
+    mergeContextResults,
+} from '#core/services/context-isolator.js';
+import type { SnapshotManager } from '#core/ports/snapshot-manager.port.js';
+import type { RulesStore } from '#core/ports/rules-store.port.js';
+import type { ReflectionEngine } from '#core/services/reflection-engine.js';
+import { formatRulesAsContext, getApplicableRules } from '#core/services/rules-applicator.js';
 
 // ─── Handler Context ─────────────────────────────────────────────────────────
 
@@ -35,6 +45,18 @@ export interface DirectiveHandlerContext {
     readonly stepId: string;
     /** Set of env var names declared in the workflow frontmatter `env: []`. */
     readonly allowedEnvVars?: ReadonlySet<string>;
+    /** Output schemas declared in the workflow frontmatter for @validate. */
+    readonly outputSchema?: Readonly<Record<string, SchemaDefinition>>;
+    /** Snapshot manager for @snapshot/@restore directives. */
+    readonly snapshots?: SnapshotManager;
+    /** Current run ID for snapshot association. */
+    readonly runId?: string;
+    /** Rules store for @reflect directive and rule injection. */
+    readonly rulesStore?: RulesStore;
+    /** Reflection engine for @reflect directive. */
+    readonly reflectionEngine?: ReflectionEngine;
+    /** Current workflow name (for rule lookup). */
+    readonly workflowName?: string;
 }
 
 /** Result of a directive handler execution. */
@@ -140,7 +162,7 @@ export async function handleIf(
     return { continue: true, conditionResult: evalResult.value };
 }
 
-/** Handle @for directive — iterate over a list in the store. */
+/** Handle @for directive — iterate over a list with optional concurrency. */
 export async function handleFor(
     directive: Directive,
     step: Step,
@@ -149,6 +171,9 @@ export async function handleFor(
 ): Promise<DirectiveHandlerResult> {
     const variable = String(directive.args['variable'] ?? '');
     const iterableRef = String(directive.args['iterable'] ?? '');
+    const concurrency = typeof directive.args['concurrency'] === 'number'
+        ? directive.args['concurrency']
+        : 1;
 
     const varName = variable.startsWith('$') ? variable.slice(1) : variable;
     const listRef = iterableRef.startsWith('$') ? iterableRef.slice(1) : iterableRef;
@@ -156,7 +181,7 @@ export async function handleFor(
     const listValue = ctx.store.get(listRef);
     const items = Array.isArray(listValue) ? listValue : [];
 
-    ctx.logger?.info(`@for ${variable} in ${iterableRef} — ${items.length} items`);
+    ctx.logger?.info(`@for ${variable} in ${iterableRef} — ${items.length} items (concurrency: ${concurrency})`);
 
     // Get child directives: prefer directive.children, then step.children, then fallback
     const forIdx = step.directives.indexOf(directive);
@@ -166,29 +191,76 @@ export async function handleFor(
             ? step.children.flatMap((c) => c.directives)
             : step.directives.slice(forIdx + 1);
 
-    const results: unknown[] = [];
-    for (let i = 0; i < items.length; i++) {
-        ctx.store.set(varName, items[i]);
-        ctx.store.set(`${varName}_index`, i);
+    if (concurrency <= 1) {
+        // Sequential execution (original behavior)
+        const results: unknown[] = [];
+        for (let i = 0; i < items.length; i++) {
+            ctx.store.set(varName, items[i]);
+            ctx.store.set(`${varName}_index`, i);
 
-        ctx.emitter?.emit({
-            type: 'loop:iteration',
-            timestamp: Date.now(),
-            stepId: ctx.stepId,
-            index: i,
-            total: items.length,
-            item: items[i],
-        });
+            ctx.emitter?.emit({
+                type: 'loop:iteration',
+                timestamp: Date.now(),
+                stepId: ctx.stepId,
+                index: i,
+                total: items.length,
+                item: items[i],
+            });
 
-        if (!ctx.dryRun) {
-            await executeChildDirectives(childDirectives, ctx);
+            if (!ctx.dryRun) {
+                await executeChildDirectives(childDirectives, ctx);
+            }
+            results.push(ctx.store.getAll());
         }
-        results.push(ctx.store.getAll());
+        ctx.store.set(`${listRef}_results`, results);
+    } else {
+        // Concurrent execution with context isolation
+        // Process in batches of `concurrency`
+        const allResults: Record<string, unknown>[] = [];
+
+        for (let batchStart = 0; batchStart < items.length; batchStart += concurrency) {
+            const batch = items.slice(batchStart, batchStart + concurrency);
+
+            const batchPromises = batch.map(async (item, offset) => {
+                const i = batchStart + offset;
+                const isolated = createIsolatedContext(ctx.store);
+                isolated.store.set(varName, item);
+                isolated.store.set(`${varName}_index`, i);
+
+                ctx.emitter?.emit({
+                    type: 'loop:iteration',
+                    timestamp: Date.now(),
+                    stepId: ctx.stepId,
+                    index: i,
+                    total: items.length,
+                    item,
+                });
+
+                if (!ctx.dryRun) {
+                    await executeChildDirectives(childDirectives, {
+                        ...ctx,
+                        store: isolated.store,
+                        stepId: `${ctx.stepId}-iter-${i}`,
+                    });
+                }
+
+                return isolated.store.getAll();
+            });
+
+            const batchResults = await Promise.allSettled(batchPromises);
+            for (const result of batchResults) {
+                if (result.status === 'fulfilled') {
+                    allResults.push(result.value);
+                }
+            }
+        }
+
+        // Merge all iteration results
+        mergeContextResults(ctx.store, allResults);
+        ctx.store.set(`${listRef}_results`, allResults);
     }
 
-    ctx.store.set(`${listRef}_results`, results);
-
-    return { continue: false }; // Don't process remaining directives
+    return { continue: false };
 }
 
 /** Handle @repeat directive — loop until condition or max iterations. */
@@ -276,6 +348,14 @@ export async function handleTry(
             ? step.directives.slice(onErrorIdx + 1)
             : [];
 
+    // Auto-snapshot before @try block if snapshot manager is available
+    if (ctx.snapshots && ctx.runId && !ctx.dryRun) {
+        const autoLabel = `_try_${ctx.stepId}_${Date.now()}`;
+        ctx.snapshots.save(ctx.runId, autoLabel, ctx.store.getAll(), ctx.stepId);
+        ctx.store.set('_trySnapshotLabel', autoLabel);
+        ctx.logger?.info(`@try — auto-snapshot saved: "${autoLabel}"`);
+    }
+
     try {
         if (!ctx.dryRun) {
             await executeChildDirectives(tryDirectives, ctx);
@@ -284,6 +364,26 @@ export async function handleTry(
         const errorMsg = error instanceof Error ? error.message : String(error);
         ctx.logger?.warn(`@try caught error: ${errorMsg}`);
         ctx.store.set('_error', errorMsg);
+
+        // Auto-restore state from snapshot on error
+        if (ctx.snapshots && ctx.runId && !ctx.dryRun) {
+            const autoLabel = ctx.store.get('_trySnapshotLabel') as string | undefined;
+            if (autoLabel) {
+                const snapshot = ctx.snapshots.loadByLabel(ctx.runId, autoLabel);
+                if (snapshot) {
+                    const currentKeys = Object.keys(ctx.store.getAll());
+                    for (const key of currentKeys) {
+                        ctx.store.set(key, undefined);
+                    }
+                    for (const [key, value] of Object.entries(snapshot.state)) {
+                        ctx.store.set(key, value);
+                    }
+                    // Re-set error so @on-error handlers can access it
+                    ctx.store.set('_error', errorMsg);
+                    ctx.logger?.info(`@try — auto-restored state from "${autoLabel}"`);
+                }
+            }
+        }
 
         ctx.emitter?.emit({
             type: 'error',
@@ -321,17 +421,20 @@ export async function handleTry(
     return { continue: false };
 }
 
-/** Handle @parallel directive — in SimpleExecutor, runs sequentially. */
+/** Handle @parallel directive — true parallel execution with context isolation. */
 export async function handleParallel(
     directive: Directive,
     step: Step,
     ctx: DirectiveHandlerContext,
     executeChildDirectives: (directives: readonly Directive[], ctx: DirectiveHandlerContext) => Promise<void>,
 ): Promise<DirectiveHandlerResult> {
-    ctx.logger?.info(`@parallel — executing children sequentially (SimpleExecutor)`);
-
-    // Prefer directive.children from parser, fallback to step.children
     const parallelChildren = directive.children ?? step.children ?? [];
+
+    if (parallelChildren.length === 0) {
+        return { continue: true };
+    }
+
+    ctx.logger?.info(`@parallel — executing ${parallelChildren.length} branches in parallel`);
 
     ctx.emitter?.emit({
         type: 'parallel:start',
@@ -340,23 +443,59 @@ export async function handleParallel(
     });
 
     const startTime = Date.now();
-    const results: Record<string, { success: boolean; error?: string }> = {};
 
-    if (parallelChildren.length > 0) {
-        for (const child of parallelChildren) {
-            try {
-                await executeChildDirectives(child.directives, {
-                    ...ctx,
-                    stepId: child.id,
-                });
-                results[child.id] = { success: true };
-            } catch (error) {
-                results[child.id] = {
-                    success: false,
-                    error: error instanceof Error ? error.message : String(error),
-                };
-            }
+    // Create isolated context per branch and execute all in parallel
+    const promises = parallelChildren.map(async (child) => {
+        const isolated = createIsolatedContext(ctx.store);
+        const branchCtx: DirectiveHandlerContext = {
+            ...ctx,
+            store: isolated.store,
+            stepId: child.id,
+        };
+
+        try {
+            await executeChildDirectives(child.directives, branchCtx);
+            return {
+                id: child.id,
+                success: true as const,
+                results: isolated.store.getAll(),
+            };
+        } catch (error) {
+            return {
+                id: child.id,
+                success: false as const,
+                error: error instanceof Error ? error.message : String(error),
+                results: isolated.store.getAll(),
+            };
         }
+    });
+
+    const settled = await Promise.allSettled(promises);
+
+    // Collect results
+    const results: Record<string, { success: boolean; error?: string }> = {};
+    const successResults: Record<string, unknown>[] = [];
+    let failureCount = 0;
+
+    for (const outcome of settled) {
+        if (outcome.status === 'fulfilled') {
+            const branch = outcome.value;
+            results[branch.id] = { success: branch.success, error: branch.success ? undefined : branch.error };
+            if (branch.success) {
+                successResults.push(branch.results);
+            } else {
+                failureCount++;
+            }
+        } else {
+            failureCount++;
+        }
+    }
+
+    // Merge successful branch results into parent store
+    mergeContextResults(ctx.store, successResults);
+
+    if (failureCount > 0) {
+        ctx.logger?.warn(`${failureCount}/${parallelChildren.length} parallel branches failed`);
     }
 
     ctx.emitter?.emit({
@@ -366,7 +505,8 @@ export async function handleParallel(
         duration: Date.now() - startTime,
     });
 
-    return { continue: false };
+    // Continue if at least one branch succeeded
+    return { continue: failureCount < parallelChildren.length };
 }
 
 /** Handle @workflow directive — resolve and execute sub-workflow. */
@@ -557,7 +697,20 @@ export async function handleAgentOrHandoff(
 
     // Resolve variables in prompt
     const vars = ctx.store.getAll();
-    const resolvedPrompt = substituteVariables(prompt, vars);
+    let resolvedPrompt = substituteVariables(prompt, vars);
+
+    // Inject learned rules as context if available
+    if (ctx.rulesStore && ctx.workflowName) {
+        const rules = getApplicableRules(ctx.rulesStore, ctx.workflowName);
+        const rulesContext = formatRulesAsContext(rules);
+        if (rulesContext) {
+            resolvedPrompt = resolvedPrompt + rulesContext;
+            // Record rule hits
+            for (const rule of rules.filter((r) => r.ruleType === 'soft')) {
+                ctx.rulesStore.recordHit(rule.id);
+            }
+        }
+    }
 
     // Invoke the agent
     const result = await ctx.agent.invoke({
@@ -584,7 +737,448 @@ export async function handleAgentOrHandoff(
     return { continue: true, output: result.value.content };
 }
 
+/**
+ * Handle @team directive — execute a team of agents with dependency-aware parallelism.
+ *
+ * Independent agents (no variable dependencies on other agents' outputs) run in parallel.
+ * Dependent agents wait for their dependencies.
+ *
+ * @example
+ * ```md
+ * @team review-team concurrency:3:
+ *   @agent critic: "Find bugs in $code" → $critic_result
+ *   @agent defender: "Defend the code quality of $code" → $defender_result
+ *   @agent judge: "Arbitrate between $critic_result and $defender_result" → $verdict
+ * ```
+ */
+export async function handleTeam(
+    directive: Directive,
+    step: Step,
+    ctx: DirectiveHandlerContext,
+    executeChildDirectives: (directives: readonly Directive[], ctx: DirectiveHandlerContext) => Promise<void>,
+): Promise<DirectiveHandlerResult> {
+    const teamName = String(directive.args['name'] ?? 'unnamed-team');
+    const concurrency = typeof directive.args['concurrency'] === 'number'
+        ? directive.args['concurrency']
+        : 3;
+
+    const teamChildren = directive.children ?? step.children ?? [];
+
+    if (teamChildren.length === 0) {
+        return { continue: true };
+    }
+
+    ctx.logger?.info(`@team ${teamName} — ${teamChildren.length} agents (concurrency: ${concurrency})`);
+
+    // Extract agent directives from children
+    const agentSteps = teamChildren.flatMap((child) =>
+        child.directives
+            .filter((d) => d.type === 'agent' || d.type === 'handoff')
+            .map((d) => ({ step: child, directive: d }))
+    );
+
+    if (agentSteps.length === 0) {
+        ctx.logger?.warn(`@team ${teamName} — no @agent directives found`);
+        return { continue: true };
+    }
+
+    // Build dependency graph from variable references
+    const { extractVariables } = await import('#core/services/template-engine.js');
+
+    const captureMap = new Map<string, number>(); // variable name → agent index
+    const deps = new Map<number, Set<number>>();   // agent index → dependencies
+
+    for (let i = 0; i < agentSteps.length; i++) {
+        const capture = String(agentSteps[i]!.directive.args['capture'] ?? '');
+        if (capture) {
+            captureMap.set(capture, i);
+        }
+        deps.set(i, new Set());
+    }
+
+    for (let i = 0; i < agentSteps.length; i++) {
+        const prompt = String(agentSteps[i]!.directive.args['prompt'] ?? agentSteps[i]!.directive.args['message'] ?? '');
+        const vars = extractVariables(prompt);
+        for (const v of vars) {
+            const depIdx = captureMap.get(v);
+            if (depIdx !== undefined && depIdx !== i) {
+                deps.get(i)!.add(depIdx);
+            }
+        }
+    }
+
+    // Execute in topological order with parallelism
+    const completed = new Set<number>();
+    const results: Record<string, unknown> = {};
+
+    while (completed.size < agentSteps.length) {
+        // Find ready agents (all deps completed)
+        const ready: number[] = [];
+        for (let i = 0; i < agentSteps.length; i++) {
+            if (completed.has(i)) continue;
+            const agentDeps = deps.get(i)!;
+            if ([...agentDeps].every((d) => completed.has(d))) {
+                ready.push(i);
+            }
+        }
+
+        if (ready.length === 0) {
+            ctx.logger?.error(`@team ${teamName} — circular dependency detected`);
+            return { continue: false, error: `@team ${teamName}: circular dependency` };
+        }
+
+        // Execute ready agents in parallel (up to concurrency limit)
+        const batch = ready.slice(0, concurrency);
+        const promises = batch.map(async (idx) => {
+            const agent = agentSteps[idx]!;
+            const isolated = createIsolatedContext(ctx.store);
+
+            // Inject results from completed agents
+            for (const [varName, value] of Object.entries(results)) {
+                isolated.store.set(varName, value);
+            }
+
+            await executeChildDirectives(
+                [agent.directive],
+                { ...ctx, store: isolated.store, stepId: agent.step.id },
+            );
+
+            const capture = String(agent.directive.args['capture'] ?? '');
+            if (capture) {
+                results[capture] = isolated.store.get(capture);
+            }
+
+            return idx;
+        });
+
+        const settled = await Promise.allSettled(promises);
+        for (const outcome of settled) {
+            if (outcome.status === 'fulfilled') {
+                completed.add(outcome.value);
+            }
+        }
+    }
+
+    // Write all results to parent store
+    for (const [key, value] of Object.entries(results)) {
+        ctx.store.set(key, value);
+    }
+
+    return { continue: false };
+}
+
+/**
+ * Handle @vote directive — launch N parallel agent calls and aggregate by majority.
+ *
+ * @example
+ * ```md
+ * @vote count:5: "Is this code secure? $code" → $verdict
+ * ```
+ */
+export async function handleVote(
+    directive: Directive,
+    ctx: DirectiveHandlerContext,
+): Promise<DirectiveHandlerResult> {
+    const count = typeof directive.args['count'] === 'number'
+        ? directive.args['count']
+        : 3;
+    const prompt = String(directive.args['prompt'] ?? '');
+    const capture = String(directive.args['capture'] ?? 'verdict');
+
+    if (!prompt) {
+        return { continue: false, error: '@vote requires a prompt' };
+    }
+
+    if (!ctx.agent) {
+        ctx.logger?.warn('@vote: no agent provider configured');
+        return { continue: true };
+    }
+
+    ctx.logger?.info(`@vote count:${count} — launching ${count} parallel agent calls`);
+
+    const vars = ctx.store.getAll();
+    const resolvedPrompt = substituteVariables(prompt, vars);
+
+    // Launch N parallel calls
+    const promises = Array.from({ length: count }, async (_, i) => {
+        const result = await ctx.agent!.invoke({
+            agent: 'copilot',
+            prompt: resolvedPrompt,
+            variables: vars,
+        });
+        return { index: i, result };
+    });
+
+    const results = await Promise.allSettled(promises);
+
+    // Collect successful responses
+    const votes: string[] = [];
+    for (const outcome of results) {
+        if (outcome.status === 'fulfilled' && outcome.value.result.ok) {
+            votes.push(outcome.value.result.value.content);
+        }
+    }
+
+    if (votes.length === 0) {
+        return { continue: false, error: '@vote: all agent calls failed' };
+    }
+
+    // Count votes (exact match)
+    const voteCounts = new Map<string, number>();
+    for (const vote of votes) {
+        voteCounts.set(vote, (voteCounts.get(vote) ?? 0) + 1);
+    }
+
+    // Find majority
+    let maxCount = 0;
+    let winner = '';
+    for (const [answer, answerCount] of voteCounts) {
+        if (answerCount > maxCount) {
+            maxCount = answerCount;
+            winner = answer;
+        }
+    }
+
+    const confidence = maxCount / votes.length;
+
+    ctx.store.set(capture, {
+        answer: winner,
+        confidence,
+        votes,
+        voteCount: votes.length,
+    });
+
+    ctx.logger?.info(`@vote result: confidence=${confidence.toFixed(2)}, ${votes.length} votes`);
+
+    return { continue: true };
+}
+
+/**
+ * Handle @validate directive — validate a variable against a named schema.
+ *
+ * @example
+ * ```md
+ * @validate $result against schema:report
+ * ```
+ */
+export function handleValidate(
+    directive: Directive,
+    ctx: DirectiveHandlerContext,
+): DirectiveHandlerResult {
+    const varRef = String(directive.args['variable'] ?? '');
+    const schemaName = String(directive.args['schema'] ?? '');
+
+    if (!varRef || !schemaName) {
+        return {
+            continue: false,
+            error: '@validate requires: @validate $var against schema:Name',
+        };
+    }
+
+    const varName = varRef.startsWith('$') ? varRef.slice(1) : varRef;
+    const value = ctx.store.get(varName);
+
+    if (value === undefined) {
+        return {
+            continue: false,
+            error: `@validate: variable $${varName} is not defined`,
+        };
+    }
+
+    // Resolve schema from outputSchema in frontmatter
+    const schema = ctx.outputSchema?.[schemaName];
+    if (!schema) {
+        return {
+            continue: false,
+            error: `@validate: schema "${schemaName}" not found in outputSchema`,
+        };
+    }
+
+    const validator = createSchemaValidator();
+    const issues = validator.validate(value, schema);
+
+    if (issues.length > 0) {
+        const details = issues.map((i) => `${i.path}: ${i.message}`).join('; ');
+        ctx.logger?.warn(`@validate $${varName} against schema:${schemaName} — FAILED: ${details}`);
+
+        ctx.emitter?.emit({
+            type: 'directive:end',
+            timestamp: Date.now(),
+            stepId: ctx.stepId,
+            directiveType: 'validate',
+            success: false,
+            result: { issues },
+        });
+
+        return {
+            continue: false,
+            error: `@validate failed for $${varName}: ${details}`,
+        };
+    }
+
+    ctx.logger?.debug(`@validate $${varName} against schema:${schemaName} — passed`);
+    return { continue: true };
+}
+
 // ─── Main Dispatcher ─────────────────────────────────────────────────────────
+
+// ─── Reflect ────────────────────────────────────────────────────────────────
+
+/** Handle @reflect: "prompt" → $var — analyze execution and generate rules. */
+async function handleReflect(
+    directive: Directive,
+    ctx: DirectiveHandlerContext,
+): Promise<DirectiveHandlerResult> {
+    const prompt = String(directive.args['prompt'] ?? '');
+    const capture = String(directive.args['capture'] ?? 'reflection');
+
+    if (!prompt) {
+        return { continue: true, error: '@reflect: no prompt provided' };
+    }
+
+    if (ctx.dryRun) {
+        ctx.logger?.info(`@reflect: "${prompt.slice(0, 80)}" [dry-run]`);
+        ctx.store.set(capture, '[dry-run] reflection skipped');
+        return { continue: true };
+    }
+
+    if (!ctx.reflectionEngine) {
+        ctx.logger?.warn('@reflect: no reflection engine configured — requires agent provider');
+        return { continue: true };
+    }
+
+    const variables = ctx.store.getAll();
+    const error = ctx.store.get('_error') as string | undefined;
+
+    const result = await ctx.reflectionEngine.reflect({
+        prompt: substituteVariables(prompt, variables),
+        variables,
+        stepId: ctx.stepId,
+        error,
+        workflowName: ctx.workflowName,
+    });
+
+    // Store reflection result
+    ctx.store.set(capture, result.summary);
+
+    // Save learned rules to store if available
+    if (ctx.rulesStore && result.rules.length > 0) {
+        for (const rule of result.rules) {
+            ctx.rulesStore.addRule({
+                workflowName: ctx.workflowName,
+                ruleType: rule.ruleType,
+                condition: rule.condition,
+                action: rule.action,
+                source: `@reflect in ${ctx.stepId}`,
+                confidence: rule.confidence,
+            });
+        }
+        ctx.logger?.info(`@reflect: saved ${result.rules.length} learned rule(s)`);
+    }
+
+    ctx.emitter?.emit({
+        type: 'reflection:complete',
+        timestamp: Date.now(),
+        stepId: ctx.stepId,
+        summary: result.summary,
+        rulesCount: result.rules.length,
+        suggestionsCount: result.suggestions.length,
+    });
+
+    ctx.logger?.info(`@reflect: "${result.summary.slice(0, 100)}"`, {
+        rules: result.rules.length,
+        suggestions: result.suggestions.length,
+    });
+
+    return { continue: true, output: result.summary };
+}
+
+// ─── Snapshot / Restore ─────────────────────────────────────────────────────
+
+/** Handle @snapshot "label" — save current state to persistent storage. */
+function handleSnapshot(
+    directive: Directive,
+    ctx: DirectiveHandlerContext,
+): DirectiveHandlerResult {
+    const label = String(directive.args['label'] ?? directive.args['_rest'] ?? 'auto')
+        .replace(/^["']|["']$/g, '');
+
+    if (!ctx.snapshots || !ctx.runId) {
+        ctx.logger?.warn('@snapshot: no snapshot manager or run ID available');
+        return { continue: true };
+    }
+
+    if (ctx.dryRun) {
+        ctx.logger?.info(`@snapshot "${label}" (dry run — skipped)`);
+        return { continue: true };
+    }
+
+    const state = ctx.store.getAll();
+    const id = ctx.snapshots.save(ctx.runId, label, state, ctx.stepId);
+
+    ctx.logger?.info(`@snapshot "${label}" saved (id=${id})`);
+
+    ctx.emitter?.emit({
+        type: 'snapshot:created',
+        timestamp: Date.now(),
+        stepId: ctx.stepId,
+        label,
+        snapshotId: id,
+    });
+
+    return { continue: true };
+}
+
+/** Handle @restore "label" — restore state from a saved snapshot. */
+function handleRestore(
+    directive: Directive,
+    ctx: DirectiveHandlerContext,
+): DirectiveHandlerResult {
+    const label = String(directive.args['label'] ?? directive.args['_rest'] ?? '')
+        .replace(/^["']|["']$/g, '');
+
+    if (!label) {
+        ctx.logger?.warn('@restore: no label specified');
+        return { continue: true };
+    }
+
+    if (!ctx.snapshots || !ctx.runId) {
+        ctx.logger?.warn('@restore: no snapshot manager or run ID available');
+        return { continue: true };
+    }
+
+    if (ctx.dryRun) {
+        ctx.logger?.info(`@restore "${label}" (dry run — skipped)`);
+        return { continue: true };
+    }
+
+    const snapshot = ctx.snapshots.loadByLabel(ctx.runId, label);
+    if (!snapshot) {
+        ctx.logger?.warn(`@restore: snapshot "${label}" not found — continuing without restore`);
+        return { continue: true };
+    }
+
+    // Restore state: clear current and load snapshot
+    const currentKeys = Object.keys(ctx.store.getAll());
+    for (const key of currentKeys) {
+        ctx.store.set(key, undefined);
+    }
+    for (const [key, value] of Object.entries(snapshot.state)) {
+        ctx.store.set(key, value);
+    }
+
+    ctx.logger?.info(`@restore "${label}" — state restored from snapshot ${snapshot.id}`);
+
+    ctx.emitter?.emit({
+        type: 'snapshot:restored',
+        timestamp: Date.now(),
+        stepId: ctx.stepId,
+        label,
+        snapshotId: snapshot.id,
+    });
+
+    return { continue: true };
+}
 
 /**
  * Execute a single directive using the appropriate handler.
@@ -668,6 +1262,30 @@ export async function executeDirective(
         case 'agent':
         case 'handoff':
             result = await handleAgentOrHandoff(directive, ctx);
+            break;
+
+        case 'validate':
+            result = handleValidate(directive, ctx);
+            break;
+
+        case 'team':
+            result = await handleTeam(directive, step, ctx, helpers.executeChildDirectives);
+            break;
+
+        case 'vote':
+            result = await handleVote(directive, ctx);
+            break;
+
+        case 'snapshot':
+            result = handleSnapshot(directive, ctx);
+            break;
+
+        case 'restore':
+            result = handleRestore(directive, ctx);
+            break;
+
+        case 'reflect':
+            result = await handleReflect(directive, ctx);
             break;
 
         case 'else':

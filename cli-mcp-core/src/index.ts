@@ -106,3 +106,36 @@ export type { OpenAIAgentConfig } from '#adapters/agents/openai-agent.js';
 export { createMcpClientProvider } from '#adapters/tools/mcp-client.js';
 export type { McpClientConfig, McpServerEntry } from '#adapters/tools/mcp-client.js';
 export { createCompositeToolProvider } from '#adapters/tools/composite-tool-provider.js';
+
+// ─── Persistence & History ──────────────────────────────────────────────────
+export type { PersistenceStore, Row } from '#core/ports/persistence.port.js';
+export { createSqlitePersistence } from '#adapters/state/sqlite-persistence.js';
+export type { RunHistory, RunRecord, RunEventRecord } from '#core/ports/run-history.port.js';
+export { createNoopRunHistory } from '#core/ports/run-history.port.js';
+export { createSqliteRunHistory } from '#adapters/state/sqlite-run-history.js';
+
+// ─── Snapshots ──────────────────────────────────────────────────────────────
+export type { SnapshotManager, SnapshotRecord } from '#core/ports/snapshot-manager.port.js';
+export { createSqliteSnapshotManager } from '#adapters/state/sqlite-snapshot-manager.js';
+
+// ─── Rules & Reflection ─────────────────────────────────────────────────────
+export type { RulesStore, LearnedRule } from '#core/ports/rules-store.port.js';
+export { createSqliteRulesStore } from '#adapters/state/sqlite-rules-store.js';
+export type { ReflectionEngine, ReflectionResult, ReflectionRule } from '#core/services/reflection-engine.js';
+export { createReflectionEngine } from '#core/services/reflection-engine.js';
+export { formatRulesAsContext, getApplicableRules, checkAdmissibility } from '#core/services/rules-applicator.js';
+
+// ─── Schema Validation ──────────────────────────────────────────────────────
+export type { SchemaDefinition, ValidationIssue, SchemaValidator } from '#core/ports/schema-validator.port.js';
+export { createSchemaValidator } from '#core/services/schema-validator.js';
+
+// ─── Workflow Integrity ─────────────────────────────────────────────────────
+export { computeWorkflowHash, verifyWorkflowIntegrity } from '#core/services/workflow-integrity.js';
+export type { WorkflowStatus, RunStats } from '#core/entities/workflow.js';
+
+// ─── Agent Pool ─────────────────────────────────────────────────────────────
+export type { AgentPool, AgentTask, AgentTaskResult } from '#core/ports/agent-pool.port.js';
+export { createAgentPool } from '#adapters/agents/agent-pool.js';
+
+// ─── Context Isolation ──────────────────────────────────────────────────────
+export { createIsolatedContext, mergeContextResults } from '#core/services/context-isolator.js';
