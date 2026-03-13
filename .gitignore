@@ -36,3 +36,6 @@ coverage/
 
 # Temp clones used for monorepo init
 /tmp/cs-*
+
+# ChainSkills SQLite database (runtime artifacts)
+.chainskills/
