@@ -78,18 +78,25 @@
 
 ### 0.3 Stack technique confirmée
 
-| Composant | Version actuelle | Rôle |
-|-----------|-----------------|------|
-| TypeScript | ^5.9.0 (strict) | Typage sûr, inférence avancée |
-| Node.js | >=20 | ESM natif, performance V8 |
-| pnpm | ^10.17.1 | Monorepo workspaces, déduplication |
-| @mastra/core | ^1.3.0 | Orchestration workflows graph-based |
-| @modelcontextprotocol/sdk | ^1.26.0 | Protocole standard outil-agent |
-| Zod | ^3.25.0 | Schémas runtime + TypeScript inféré |
-| Vitest | ^4.0.0 | Unit + intégration, compatible ESM |
-| obuild (Rolldown) | ^0.4.22 | Bundling Rust-based ultra-rapide |
-| better-sqlite3 | ^12.6.2 | Persistence SQLite synchrone |
-| citty | ^0.2.1 | CLI framework |
+| Composant | Version actuelle | Version SOTA | Rôle |
+|-----------|-----------------|--------------|------|
+| TypeScript | ^5.9.0 (strict) | — | Typage sûr, inférence avancée |
+| Node.js | >=20 | **≥22.13.0** (requis par Mastra v1.x) | ESM natif, performance V8 |
+| pnpm | ^10.17.1 | — | Monorepo workspaces, déduplication |
+| @mastra/core | **^1.3.0** | **v1.10.0** (mars 2026) | Orchestration workflows graph-based |
+| @modelcontextprotocol/sdk | ^1.26.0 | — | Protocole standard outil-agent |
+| Zod | ^3.25.0 | — | Schémas runtime + TypeScript inféré |
+| Vitest | ^4.0.0 | — | Unit + intégration, compatible ESM |
+| obuild (Rolldown) | ^0.4.22 | — | Bundling Rust-based ultra-rapide |
+| better-sqlite3 | ^12.6.2 | — | Persistence SQLite synchrone |
+| citty | ^0.2.1 | — | CLI framework |
+
+> **ALERTE MIGRATION :** @mastra/core v1.0.0 (20 jan 2026) a introduit des **breaking changes** :
+> les imports top-level depuis `@mastra/core` ne sont plus autorisés (sauf `Mastra` et `Config`).
+> Il faut utiliser les subpath imports (`@mastra/core/workflows`, etc.).
+> Le projet utilise actuellement `^1.3.0` mais la version actuelle est **v1.10.0**.
+> Node.js minimum requis par Mastra v1.x est **22.13.0** (le projet spécifie >=20).
+> **Action requise :** Mettre à jour `engines.node` et vérifier la compatibilité des imports.
 
 ---
 
@@ -99,14 +106,17 @@
 
 **État actuel :** Le `MastraExecutor` utilise `.then()` et `.parallel()` uniquement. Le `DAGBuilder` produit un `DAG` avec `parallelGroups` qui sont traduits en `.then()` (1 step) ou `.parallel()` (N steps). Les patterns `.branch()`, `.dowhile()`, `.dountil()`, `.foreach()` de Mastra ne sont **pas utilisés directement** — le contrôle de flux est géré dans `directive-handlers.ts` au niveau step, pas au niveau Mastra workflow.
 
-**Recherche SOTA :** Mastra (v1.3.0+, Apache 2.0) offre 7 méthodes de contrôle de flux :
+**Recherche SOTA (mars 2026) :** Mastra **v1.10.0** (Apache 2.0) offre 7 méthodes de contrôle de flux, toutes confirmées :
 - `.then(step)` — séquentiel ✅ utilisé
-- `.parallel([steps])` — parallèle ✅ utilisé
-- `.branch(conditions)` — conditionnel ❌ non utilisé (géré manuellement via handleIf)
-- `.dowhile(step, condition)` — boucle while ❌ non utilisé (géré manuellement via handleRepeat)
-- `.dountil(step, condition)` — boucle until ❌ non utilisé
-- `.foreach(step, options)` — itération sur liste ❌ non utilisé (géré manuellement via handleFor)
-- `.map(config)` — transformation de données ❌ absent
+- `.parallel([steps])` — parallèle ✅ utilisé — output keyed par step ID
+- `.branch(conditions[])` — conditionnel ❌ non utilisé — array de `[conditionFn, step]` tuples, premier match exécuté
+- `.dowhile(step, conditionFn)` — boucle while ❌ non utilisé — condition async reçoit `{ inputData }`
+- `.dountil(step, conditionFn)` — boucle until ❌ non utilisé — répète jusqu'à condition true
+- `.foreach(step, { concurrency?: N })` — itération ❌ non utilisé — output = array matching input length
+- `.map(transformerFn)` — transformation ❌ absent — helpers `getStepResult()`, `getInitData()`, `mapVariable()`
+
+**Règle de chaînage Mastra :** chaque `outputSchema` doit matcher l'`inputSchema` suivant, ou utiliser `.map()` pour le bridging.
+Le projet utilise actuellement un `DynamicSchema = z.record(z.unknown())` universel, ce qui contourne cette contrainte.
 
 | Tâche | Priorité | Complexité | Dépendance |
 |-------|----------|------------|------------|
@@ -146,7 +156,15 @@
 
 ### A3. Suspend / Resume — Human-in-the-Loop
 
-**État actuel :** `@breakpoint` existe comme pause conditionnelle de debug. Le `MastraExecutionController` implémente `pause()/resume()/cancel()` mais c'est une abstraction ChainSkills, pas le suspend/resume natif de Mastra. Mastra supporte `suspend()` + `resume()` avec persistance d'état nativement.
+**État actuel :** `@breakpoint` existe comme pause conditionnelle de debug. Le `MastraExecutionController` implémente `pause()/resume()/cancel()` mais c'est une abstraction ChainSkills, pas le suspend/resume natif de Mastra.
+
+**Recherche SOTA (Mastra v1.10.0) :** Le suspend/resume natif est très complet :
+- `suspend(payload)` dans `execute()` d'un step — persiste l'état automatiquement
+- Steps peuvent déclarer `resumeSchema` et `suspendSchema` (Zod) pour typer les données suspend/resume
+- `run.resume({ resumeData, step })` pour reprendre — `step` optionnel si un seul step suspendu
+- Streaming : `closeOnSuspend` ferme le stream automatiquement, `resumeStream()` le reprend
+- `suspendData` disponible automatiquement dans execute lors de la reprise
+- Compatible multi-requêtes via `createRun({ runId })` pour reprendre un run existant
 
 | Tâche | Priorité | Complexité | Dépendance |
 |-------|----------|------------|------------|
@@ -181,7 +199,15 @@
 
 ### A5. Streaming & Observabilité temps réel
 
-**État actuel :** Le système d'events (`ExecutionEventEmitter`) est complet avec 16 types d'events. La CLI affiche les events en temps réel (step:start, step:end, directive:start, parallel:start/end, loop:iteration, error). Mais pas de barre de progression ni de SSE.
+**État actuel :** Le système d'events (`ExecutionEventEmitter`) est complet avec 16 types d'events ChainSkills. La CLI affiche les events en temps réel. Mais pas de barre de progression ni de SSE.
+
+**Recherche SOTA (Mastra v1.10.0) :** Mastra offre un streaming natif riche :
+- `run.stream()` retourne un `WorkflowRunOutput` (async iterable via `for await...of`)
+- Chaque step reçoit un `writer` dans `execute()` pour pousser des events custom dans le stream
+- `run.watch(callback)` pour observer un run en temps réel (two flavors: `watch` et `watch-v2`)
+- Events Mastra : `start`, `step-start`, `text-delta`, `tool-call`, `tool-result`, `step-finish`, `finish`, `workflow-start`, `workflow-step-start`, `workflow-step-progress`
+- API expérimentale `streamVNext` avec `MastraWorkflowStream` (extends `ReadableStream`)
+- Observe pattern : clients peuvent se connecter à un stream en cours et recevoir tous les events depuis le début
 
 | Tâche | Priorité | Complexité | Dépendance |
 |-------|----------|------------|------------|
@@ -192,7 +218,13 @@
 
 ### A6. Step Creation enrichi — Types Mastra
 
-**État actuel :** Tous les steps sont créés via `createStep()` avec DynamicSchema. L'AgentProvider est invoqué via `handleAgent()` dans les directive-handlers, pas via un step Mastra natif Agent.
+**État actuel :** Tous les steps sont créés via `createStep()` avec `DynamicSchema = z.record(z.unknown())`. L'AgentProvider est invoqué via `handleAgent()` dans les directive-handlers, pas via un step Mastra natif Agent.
+
+**Recherche SOTA (Mastra v1.10.0) :** Mastra supporte 3 patterns de création de step :
+1. Custom `execute` function (c'est ce que ChainSkills utilise)
+2. `createStep(agent)` → auto `{ prompt: string }` input, `{ text: string }` output
+3. `createStep(agent, { structuredOutput: { schema } })` → output Zod-typé
+4. Les **Processors** (ToolCallFilter, TokenLimiterProcessor) transforment les messages avant le LLM — ce ne sont pas des steps de workflow
 
 | Tâche | Priorité | Complexité | Dépendance |
 |-------|----------|------------|------------|
@@ -214,17 +246,49 @@
 | A7.1 Ajouter `totalTokens` et `totalCost` aux runs (si agent utilisé) | P3 | S | — |
 | A7.2 `chainskills inspect --run-id <id>` pour inspecter un run passé/suspendu | P2 | M | A3.4 |
 | A7.3 Ajouter durée par step dans le run_events | P3 | S | — |
+| A7.4 Évaluer la migration vers Mastra Storage natif (LibSQL/Postgres) | P3 | L | A0 |
+
+**Note sur Mastra Storage :** Mastra v1.10.0 supporte 10+ backends de stockage via `MastraCompositeStore`
+(LibSQL, PostgreSQL, MongoDB, Upstash, CloudflareKV, D1, DynamoDB, MSSQL, LanceDB, ClickHouse).
+ChainSkills utilise actuellement better-sqlite3 directement. La migration vers Mastra Storage
+permettrait de bénéficier du storage pluggable sans code custom, mais ajouterait un couplage fort
+avec Mastra. **Recommandation :** conserver better-sqlite3 pour le storage ChainSkills (runs, rules, patterns)
+et utiliser Mastra Storage uniquement pour l'état de workflow Mastra natif (suspend/resume).
 
 ### A8. Observabilité avancée
 
 **État actuel :** Logger JSON structuré existe (`infrastructure/logger.ts`). Events en temps réel via emitter. Pas d'export OpenTelemetry.
 
+**Recherche SOTA (Mastra v1.10.0) :** Mastra a un système **AI Tracing** natif (`@mastra/core/ai-tracing`) qui capture token usage, model params, tool execution, conversation flows. Exporteurs pluggables :
+- `@mastra/otel-exporter` → OTLP (Datadog, New Relic, SigNoz, Jaeger, MLflow, Dash0, Traceloop, Laminar)
+- Exporteurs dédiés : Langfuse, Braintrust, LangSmith
+- ClickHouse recommandé pour production
+- Configuration via `observability: { serviceName, exporters[] }` sur le constructeur Mastra
+
 | Tâche | Priorité | Complexité | Dépendance |
 |-------|----------|------------|------------|
 | A8.1 Enrichir le logger avec niveaux structurés par step | P3 | S | — |
-| A8.2 `CHAINSKILLS_OTEL_ENDPOINT` → export OpenTelemetry optionnel | P3 | L | — |
+| A8.2 Exploiter le AI Tracing natif de Mastra via config `observability` | P2 | M | A0 |
 | A8.3 `chainskills run --profile` → timing détaillé par step post-exécution | P2 | M | — |
-| A8.4 Intégration optionnelle Langfuse pour traçage LLM | P3 | L | A8.2 |
+| A8.4 Intégration Langfuse via exporteur Mastra natif (au lieu de custom) | P3 | S | A8.2 |
+| A8.5 `CHAINSKILLS_OTEL_ENDPOINT` → bridging vers le OTel exporter Mastra | P3 | M | A8.2 |
+
+### A0. Migration Mastra v1.x (PRÉREQUIS)
+
+**CRITIQUE :** Le projet utilise `@mastra/core ^1.3.0` mais la version actuelle est **v1.10.0**.
+La v1.0.0 (20 jan 2026) a introduit des **breaking changes** sur les imports.
+De plus, Node.js ≥22.13.0 est requis par Mastra v1.x (le projet spécifie >=20).
+
+| Tâche | Priorité | Complexité | Dépendance |
+|-------|----------|------------|------------|
+| A0.1 Mettre à jour `engines.node` de `>=20` à `>=22.13.0` | P0 | S | — |
+| A0.2 Mettre à jour `@mastra/core` de `^1.3.0` à `^1.10.0` | P0 | M | A0.1 |
+| A0.3 Migrer les imports : `@mastra/core` → subpath imports (`@mastra/core/workflows`) | P0 | M | A0.2 |
+| A0.4 Vérifier compatibilité `createStep`, `createWorkflow` avec la nouvelle API | P0 | M | A0.3 |
+| A0.5 Tester tous les 197 tests après migration | P0 | S | A0.4 |
+
+> **Note :** Cette migration est un prérequis pour tous les blocs A. Elle débloque l'accès
+> aux features Mastra sous-utilisées (suspend/resume natif, streaming, AI tracing, storage pluggable).
 
 ---
 
@@ -565,6 +629,16 @@ CREATE TABLE patterns (
 
 ## Priorisation & Séquencement
 
+### Phase 0 — Migration Mastra v1.x (PRÉREQUIS CRITIQUE)
+
+**Objectif :** Mettre à jour @mastra/core de ^1.3.0 à ^1.10.0, corriger les imports, valider les tests
+
+| # | Tâche | Bloc | Priorité | Complexité |
+|---|-------|------|----------|------------|
+| 0 | Migration Mastra v1.x + Node.js >=22.13.0 | A0.1-A0.5 | **P0** | M |
+
+**Estimation :** 1-2 jours. **Bloque tout le Bloc A.**
+
 ### Phase 1 — Fondations (v0.7.0–v0.8.0) — "Les bases qui débloquent tout"
 
 **Objectif :** WorkflowGraph unifié + Context Translator + Capture de traces
@@ -686,13 +760,23 @@ Le domaine core/ ne doit **jamais** importer de dépendances externes (Mastra, b
 
 ### Frameworks et outils
 
-| Outil | Version | Licence | Usage dans ChainSkills |
-|-------|---------|---------|------------------------|
-| Mastra | ^1.3.0 | Apache 2.0 | DAG engine principal |
-| React Flow | latest | MIT | WebView DAG VSCode |
-| dagre / elk | — | MIT / EPL-2.0 | Layout algorithmique DAG |
-| ONNX Runtime | — | MIT | ML inference (phases 3-4) |
-| FAISS / SQLite-VSS | — | MIT | Recherche vectorielle (phase 4) |
+| Outil | Version actuelle | Version SOTA | Licence | Usage dans ChainSkills |
+|-------|-----------------|--------------|---------|------------------------|
+| Mastra | ^1.3.0 | **v1.10.0** (9 mars 2026) | Apache 2.0 | DAG engine principal |
+| React Flow | — | latest | MIT | WebView DAG VSCode |
+| dagre / elk | — | — | MIT / EPL-2.0 | Layout algorithmique DAG |
+| ONNX Runtime | — | — | MIT | ML inference (phases 3-4) |
+| FAISS / SQLite-VSS | — | — | MIT | Recherche vectorielle (phase 4) |
+
+### Sources Mastra (vérifiées mars 2026)
+
+- [@mastra/core npm](https://www.npmjs.com/package/@mastra/core) — v1.10.0, 235 projets dépendants
+- [Workflows Overview](https://mastra.ai/docs/workflows/overview) — .then/.parallel/.branch/.dowhile/.dountil/.foreach/.map
+- [Suspend & Resume](https://mastra.ai/docs/workflows/suspend-and-resume) — resumeSchema, suspendSchema, closeOnSuspend
+- [Workflow Streaming](https://mastra.ai/docs/streaming/workflow-streaming) — run.stream(), writer, resumeStream()
+- [AI Tracing](https://mastra.ai/docs/observability/tracing) — exporteurs OTel, Langfuse, Braintrust, LangSmith
+- [Storage Blog](https://mastra.ai/blog/mastra-storage) — 10+ backends, MastraCompositeStore
+- [v1.0 Changelog](https://mastra.ai/blog/changelog-2026-01-20) — breaking changes imports
 
 ---
 
