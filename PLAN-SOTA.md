@@ -385,14 +385,18 @@ interface IWorkflowRenderer {
 
 ### C1. Validation scientifique (SOTA 2024–2026)
 
-| Source | Résultat clé | Implication ChainSkills |
-|--------|-------------|--------------------------|
+| Source | Résultat clé (vérifié) | Implication ChainSkills |
+|--------|------------------------|--------------------------|
 | Études JSON structuré (2024-2025) | +8 à +38 pts de précision avec JSON projeté compact | AgentContext JSON compact pour @agent/@handoff |
-| TOON (Tensorlake, v3.0 2025) | -30 à -60% tokens vs JSON, ~74% précision | Format TOON pour workflows en system prompt |
-| WorFBench (ICLR 2025) | GPT-4 atteint seulement 52.47% sur graph planning | INPUT structuré critique pour performances agent |
-| Semantic Entropy (Nature 2024) | Détection hallucinations par entropie sémantique | Module de détection d'incertitude |
-| AFlow (ICLR 2025, Oral) | GPT-4o-mini dépasse GPT-4o à 4.55% du coût | WorkflowOptimizer MCTS |
-| LLMLingua-2 (Microsoft, ACL 2024) | Jusqu'à 20x compression, perte minimale | Pipeline de compression de prompts |
+| **TOON** (Tensorlake, spec v2.0) | **-30 à -60% tokens** vs JSON, 74% accuracy vs 70%. SDKs : TS, Python, Go, Swift, .NET, Elixir | Format TOON pour workflows en system prompt |
+| **WorFBench** (ICLR 2025) | GPT-4 : F1_graph=62.1% (vs F1_chain=74.9%), capacité workflow **52.47%**. Prior knowledge → +13-18pts | INPUT structuré critique pour performances agent |
+| **Semantic Entropy** (Nature 2024, 581 citations) | Entropie sur clusters sémantiques. Impls : official, SEPs (~0 overhead), Bayesian SE (Spotify, 53% samples) | Module de détection d'incertitude |
+| **AFlow** (ICLR 2025, Oral) | MCTS workflow optimization. GPT-4o-mini > GPT-4o à **4.55% du coût**. +5.7% vs SOTA | WorkflowOptimizer MCTS |
+| **LLMLingua-2** (ACL 2024) | Compression **2x-5x**, 3x-6x plus rapide. `pip install llmlingua`. Intégré LangChain + LlamaIndex | Pipeline de compression de prompts |
+| **SelfCheckGPT** (EMNLP 2023) | AUC-PR **93.42%** (non-factual). 5 méthodes : BERTScore, QA, n-gram, NLI, LLM Prompting | ConsistencyScorer multi-sampling |
+| **DeepSWE** (Together AI, 2025) | **59% SWE-Bench-Verified** (Pass@16). stdout/stderr = état d'environnement RL | Capture stdout/stderr comme mémoire épisodique |
+| **MemRL** (Jan 2026) | Intent-Experience-Utility triplets. Value-Aware Retrieval (Q-values). Pas de weight updates | Architecture ExecutionMemory |
+| **LEGOMem** (AAMAS 2026) | Mémoire procédurale modulaire. Petits LLM + mémoire ≈ gros LLM | SkillRefiner auto-amélioration |
 
 **Règle fondamentale :** L'INPUT structuré améliore les performances (+8 à +38 pts), mais l'OUTPUT contraint les dégrade (-10 à -15%). Ne jamais forcer JSON en sortie pendant le raisonnement agent.
 
@@ -447,7 +451,11 @@ interface AgentContext {
 
 **État actuel :** ❌ N'existe pas. Pas de compression de prompts ni de routing ML.
 
-**Note architecturale :** Ce bloc est le plus ambitieux et le plus risqué. Il nécessite des dépendances ML (ONNX Runtime, DistilBERT) qui alourdissent significativement le bundle. Recommandation : implémenter en tant que **package optionnel** (`@chainskills/ml-optimizer`) installable séparément.
+**Recherche SOTA vérifiée :**
+- **LLMLingua-2** (ACL 2024) : compression **2x-5x** via token classification (XLM-RoBERTa-large ou mBERT). Labels distillés depuis GPT-4. 3x-6x plus rapide que LLMLingua-1. Lib prod : `pip install llmlingua`, intégré LangChain + LlamaIndex. **Note : implémentation Python uniquement** — nécessite un bridge ou un portage TypeScript.
+- **TOON** : SDKs TypeScript et Python disponibles, intégrable directement.
+
+**Note architecturale :** Ce bloc est le plus ambitieux et le plus risqué. LLMLingua-2 est Python-only (bridge Node.js → Python via child_process ou API locale). DistilBERT ONNX est faisable en TS via `onnxruntime-node`. Recommandation : implémenter en tant que **package optionnel** (`@chainskills/ml-optimizer`) installable séparément.
 
 | Tâche | Priorité | Complexité | Dépendance |
 |-------|----------|------------|------------|
@@ -575,9 +583,9 @@ CREATE TABLE patterns (
 |-------|----------|------------|------------|
 | E1.1 Créer port `core/ports/output-validator.port.ts` avec pipeline 5 étapes | P2 | M | — |
 | E1.2 Étape 1 : `StructuralValidator` (déjà existant via @validate/Zod) — wrapper | P2 | S | E1.1 |
-| E1.3 Étape 2 : `ConsistencyScorer` (multi-sampling LLM, style SelfCheckGPT) | P3 | XL | E1.1 |
+| E1.3 Étape 2 : `ConsistencyScorer` (multi-sampling, 5 méthodes SelfCheckGPT : BERTScore/QA/n-gram/NLI/LLM. AUC-PR 93.42%. Lib : [selfcheckgpt](https://github.com/potsawee/selfcheckgpt)) | P3 | XL | E1.1 |
 | E1.4 Étape 3 : `SymbolicGuard` (déjà existant via @assert) — wrapper | P2 | S | E1.1 |
-| E1.5 Étape 4 : `SemanticEntropyDetector` (entropie sémantique, Nature 2024) | P3 | XL | E1.1 |
+| E1.5 Étape 4 : `SemanticEntropyDetector` (entropie sur clusters sémantiques. Impls : [jlko/semantic_uncertainty](https://github.com/jlko/semantic_uncertainty), SEPs ~0 overhead, Bayesian SE Spotify 53% samples) | P3 | XL | E1.1 |
 | E1.6 Étape 5 : `HistoricalAnomalyML` (comparaison vs runs historiques) | P3 | L | E1.1, D1.3 |
 | E1.7 Décision de sortie : Accept | Retry | Escalate | Fallback, configurable par step | P2 | M | E1.1 |
 
@@ -615,7 +623,12 @@ CREATE TABLE patterns (
 
 ### E4. WorkflowOptimizer MCTS — Auto-amélioration
 
-**Recherche SOTA :** AFlow (ICLR 2025 Oral) démontre que GPT-4o-mini peut dépasser GPT-4o en performance à 4.55% du coût via optimisation automatique de workflows par MCTS. Le framework traite les workflows LLM comme du code optimisable.
+**Recherche SOTA vérifiée :** AFlow (ICLR 2025 Oral, [arXiv 2410.10762](https://arxiv.org/abs/2410.10762)) :
+- MCTS sur workflows code-represented (nœuds LLM connectés par edges)
+- **+5.7%** vs SOTA, **+19.5%** vs approches automatisées sur 6 benchmarks (HumanEval, MBPP, GSM8K, MATH, HotpotQA, DROP)
+- **GPT-4o-mini > GPT-4o à 4.55% du coût** (~1/22 du prix)
+- Opérateurs réutilisables : Generate, Review, Revise, Ensemble, Test, Programmer
+- Code : [FoundationAgents/AFlow](https://github.com/FoundationAgents/AFlow)
 
 | Tâche | Priorité | Complexité | Dépendance |
 |-------|----------|------------|------------|
@@ -745,18 +758,22 @@ Le domaine core/ ne doit **jamais** importer de dépendances externes (Mastra, b
 
 ## Annexe — Références SOTA
 
-### Publications validées
+### Publications validées (recherche mars 2026)
 
-| Ref | Titre | Venue | Date | Pertinence |
-|-----|-------|-------|------|------------|
-| [1] | Semantic Entropy | Nature | Juin 2024 | Détection hallucinations — entropie sémantique |
-| [2] | LLMLingua-2 | ACL 2024 | 2024 | Compression de prompts — jusqu'à 20x |
-| [3] | SelfCheckGPT | EMNLP 2023 | 2023 | Validation par consistance multi-sampling |
-| [4] | AFlow | ICLR 2025 (Oral) | 2025 | Optimisation auto de workflows par MCTS |
-| [5] | WorFBench | ICLR 2025 | 2025 | Benchmark graph planning — GPT-4 à 52.47% |
-| [6] | TOON | Tensorlake | 2025 | Format token-optimisé -30 à -60% vs JSON |
-| [7] | DeepSWE | — | 2025 | stdout/stderr comme état d'environnement, 59% SWE-Bench |
-| [8] | MemRL / LEGOMem | — | 2025-2026 | Mémoire épisodique/sémantique/procédurale pour agents |
+| Ref | Titre | Venue | Date | Résultat clé vérifié | Pertinence ChainSkills |
+|-----|-------|-------|------|---------------------|------------------------|
+| [1] | **Semantic Entropy** | Nature vol.630, pp.625-630 | Juin 2024 | Détection confabulations par entropie sur clusters sémantiques. 581 citations, 333k accès. Implémentations : [jlko/semantic_uncertainty](https://github.com/jlko/semantic_uncertainty), SEPs (approximation single-gen, overhead ~0), Bayesian SE (Spotify, 53% des samples) | Bloc E1.5 — SemanticEntropyDetector |
+| [2] | **LLMLingua-2** | ACL 2024 Findings | 2024 | Compression 2x-5x (token classification XLM-RoBERTa/mBERT, labels distillés GPT-4). 3x-6x plus rapide que LLMLingua-1. Latence E2E -1.6x à -2.9x. Lib prod : `pip install llmlingua`, intégré LangChain + LlamaIndex | Bloc C4.3 — ContextCompressor |
+| [3] | **SelfCheckGPT** | EMNLP 2023 | 2023 | Zero-resource hallucination detection par self-consistency. 5 méthodes : BERTScore, QA, n-gram, NLI, LLM Prompting. AUC-PR 93.42 (non-factual). Lib : [potsawee/selfcheckgpt](https://github.com/potsawee/selfcheckgpt) | Bloc E1.3 — ConsistencyScorer |
+| [4] | **AFlow** | ICLR 2025 (Oral) | 2025 | MCTS sur workflows code-represented. +5.7% vs SOTA, +19.5% vs approches auto. **GPT-4o-mini dépasse GPT-4o à 4.55% du coût** (~1/22). Opérateurs : Generate, Review, Revise, Ensemble, Test, Programmer. Code : [FoundationAgents/AFlow](https://github.com/FoundationAgents/AFlow) | Bloc E4 — WorkflowOptimizer MCTS |
+| [5] | **WorFBench** | ICLR 2025 | 2025 | GPT-4 : F1_chain=74.9% mais F1_graph=**62.1%** (gap -13pts). Capacité workflow globale **52.47%**. Graph planning 15-20pts derrière chain planning pour tous les 18 modèles testés. Workflows comme prior knowledge : +13.6-18.6pts sur ALFWorld. Code : [zjunlp/WorfBench](https://github.com/zjunlp/WorfBench) | Bloc C1 — INPUT structuré critique |
+| [6] | **TOON** | Tensorlake | 2025 | Spec v2.0 (working draft), impl v1.3.3. **-30 à -60% tokens** vs JSON. 74% accuracy vs 70% JSON (benchmarks 4 modèles, tokenizer o200k_base). SDKs : TypeScript, Python, Go, Swift, .NET, Elixir, Dart. Wrapper LangChain (`langchain-toon`). Site : [toonformat.dev](https://toonformat.dev/) | Bloc B2.7 — ToonRenderer, Bloc C2.4 |
+| [7] | **DeepSWE** | Together AI / Agentica | 2025 | stdout/stderr comme état d'environnement RL (R2E-Gym). **59.0% SWE-Bench-Verified** (Pass@16 hybrid scaling), 42.2% Pass@1, 71% Pass@16. RL pur sur Qwen3-32B : +20pts Pass@1 en 200 steps (23%→42%). 4 outils : Execute Bash, Search, File Editor | Bloc D1 — Capture stdout/stderr |
+| [8a] | **MemRL** | arXiv 2601.03192 | Jan 2026 | Mémoire épisodique auto-évolutive. LLM gelé + mémoire externe plastique. Triplets Intent-Experience-Utility. Two-Phase Retrieval : sémantique puis Q-values (Value-Aware Retrieval). Apprentissage succès ET échec sans weight updates | Bloc D1 — ExecutionMemory |
+| [8b] | **LEGOMem** | AAMAS 2026 | Oct 2025 | Mémoire **procédurale** modulaire pour systèmes multi-agents. Décompose trajectoires en unités réutilisables. Petits LLM + mémoire procédurale ≈ gros LLM. Évalué sur OfficeBench | Bloc D1.9 — SkillRefiner |
+
+> **Note :** Un workshop ICLR 2026 (MemAgents) est dédié à "Memory for LLM-Based Agentic Systems",
+> confirmant que ce domaine est en pleine explosion. Survey de référence : "Memory in the Age of AI Agents".
 
 ### Frameworks et outils
 
