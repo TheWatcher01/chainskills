@@ -1,7 +1,7 @@
 ---
 name: CopilotExpert
 description: VS Code GitHub Copilot Chat expert — custom agents, toolsets, hooks, frontmatter schema, built-in tools reference. Use when configuring agents, debugging Copilot features, or learning SOTA patterns.
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 tools:
   - read/readFile

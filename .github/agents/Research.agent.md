@@ -1,7 +1,7 @@
 ---
 name: Research
 description: Deep research specialist — web + codebase + dependencies, sourced and timestamped findings for chainskills
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 tools:
   - read/readFile

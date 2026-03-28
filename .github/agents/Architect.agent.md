@@ -1,7 +1,7 @@
 ---
 name: Architect
 description: Architecture-aware planner for chainskills — Hexagonal design, Ports & Adapters, read-only codebase exploration across both packages
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 tools:
   - read/readFile

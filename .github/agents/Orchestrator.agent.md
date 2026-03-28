@@ -1,7 +1,7 @@
 ---
 name: Orchestrator
 description: Task orchestrator for chainskills — analyzes requests and routes to the right specialist agent (Research, Architect, Review, Extension, CopilotExpert). Use when you want intelligent routing of complex tasks, or when unsure which agent to use.
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 tools:
   - read/readFile

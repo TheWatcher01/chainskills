@@ -1,7 +1,7 @@
 ---
 name: Extension
 description: VS Code extension specialist for chainskills — providers, Copilot Chat participant, Agent Mode tools, DAG webview, webpack, package.json manifest. Use for all vscode-extension/ work.
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 tools:
   - read/readFile

@@ -1,7 +1,7 @@
 ---
 name: Review
 description: Review and validate completed work for quality, architecture compliance, and correctness — covers both cli-mcp-core and vscode-extension packages
-user-invokable: true
+user-invocable: true
 disable-model-invocation: false
 tools:
   - read/readFile
