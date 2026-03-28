@@ -45,3 +45,4 @@ export type {
     AgentError,
     AgentMessage,
 } from './agent-provider.port.js';
+export type { ObservabilityPort, Span } from './observability.port.js';
