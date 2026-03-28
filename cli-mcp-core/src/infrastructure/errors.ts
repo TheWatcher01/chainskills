@@ -163,3 +163,27 @@ export function toolError(
 ): ToolError {
     return { code, message, tool, method };
 }
+
+// ─── Async Result Utilities ─────────────────────────────────────────────────
+
+/** Wrap an async operation into a Result, catching errors. */
+export async function tryAsync<T, E>(
+    fn: () => Promise<T>,
+    mapError: (err: unknown) => E,
+): Promise<Result<T, E>> {
+    try {
+        return ok(await fn());
+    } catch (e) {
+        return err(mapError(e));
+    }
+}
+
+/** Collect an array of Results into a Result of array. Fails on first error. */
+export function allOk<T, E>(results: Result<T, E>[]): Result<T[], E> {
+    const values: T[] = [];
+    for (const r of results) {
+        if (!r.ok) return r;
+        values.push(r.value);
+    }
+    return ok(values);
+}

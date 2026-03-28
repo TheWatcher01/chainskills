@@ -28,6 +28,8 @@ import type { ToolProvider } from '#core/ports/tool-provider.port.js';
 import type { SkillResolver } from '#core/ports/skill-resolver.port.js';
 import type { ExecutionEventEmitter } from '#core/ports/execution-events.port.js';
 import type { AgentProvider } from '#core/ports/agent-provider.port.js';
+import type { ObservabilityPort } from '#core/ports/observability.port.js';
+import { createConsoleTracer } from '#adapters/observability/console-tracer.js';
 
 /** Container exposing all wired services. */
 export interface Container {
@@ -40,6 +42,7 @@ export interface Container {
     readonly resolver: SkillResolver;
     readonly emitter: ExecutionEventEmitter;
     readonly agent: AgentProvider;
+    readonly observability: ObservabilityPort;
 }
 
 /**
@@ -125,6 +128,9 @@ export async function createContainer(
         executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent });
     }
 
+    // Observability
+    const observability = createConsoleTracer(logger);
+
     return {
         config,
         logger,
@@ -135,5 +141,6 @@ export async function createContainer(
         resolver,
         emitter,
         agent,
+        observability,
     };
 }
