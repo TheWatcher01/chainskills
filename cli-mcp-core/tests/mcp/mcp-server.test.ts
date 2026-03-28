@@ -112,7 +112,7 @@ describe('MCP config fields', () => {
         const { DEFAULT_CONFIG } = await import('#config/defaults.js');
         expect(DEFAULT_CONFIG.mcpTransport).toBe('stdio');
         expect(DEFAULT_CONFIG.mcpServerName).toBe('chainskills');
-        expect(DEFAULT_CONFIG.mcpServerVersion).toBe('0.3.0');
+        expect(DEFAULT_CONFIG.mcpServerVersion).toBe('0.6.0');
         expect(DEFAULT_CONFIG.mcpPort).toBe(3001);
     });
 

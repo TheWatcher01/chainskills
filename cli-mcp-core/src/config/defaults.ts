@@ -50,7 +50,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     mcpPort: 3001,
     mcpTransport: 'stdio',
     mcpServerName: 'chainskills',
-    mcpServerVersion: '0.3.0',
+    mcpServerVersion: '0.6.0',
     registryUrl: 'https://registry.chainskills.dev',
     shellTimeout: 30_000,
 };

@@ -17,7 +17,7 @@ import { serveCommand } from './serve.js';
 const main = defineCommand({
     meta: {
         name: 'chainskills',
-        version: '0.3.0',
+        version: '0.6.0',
         description:
             'Compose, share, and run AI agent workflows written in natural language',
     },

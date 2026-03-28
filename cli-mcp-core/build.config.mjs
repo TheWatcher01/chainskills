@@ -7,5 +7,6 @@ export default defineBuildConfig({
     { type: 'bundle', input: 'src/adapters/parser/markdown-parser.ts', dts: true },
     { type: 'bundle', input: 'src/adapters/executor/simple-executor.ts', dts: true },
     { type: 'bundle', input: 'src/adapters/executor/mastra-executor.ts', dts: true },
+    { type: 'bundle', input: 'src/adapters/tools/mcp-server.ts', dts: true },
   ],
 });

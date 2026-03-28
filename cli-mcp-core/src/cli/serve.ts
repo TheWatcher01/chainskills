@@ -47,7 +47,7 @@ export const serveCommand = defineCommand({
 
         const mcpServer = createMcpServer(container, {
             name: args.name ?? 'chainskills',
-            version: '0.3.0',
+            version: container.config.mcpServerVersion,
             workflowsDir,
         });
 

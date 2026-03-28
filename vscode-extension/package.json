@@ -2,7 +2,7 @@
     "name": "chainskills-vscode",
     "displayName": "chainskills",
     "description": "AI workflow orchestration in Markdown - VS Code Extension",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "publisher": "chainskills",
     "license": "MIT",
     "repository": {
@@ -10,7 +10,7 @@
         "url": "https://github.com/chainskills/chainskills-vscode"
     },
     "engines": {
-        "vscode": "^1.90.0"
+        "vscode": "^1.99.0"
     },
     "categories": [
         "Programming Languages",
@@ -298,7 +298,7 @@
     "devDependencies": {
         "@types/mocha": "^10.0.10",
         "@types/node": "~20.19.33",
-        "@types/vscode": "^1.109.0",
+        "@types/vscode": "^1.99.0",
         "@typescript-eslint/eslint-plugin": "^7.18.0",
         "@typescript-eslint/parser": "^7.18.0",
         "@vscode/test-cli": "^0.0.9",
