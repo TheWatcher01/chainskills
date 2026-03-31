@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.next/
+*.lock
+*.min.js
+*.min.css
+*.map
+coverage/
+.turbo/
+.env
+.env.local
+.env.*.local

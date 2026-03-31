@@ -30,6 +30,11 @@ VIOLATIONS=""
 while IFS= read -r filepath; do
   [[ -z "${filepath}" ]] && continue
 
+  # Skip files outside the chainskills workspace
+  if [[ "${filepath}" == /* ]] && [[ "${filepath}" != "${WORKSPACE}"/* ]]; then
+    continue
+  fi
+
   # Only check files inside src/core/
   if [[ "${filepath}" == *"/src/core/"* ]]; then
     existing_content=""

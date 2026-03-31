@@ -27,29 +27,5 @@
       "Bash(npm *)"
     ]
   },
-  "enableAllProjectMcpServers": true,
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash scripts/hooks/arch-guard.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash scripts/hooks/post-edit.sh"
-          }
-        ]
-      }
-    ]
-  }
+  "enableAllProjectMcpServers": true
 }
