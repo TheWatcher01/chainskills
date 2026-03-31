@@ -1,7 +1,6 @@
 ---
 name: end-session
 description: "Cloture propre de session : resume, capitalisation, sauvegarde CRAG + graph memory"
-model: sonnet
 allowed-tools: Bash, Read, Grep, Glob, mcp__crag__session_save, mcp__crag__kv_set, mcp__memory__add_observations
 ---
 
