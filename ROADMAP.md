@@ -16,10 +16,10 @@
 | v0.4.0   | VS Code Ext  | Extension skeleton, core enhancements, syntax highlighting        | ✅ Complété |
 | v0.5.0   | IDE Features | Language Features (CodeLens, Completion, Hover, Diagnostics)      | ✅ Complété | 2026-02-19 |
 | v0.6.0   | Copilot AI   | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | 🔄 En cours | Q2 2026    |
-| v0.7.0   | Debug & Test | Debug Adapter (DAP), Test Controller, Variable Inspector          | ⏳ Planifié |
-| v0.8.0   | Registry     | npm-like registry, `@use` résolution distante/git                 | ⏳ Planifié |
-| v0.9.0   | Polish       | Marketplace publish, integration tests, performance               | ⏳ Planifié |
-| v1.0.0   | Production   | SQLite, Redis, rate limiting, enterprise features                 | ⏳ Planifié |
+| v0.7.0   | Traces+Hooks | Trace recording (JSONL), ExecutionHook pipeline, cost tracking    | ⏳ Planifié |
+| v0.8.0   | Registry+Route| Skill registry git, model routing cascade, replay mode           | ⏳ Planifié |
+| v0.9.0   | Factory+Eval | Pattern detection, TWB export, eval framework, DAP debug          | ⏳ Planifié |
+| v1.0.0   | Production   | SQLite, dataset gen, autoresearch, marketplace publish             | ⏳ Planifié |
 
 > Voir aussi : [AGENTS.md](AGENTS.md) — architecture agentique complète, structure projet, stack technique.
 
@@ -723,88 +723,153 @@ Copilot Agent Mode:
 
 ---
 
-## v0.7.0 — Debug & Testing (Planifié — Q3 2026)
+## v0.7.0 — Trace Recording & Hook System (Planifié — Q3 2026)
 
-> Debugging avancé (DAP complet) et framework de tests intégré.
+> Fondation pour replay, distillation, pattern detection, evaluation.
+> Recherche SOTA 2026-03-31 : AgentRR, OTel GenAI, LangChain middleware.
 
-### Phase 6 — Debug Adapter Protocol (Semaines 10-12) ⏳
+### Phase 6 — Trace Infrastructure ⏳
 
-- [ ] `src/debug/debug-adapter.ts` — DAP inline via `InlineDebugAdapterFactory`
-- [ ] `src/debug/breakpoint-manager.ts` — mapping `@breakpoint` ↔ editor breakpoints
-- [ ] F5 pour debugger un workflow
-- [ ] Step through: un directive à la fois
-- [ ] Variables panel: affiche `$state` et variables du workflow
-- [ ] Call stack: hiérarchie des steps
+- [ ] `src/adapters/trace/jsonl-trace-store.ts` — JSONL adapter pour TraceStore port existant
+- [ ] Instrumenter `simple-executor.ts` — emit trace par step (inputs, outputs, model, tokens, timing)
+- [ ] Instrumenter `mastra-executor.ts` — idem
+- [ ] `src/cli/commands/run.ts` — flag `--capture-traces`
+- [ ] `src/cli/commands/replay.ts` — commande `chainskills replay <trace-id>`
+- [ ] `src/cli/commands/traces.ts` — commande `chainskills traces list|export`
+- [ ] Stockage : `~/.chainskills/traces/{workflow}-{run-id}.trace.jsonl`
+- [ ] OTel GenAI-compatible trace schema (model_id, tokens, cost_estimate)
 
-### Phase 7 — Test Controller (Semaine 12) ⏳
+### Phase 7 — Hook/Middleware Pipeline ⏳
 
-- [ ] `src/testing/test-controller.ts` — chaque `.workflow.md` = test item dans Test Explorer
-- [ ] 3 profils: "Dry Run" (rapide), "Full Run" (réel), "Debug Run" (avec breakpoints)
-- [ ] Structure hiérarchique: Workflow → Steps → Directives
-- [ ] CI/CD integration via VS Code test results API
+- [ ] `src/core/ports/execution-hook.port.ts` — ExecutionHook interface (before/after/onError)
+- [ ] `src/adapters/hooks/trace-hook.ts` — hook qui capture les traces
+- [ ] `src/adapters/hooks/cost-tracker-hook.ts` — suivi couts par modele
+- [ ] `src/adapters/hooks/guardrail-hook.ts` — validation pre/post step
+- [ ] Integrer pipeline de hooks dans simple-executor.ts + mastra-executor.ts
+- [ ] Hook priority ordering (number-based)
+- [ ] Hook actions: continue, skip, abort
 
-### Phase 8 — Rename & References (Semaine 13) ⏳
+### Tests v0.7.0
 
-- [ ] `RenameProvider` — F2 sur `$variable` → renomme partout (10h)
-- [ ] `ReferenceProvider` — trouver tous les usages d'une variable/skill (6h)
-- [ ] `DefinitionProvider` — go-to-definition pour `@use`, `$variable`, `@workflow` (4h)
+- [ ] Trace JSONL creation + mandatory fields + error tracing + parallel branches
+- [ ] Hook ordering, abort, skip, cost accumulation
+- [ ] **+18 tests minimum**
 
-**Métriques cibles v0.7.0** : DAP complet + Test Explorer + F2 rename
+**Source SOTA** : AgentRR (arXiv 2505.17716), OTel GenAI, LangChain middleware (nov 2025)
 
 ---
 
-## v0.8.0 — Registry & Distribution (Planifié — Q3 2026)
+## v0.8.0 — Registry, Routing & Replay (Planifié — Q3 2026)
 
-> npm-like registry pour partager et installer des skills/workflows.
+> Skill registry distant + model routing cascade + replay mode.
+> Recherche SOTA 2026-03-31 : Agent Skills standard, CASTER, MasRouter, ICD.
 
-- [ ] `chainskills add owner/repo[@workflow]` — install depuis Git/registry
-- [ ] `chainskills publish` — publier sur le registry
-- [ ] `chainskills remove <name>` — désinstaller un skill
-- [ ] `@use package-name` — résolution distante automatique
+### Phase 8 — Skill Registry ⏳
+
+- [ ] `src/core/ports/skill-registry.port.ts` — interface registry
+- [ ] `src/adapters/skills/git-registry.ts` — resolution `@use owner/repo@skill`
+- [ ] `src/cli/commands/skills.ts` — search, install, publish
+- [ ] `@use package-name` — resolution distante automatique
 - [ ] Semantic versioning pour les workflows
-- [ ] `AuthenticationProvider` VS Code pour auth registry
-- [ ] `SecretStorage` pour tokens sécurisés
+- [ ] Format compatible Agent Skills standard (Anthropic, dec 2025)
+
+### Phase 9 — Model Routing ⏳
+
+- [ ] `src/core/ports/model-router.port.ts` — interface routing
+- [ ] `src/adapters/agents/model-router.ts` — router cascade (Opus->Sonnet->Haiku->local)
+- [ ] `src/cli/commands/run.ts` — flag `--model auto|local|cloud`
+- [ ] Routing par directive : @call=no LLM, @if=Haiku, @agent=Sonnet, complex=Opus
+- [ ] Fallback automatique si modele echoue
+
+### Phase 10 — Replay Mode ⏳
+
+- [ ] `chainskills replay <trace-id> --model haiku` — replay avec modele different
+- [ ] In-Context Distillation : inject traces reussies comme few-shot
+- [ ] Validation output vs trace originale (schema Zod)
+
+### Tests v0.8.0
+
+- [ ] Git resolution, routing decisions, fallback cascade, replay with cache
+- [ ] **+10 tests minimum**
+
+**Sources SOTA** : Agent Skills (agentskills.io), CASTER (arXiv 2601.19793), ICD (arXiv 2512.02543)
 
 ---
 
-## v0.9.0 — Polish & Marketplace (Planifié — Q3 2026)
+## v0.9.0 — Workflow Factory & Evaluation (Planifié — Q4 2026)
 
-> Finitions, tests d'intégration, publication marketplace.
+> Pattern detection automatique + export TWB + evaluation framework + debug.
+> Recherche SOTA 2026-03-31 : Agentic Process Mining, Mastra Datasets.
 
-- [ ] Integration tests (`@vscode/test-electron`)
-- [ ] Performance profiling (activation < 500ms, DAG render < 2s)
-- [ ] README avec GIFs / screenshots
-- [ ] CHANGELOG.md complet
-- [ ] Package `.vsix` + publish VS Code Marketplace
-- [ ] Extension icon + branding
+### Phase 11 — Pattern Detection ⏳
+
+- [ ] `src/core/use-cases/detect-patterns.ts` — analyse n-grams sur directive chains
+- [ ] `src/core/entities/workflow-pattern.ts` — entite Pattern
+- [ ] `src/cli/commands/patterns.ts` — analyze, suggest, extract, export-twb
+- [ ] Integration TWB : `patterns export-twb <id>` genere block.json + template
+
+### Phase 12 — Evaluation Framework ⏳
+
+- [ ] `src/core/use-cases/evaluate-workflow.ts` — evaluation
+- [ ] `src/cli/commands/eval.ts` — `chainskills eval <workflow> --dataset <jsonl>`
+- [ ] Comparaison modeles : `chainskills eval --compare opus haiku`
+
+### Phase 13 — Debug Adapter Protocol ⏳
+
+- [ ] `debug/debug-adapter.ts` — DAP inline via InlineDebugAdapterFactory (VS Code)
+- [ ] `debug/breakpoint-manager.ts` — mapping @breakpoint <-> editor breakpoints
+- [ ] F5 debug, step through, variables panel, call stack
+
+### Tests v0.9.0
+
+- [ ] Pattern detection, scoring, extraction, eval scoring
+- [ ] **+14 tests minimum**
 
 ---
 
-## v1.0.0 — Production & Scale (Planifié — Q4 2026)
+## v1.0.0 — Production & Autoresearch (Planifié — Q4 2026)
 
-> Enterprise features et scalabilité.
+> Production readiness + boucle autoresearch pour LLMs locaux.
+
+### Infrastructure Production
 
 - [ ] `SQLite` state store — persistent execution history
-- [ ] `Redis` state store — distributed execution
 - [ ] Rate limiting — protections anti-abus
-- [ ] Audit log — traçabilité des exécutions
-- [ ] `InlayHintProvider` — hints inline (valeurs résolues, types, ordre)
-- [ ] `SemanticTokensProvider` — coloration sémantique riche (au-delà TextMate)
-- [ ] `SignatureHelpProvider` — signature tools dans `@call tool.method(`
-- [ ] `CommentController` — annotations inline (résultats validation, suggestions)
-- [ ] `TimelineProvider` — historique des exécutions par fichier
-- [ ] `CustomTextEditorProvider` — split editor (source + preview)
+- [ ] Audit log — tracabilite des executions
+- [ ] Marketplace publish (.vsix)
+- [ ] Integration tests (`@vscode/test-electron`)
+
+### Dataset & Fine-tuning Pipeline
+
+- [ ] `training/scripts/trace-to-sft.ts` — traces -> SFT format
+- [ ] `training/scripts/trace-to-dpo.ts` — traces -> DPO paires
+- [ ] InstructLab taxonomie (tool-calling, control-flow, error-handling, agent-delegation)
+- [ ] Objectif : 500-1000 traces de qualite
+
+### Autoresearch Integration
+
+- [ ] `chainskills run --model local` — Ollama integration
+- [ ] Fallback automatique local -> cloud
+- [ ] Boucle autoresearch (pattern Karpathy) pour amelioration continue
+- [ ] Export GGUF Q4_K_M pour Ollama
+
+### VS Code Advanced
+
+- [ ] `InlayHintProvider` — hints inline
+- [ ] `SemanticTokensProvider` — coloration semantique
+- [ ] `TestController` — workflow = test item dans Test Explorer
+- [ ] `TimelineProvider` — historique executions par fichier
 
 ---
 
 ## Effort Estimé (v0.5.0 → v1.0.0)
 
-| Phase             | Version | Contenu                                                                                      | Durée       | Heures    |
-| ----------------- | ------- | -------------------------------------------------------------------------------------------- | ----------- | --------- |
-| Language Features | v0.5.0  | CodeLens, Completion, Diagnostics, Hover, Symbols, Links, Folding, FileDecoration, StatusBar | 4 sem       | ~62h      |
-| Copilot + AI      | v0.6.0  | Chat Participant, Agent Mode Tools, DAG Webview                                              | 5 sem       | ~58h      |
-| Debug & Test      | v0.7.0  | DAP, TestController, Rename, References                                                      | 4 sem       | ~76h      |
-| Registry          | v0.8.0  | add/publish/remove, semver, auth                                                             | 3 sem       | ~40h      |
-| Polish            | v0.9.0  | Integration tests, marketplace publish                                                       | 2 sem       | ~20h      |
-| Production        | v1.0.0  | SQLite, Redis, enterprise                                                                    | 4 sem       | ~50h      |
-| **Total**         |         |                                                                                              | **~22 sem** | **~306h** |
+| Phase              | Version | Contenu                                                           | Durée       | Heures    |
+| ------------------ | ------- | ----------------------------------------------------------------- | ----------- | --------- |
+| Language Features  | v0.5.0  | CodeLens, Completion, Diagnostics, Hover, Symbols, Links, etc.    | 4 sem       | ~62h      |
+| Copilot + AI       | v0.6.0  | Chat Participant, Agent Mode Tools, DAG Webview                   | 5 sem       | ~58h      |
+| Traces + Hooks     | v0.7.0  | JSONL TraceStore, ExecutionHook pipeline, cost tracking            | 3 sem       | ~40h      |
+| Registry + Routing | v0.8.0  | Git skills, model routing cascade, replay mode                    | 4 sem       | ~50h      |
+| Factory + Eval     | v0.9.0  | Pattern detection, TWB export, eval framework, DAP debug          | 4 sem       | ~55h      |
+| Production         | v1.0.0  | SQLite, dataset gen, autoresearch, marketplace                    | 5 sem       | ~60h      |
+| **Total**          |         |                                                                   | **~25 sem** | **~325h** |

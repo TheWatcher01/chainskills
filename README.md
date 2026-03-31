@@ -206,10 +206,10 @@ Canonical portfolio roadmap: [ROADMAP.md](ROADMAP.md)
 | 4     | v0.4.0  | VS Code extension, ExecutionController, `@breakpoint` | ✅     |
 | 5     | v0.5.0  | CodeLens, Diagnostics, Autocomplete, Hover            | ✅     |
 | 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode, DAG Webview  | 🔄     |
-| 7     | v0.7.0  | Debug Adapter (DAP), Test Controller                  | ⏳     |
-| 8     | v0.8.0  | Registry & distribution (npm-like)                    | ⏳     |
-| 9     | v0.9.0  | Polish, integration tests, marketplace publish        | ⏳     |
-| 10    | v1.0.0  | Production & scale (SQLite, Redis)                    | ⏳     |
+| 7     | v0.7.0  | Trace recording (JSONL), ExecutionHook pipeline       | ⏳     |
+| 8     | v0.8.0  | Skill registry git, model routing, replay mode        | ⏳     |
+| 9     | v0.9.0  | Pattern detection, eval framework, TWB export         | ⏳     |
+| 10    | v1.0.0  | Production, autoresearch, LLM local integration       | ⏳     |
 
 ---
 

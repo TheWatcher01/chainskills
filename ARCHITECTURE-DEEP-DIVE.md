@@ -1,8 +1,8 @@
 # ChainSkills Architecture Deep Dive
 
-**Date:** 2026-03-27  
-**Scope:** Complete exploration of cli-mcp-core codebase after v0.6.0 (pre-v0.7.0 debug/test phase)  
-**Status:** Planning phase — comprehensive analysis of all extension points
+**Date:** 2026-03-31
+**Scope:** Complete exploration of cli-mcp-core + Workflow Factory architecture (v0.7.0-v1.0.0 planning)
+**Status:** Planning phase — comprehensive analysis + SOTA research (AgentRR, OTel, Agent Skills, model routing)
 
 ---
 
@@ -881,34 +881,38 @@ templates/meta/
 
 ---
 
-## 14. RECOMMENDED PHASED APPROACH
+## 14. RECOMMENDED PHASED APPROACH (Updated 2026-03-31)
 
-### Phase 1: Event System (1-2 days)
-- Add `learning:*`, `distillation:*`, `research:*` to execution-events.port.ts
-- Export new types from core/ports/index.ts
-- No executor changes needed (purely additive)
-- External listeners can subscribe immediately
+> Basé sur recherche SOTA + analyse des gaps. Voir PLAN.md pour le plan complet.
 
-### Phase 2: New Ports & Adapters (2-3 days)
-- Create `core/ports/distillation.port.ts` + implementation
-- Create `core/ports/learning-collector.port.ts` + implementation
-- Create `core/ports/research.port.ts` + implementation
-- Wire into Container (optional fields)
+### Phase 1: Trace Recording + Hooks (v0.7.0, 3 semaines)
+- Implement JSONL TraceStore adapter (port exists, no adapter)
+- Create ExecutionHook port + pipeline (before/after/onError)
+- Create 3 hook adapters: trace-hook, cost-tracker-hook, guardrail-hook
+- Add `--capture-traces` flag to CLI run command
+- Add `chainskills replay` + `chainskills traces` commands
+- **+18 tests**
 
-### Phase 3: CLI Commands (1-2 days)
-- `chainskills learn <workflow>` command
-- `chainskills distill` command
-- `chainskills research <domain>` command
+### Phase 2: Model Routing + Replay (v0.8.0, 4 semaines)
+- Create ModelRouter port + cascade adapter (Opus->Sonnet->Haiku->local)
+- Create Skill Registry port + git-resolver adapter
+- Implement replay mode with In-Context Distillation (few-shot from traces)
+- Add `--model auto|local|cloud` flag
+- **+10 tests**
 
-### Phase 4: Meta Workflow Templates (2-3 days)
-- `auto-learn.workflow.md` — automated learning pipeline
-- `distill-knowledge.workflow.md` — knowledge compression
-- Integration with existing research-domain, agent-factory
+### Phase 3: Pattern Detection + Evaluation (v0.9.0, 4 semaines)
+- Create detect-patterns use case (n-gram analysis on directive chains)
+- Create evaluation framework (dataset-based, model comparison)
+- Integrate with TWB (export patterns as blocks)
+- Add DAP debug adapter for VS Code
+- **+14 tests**
 
-### Phase 5: Quality Assurance (1-2 days)
-- Vitest coverage for new services
-- Integration tests with real workflows
-- Documentation updates
+### Phase 4: Production + Autoresearch (v1.0.0, 5 semaines)
+- SQLite state store, audit logging
+- Dataset generation pipeline (trace-to-SFT, trace-to-DPO)
+- Autoresearch loop (Karpathy pattern) for continuous model improvement
+- `--model local` Ollama integration with fallback
+- VS Code marketplace publish
 
 ---
 
@@ -925,4 +929,200 @@ templates/meta/
 ---
 
 **Status:** Comprehensive analysis complete. Ready for implementation.
+
+---
+
+## 16. WORKFLOW FACTORY ARCHITECTURE (Planned v0.7.0-v1.0.0)
+
+> Recherche SOTA completee 2026-03-31. Architecture des features manquantes pour
+> transformer chainskills en usine a workflows agentiques.
+
+### 16.1 Trace Recording System (v0.7.0)
+
+**Port existant** : `cli-mcp-core/src/core/ports/trace-store.port.ts`
+**Adapter a creer** : `cli-mcp-core/src/adapters/trace/jsonl-trace-store.ts`
+
+```typescript
+// Schema trace OTel GenAI-compatible
+interface StepTrace {
+  step_id: string;
+  directive: string;             // "@call", "@agent", "@if"
+  tool_name?: string;
+  input: unknown;
+  output: unknown;
+  success: boolean;
+  duration_ms: number;
+  tokens?: { input: number; output: number };
+  model_id?: string;             // "claude-opus-4-6", "qwen3-8b"
+  error?: string;
+  cost_estimate_usd?: number;
+}
+```
+
+**Architecture** : Observer pattern. L'executor emet des evenements,
+un TraceHook (hook middleware) les persiste en JSONL.
+
+**Source SOTA** : AgentRR (arXiv 2505.17716), OTel GenAI Semantic Conventions
+
+### 16.2 Hook/Middleware Pipeline (v0.7.0)
+
+**Port a creer** : `cli-mcp-core/src/core/ports/execution-hook.port.ts`
+
+```typescript
+interface ExecutionHook {
+  readonly name: string;
+  readonly priority: number;     // Ordre d'execution (0 = premier)
+  beforeStep?(step: Step, context: ExecutionContext): Promise<HookResult>;
+  afterStep?(step: Step, result: StepResult, context: ExecutionContext): Promise<HookResult>;
+  beforeWorkflow?(workflow: Workflow, context: ExecutionContext): Promise<HookResult>;
+  afterWorkflow?(workflow: Workflow, result: WorkflowResult, context: ExecutionContext): Promise<HookResult>;
+  onError?(step: Step, error: Error, context: ExecutionContext): Promise<HookResult>;
+}
+
+type HookResult =
+  | { action: 'continue' }
+  | { action: 'skip' }
+  | { action: 'abort'; reason: string };
+```
+
+**Integration** : Pipeline dans executor (simple + mastra).
+Chaque step passe par before -> execute -> after.
+Hooks priorises par `priority` (ascending).
+
+**Adapters planifies** :
+- `trace-hook.ts` — capture traces (Phase 16.1)
+- `cost-tracker-hook.ts` — accumule tokens/cout par modele
+- `guardrail-hook.ts` — validation pre/post (PII, schema)
+
+**Source SOTA** : LangChain middleware (nov 2025) — 5 hook types
+
+### 16.3 Model Router (v0.8.0)
+
+**Port a creer** : `cli-mcp-core/src/core/ports/model-router.port.ts`
+
+```typescript
+interface ModelRouter {
+  route(step: Step, context: RoutingContext): Promise<ModelSelection>;
+}
+
+interface RoutingContext {
+  complexity: 'simple' | 'moderate' | 'complex';
+  directive_type: string;
+  has_prior_trace: boolean;      // Si trace existe, modele leger suffit
+  budget_remaining: number;      // Tokens/$ restants
+}
+
+interface ModelSelection {
+  model_id: string;              // "claude-opus-4-6", "haiku", "qwen3-8b"
+  fallback?: string;             // Escalade si echec
+  reason: string;                // Pourquoi ce choix
+}
+```
+
+**Regles de routing par defaut** :
+
+| Directive | Modele | Fallback |
+|-----------|--------|----------|
+| @call (shell) | Aucun LLM | — |
+| @if, @for, @repeat | Haiku | Sonnet |
+| @agent (generation) | Sonnet | Opus |
+| @agent (raisonnement) | Opus | — |
+| Replay depuis trace | Haiku/local | Sonnet |
+
+**Source SOTA** : CASTER (arXiv 2601.19793) -72.4% cout, MasRouter (ACL 2025)
+
+### 16.4 Pattern Detection (v0.9.0)
+
+**Use case a creer** : `cli-mcp-core/src/core/use-cases/detect-patterns.ts`
+
+```typescript
+interface WorkflowPattern {
+  pattern_id: string;
+  name: string;
+  directives: DirectiveSequence[];
+  frequency: number;               // Nombre d'occurrences dans traces
+  success_rate: number;            // 0.0-1.0
+  avg_duration_ms: number;
+  suggested_as: 'workflow' | 'skill' | 'hook';
+  variables: string[];             // Variables parametrisables
+}
+```
+
+**Algorithme** :
+1. Collecter N traces d'execution
+2. Extraire n-grams de sequences de directives
+3. Identifier sub-workflows communs (>= 3 occurrences)
+4. Scorer par frequence × taux de succes
+5. Proposer extraction comme template TWB
+
+**Integration TWB** : `chainskills patterns export-twb <id>` genere
+block.json + template.workflow.md pret a `twb add`.
+
+**Source SOTA** : Agentic Process Mining (SimplAI), OpenLineage
+
+### 16.5 Evaluation Framework (v0.9.0)
+
+**Use case a creer** : `cli-mcp-core/src/core/use-cases/evaluate-workflow.ts`
+
+```bash
+chainskills eval <workflow.md> --dataset fixtures/eval.jsonl
+chainskills eval --compare opus haiku --workflow add-crawler
+```
+
+**Metriques** :
+- Steps succeeded / total steps
+- Token usage per model
+- Cost estimate
+- Duration
+- Regression detection (vs baseline traces)
+
+**Source SOTA** : Mastra Datasets/Experiments (fev 2026)
+
+### 16.6 Container Extensions (v0.7.0+)
+
+```typescript
+// Extension du Container existant (config/container.ts)
+interface Container {
+  // ... existing services ...
+  hooks?: ExecutionHook[];       // v0.7.0 — priority-ordered middleware
+  traceStore?: TraceStore;       // v0.7.0 — JSONL persistence
+  modelRouter?: ModelRouter;     // v0.8.0 — cascade routing
+  skillRegistry?: SkillRegistry; // v0.8.0 — remote resolution
+}
+```
+
+**Pattern** : Optional fields, interface segregation.
+Code existant non affecte (backward compatible).
+
+---
+
+## 17. COMPETITIVE POSITIONING (SOTA 2026-03-31)
+
+### Industry Landscape
+
+| Framework | Lang | Workflow Format | MCP | Stars/Adoption |
+|-----------|------|----------------|-----|---------------|
+| **chainskills** | TypeScript | **Markdown** | **Natif** | Open-source |
+| LangGraph | Python | Code Python | Plugin | 27K searches/mois |
+| CrewAI | Python | Code Python | Non | 12M+ exec/jour |
+| AutoGen | Python | Code Python | Non | 1445% surge |
+| Mastra | TypeScript | Code TypeScript | Natif | 22.3K stars |
+| OpenAI SDK | Python | Code Python | Non | Mars 2025 |
+
+### Avantage unique
+
+**Markdown = DSL standard** valide par GitHub Agentic Workflows (fev 2026).
+chainskills est le **seul framework TypeScript workflow-as-markdown** avec :
+- MCP natif (server + client)
+- 17 directives structurees
+- TWB integration (35 blocks reutilisables)
+- DAG auto-parallelisation
+- Execution control (pause/resume/step)
+
+### Key References
+
+- [GitHub Agentic Workflows (fev 2026)](https://github.blog/changelog/2026-02-13-github-agentic-workflows-are-now-in-technical-preview/)
+- [Agent Skills Standard (Anthropic, dec 2025)](https://agentskills.io/home)
+- [MCP Roadmap 2026](https://modelcontextprotocol.io/development/roadmap)
+- [Gartner: 40% enterprise apps with AI agents by 2026](https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026)
 
