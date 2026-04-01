@@ -873,3 +873,130 @@ Copilot Agent Mode:
 | Factory + Eval     | v0.9.0  | Pattern detection, TWB export, eval framework, DAP debug          | 4 sem       | ~55h      |
 | Production         | v1.0.0  | SQLite, dataset gen, autoresearch, marketplace                    | 5 sem       | ~60h      |
 | **Total**          |         |                                                                   | **~25 sem** | **~325h** |
+
+---
+
+## Session 2026-03-31 — Decisions & Recherches Integration Claude Code
+
+> Notes de session capturees lors de l'audit complet de l'ecosysteme TheWatcher01.
+> Ces decisions et recherches guident les versions v0.7.0 a v1.0.0.
+
+### 1. Integration Claude Code (P0 — immediat)
+
+**Objectif** : chainskills doit etre utilisable nativement depuis Claude Code.
+
+**Decision** : MCP stdio est le mode d'integration.
+
+```bash
+# Dans ~/.claude/settings.json, ajouter :
+claude mcp add chainskills -- chainskills serve --stdio --dir ~/projects/chainskills/cli-mcp-core/templates/
+```
+
+**Resultat attendu** : Claude Code peut appeler `mcp__chainskills__run_workflow`, `mcp__chainskills__validate_workflow`, etc. directement. Les `@agent copilot:` dans les workflows sont resolus par Claude Code lui-meme (quota Max 5x).
+
+**Skill `/workflow`** : creer une skill Claude Code qui simplifie l'invocation :
+```
+/workflow search-research-plan subject="mon sujet"
+→ appelle mcp__chainskills__run_workflow en interne
+```
+
+**Status** : chainskills est maintenant linke globalement (`npm link` fait le 2026-03-31).
+
+### 2. Skill /srp creee (Search-Research-Plan)
+
+**Fichiers crees cette session** :
+- `~/.claude/skills/srp/SKILL.md` — skill Claude Code, 6 agents paralleles → synthese → plan mode
+- `templates/meta/search-research-plan.workflow.md` — equivalent chainskills, 8 steps, valide (`chainskills validate` OK)
+
+**DAG du workflow SRP** :
+```
+Level 0: → validate-initialize
+Level 1: ∥ check-memory (CRAG+KG) | synthesize-brief
+Level 2: ∥ scan-codebase | generate-plan
+Level 3: ∥ research-externally (conditionnel depth) | output
+Level 4: → validate-freshness
+```
+
+### 3. Architecture cible : Opus reflechit, chainskills execute, Qwen3 fait le grunt work
+
+```
+Utilisateur
+  ↓ langage naturel
+Claude Opus (Claude Code, Max 5x)
+  ↓ choisit le workflow + inputs
+chainskills run workflow.md --input ...
+  ↓ execute le DAG
+  ├── @call shell.exec() → commandes reelles
+  ├── @agent copilot: → resolu par Opus (court terme) ou Qwen3 (apres distillation)
+  ├── @parallel: → parallelisme reel
+  └── @assert → validation deterministe
+  ↓ trace enregistree (.trace.jsonl)
+Dataset de distillation
+  ↓ trace-to-sft.ts / trace-to-dpo.ts
+Unsloth LoRA fine-tune (Qwen3-Coder 8B, $10-50)
+  ↓ export GGUF Q4_K_M
+Ollama local (MSI RTX 5060)
+  ↓ AGENT_BASE_URL=localhost:11434
+chainskills run → @agent resolu par modele local = zero cout
+```
+
+**Vision** : chaque execution par Opus enrichit le dataset → le modele local s'ameliore → Opus est de moins en moins sollicite → cercle vertueux.
+
+### 4. Recherche Karpathy — Repos a integrer
+
+| Repo | Stars | Integration chainskills | Priorite |
+|------|-------|------------------------|----------|
+| **autoresearch** (62.7K, mars 2026) | Boucle auto-amelioration. `program.md` ≈ `.workflow.md`. Agent execute experiences, evalue, ameliore, boucle overnight. **11% gain en une nuit.** | Integrer comme meta-workflow `autoresearch-loop.workflow.md` | **P0 v1.0.0** |
+| **nanochat** (50.8K, mars 2026) | Pipeline ChatGPT complet $100. Tokenization → pretraining → serving. 8K lignes. | Reference pour pipeline fine-tuning local | **P0 v1.0.0** |
+| **llm-council** (16.3K, nov 2025) | Multi-LLM consensus anonymise. 3 modeles debattent → Chair tranche. | Adapter comme directive `@council` ou pattern multi-agent | **P1 v0.8.0** |
+| **minbpe** (10.4K, juil 2024) | Tokenizer custom from scratch. Vocabulaire domaine → 15-30% tokens en moins. | Utiliser pour tokenizer subventions FR | **P1 v1.0.0** |
+| **rendergit** (2.1K, aout 2025) | Render repo en texte compact pour contexte LLM. Reduit bloat tokens. | Integrer dans `@call` pour injection contexte | **P2** |
+
+### 5. MCP Memory Graph vs Micrograd — Analyse comparative
+
+**MCP Memory Graph** (ce qu'on a actuellement) :
+- Property bag JSON : 96 entites, 146 relations, ~600 observations
+- Pas de graph DB reelle, pas de traversal, pas de semantic search
+- Text match basique, pas de schema, pas de types
+- Utile comme carnet de notes structure, pas comme moteur d'apprentissage
+
+**Micrograd** (Karpathy, 150 lignes) :
+- Moteur autograd scalaire avec backpropagation
+- DAG computationnel avec topological sort + chain rule
+- Moteur d'apprentissage, pas de stockage
+
+**Conclusion** : ce sont deux choses differentes. MCP Memory = stockage de faits. Micrograd = calcul de gradients. Pour un agent qui **apprend**, il faudrait combiner les deux : stocker les experiences (graph) + calculer les ameliorations (autograd/RL). C'est exactement ce que la boucle autoresearch fait de facon pragmatique : elle n'utilise pas de gradients mais des evaluations LLM + mutation de programmes.
+
+### 6. Briques manquantes (bloquantes pour la vision)
+
+| Brique | Version cible | Status | Bloque |
+|--------|--------------|--------|--------|
+| **TraceStore JSONL adapter** | v0.7.0 | Port defini, zero adapter | Pas de traces = pas de dataset |
+| **`--capture-traces` flag CLI** | v0.7.0 | Non implemente | Impossible d'enregistrer |
+| **AGENT_BASE_URL config** | v0.7.0 | `.env.example` existe, non configure | `@agent` echoue en runtime |
+| **MCP stdio dans Claude Code** | Immediat | chainskills linke, pas encore MCP | Claude ne peut pas lancer de workflows |
+| **trace-to-sft.ts** | v1.0.0 | Non cree | Pas de conversion traces → dataset |
+| **Boucle autoresearch** | v1.0.0 | Mentionne dans ROADMAP, zero code | Pas d'auto-amelioration |
+| **Model routing** (Opus→Haiku→local) | v0.8.0 | Non implemente | Tout passe par le meme modele |
+
+### 7. Licences — Verification distillation
+
+| Modele source | Licence | Distillation autorisee ? |
+|---------------|---------|--------------------------|
+| **Qwen3/3.5** | Apache 2.0 | ✅ Oui explicitement |
+| **DeepSeek-R1** | MIT | ✅ Oui explicitement |
+| **Mistral/Devstral** | Apache 2.0 | ✅ Oui explicitement |
+| **Claude (Anthropic)** | ToS restrictifs | ⚠️ Partiel — OK pour classification/scoring, interdit pour modele concurrent |
+| **GPT (OpenAI)** | ToS restrictifs | ❌ Interdit pour entrainer des modeles |
+
+**Decision** : utiliser Qwen3 ou DeepSeek comme teacher models pour la distillation. Claude uniquement comme orchestrateur (pas comme source de training data).
+
+### 8. Metriques actuelles ecosysteme (snapshot 2026-03-31)
+
+- **CRAG** : 34 vecteurs, 47 KV keys, 1949 doc chunks, 7+ sessions
+- **Knowledge Graph** : 96 entites, 146 relations
+- **TWB** : 37 blocks reutilisables
+- **Skills Claude Code** : 153 installees
+- **Chainskills** : 16 workflows, 197 tests, v0.6.0
+- **Claude Max 5x** : 77% quota utilise (reset samedi 12h UTC)
+- **Cache ratio** : 66.5:1 (semaine courante)
