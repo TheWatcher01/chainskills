@@ -87,5 +87,7 @@ export function loadEnvConfig(): AppConfig {
         mcpServerVersion: env.MCP_SERVER_VERSION,
         registryUrl: env.CHAINSKILLS_REGISTRY_URL,
         shellTimeout: env.CHAINSKILLS_SHELL_TIMEOUT,
+        tracesDir: process.env['TRACES_DIR'] ?? './traces',
+        recordTraces: true,
     };
 }

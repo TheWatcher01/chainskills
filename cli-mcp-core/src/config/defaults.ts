@@ -38,6 +38,10 @@ export interface AppConfig {
     readonly registryUrl: string;
     /** Shell command timeout (ms). */
     readonly shellTimeout: number;
+    /** Traces directory for JSONL fallback. */
+    readonly tracesDir: string;
+    /** Enable trace recording by default. */
+    readonly recordTraces: boolean;
 }
 
 /** Default config for local development. */
@@ -53,4 +57,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     mcpServerVersion: '0.6.0',
     registryUrl: 'https://registry.chainskills.dev',
     shellTimeout: 30_000,
+    tracesDir: './traces',
+    recordTraces: true,
 };

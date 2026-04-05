@@ -78,6 +78,11 @@ export const runCommand = defineCommand({
             description: 'Show verbose debug logs on stderr',
             default: false,
         },
+        record: {
+            type: 'boolean',
+            description: 'Record execution traces (default: true, use --no-record to disable)',
+            default: true,
+        },
     },
     async run({ args }) {
         const workflowPath = resolve(args.workflow);
@@ -85,6 +90,7 @@ export const runCommand = defineCommand({
         const jsonMode = args.json || args.format === 'json';
         const vscodeMode = args.format === 'vscode';
         const verbose = args.verbose;
+        const record = args.record;
 
         // Parse inputs
         const inputs: Record<string, string> = {};
@@ -191,6 +197,7 @@ export const runCommand = defineCommand({
         // (stderr JSON lines can appear red in VS Code terminal, confusing users)
         const container = await createContainer({
             logLevel: verbose ? 'debug' : 'warn',
+            recordTraces: record,
         });
 
         // Parse

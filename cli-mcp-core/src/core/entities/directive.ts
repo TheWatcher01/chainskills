@@ -45,7 +45,8 @@ export type DirectiveType =
     | 'workflow'
     | 'env'
     | 'agent'
-    | 'handoff';
+    | 'handoff'
+    | 'schema';
 
 /** All valid directive type values as a readonly set for runtime validation. */
 export const DIRECTIVE_TYPES: ReadonlySet<string> = new Set<DirectiveType>([
@@ -65,6 +66,7 @@ export const DIRECTIVE_TYPES: ReadonlySet<string> = new Set<DirectiveType>([
     'env',
     'agent',
     'handoff',
+    'schema',
 ]);
 
 /**

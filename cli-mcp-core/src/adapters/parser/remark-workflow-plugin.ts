@@ -202,23 +202,36 @@ function parseDirectiveArgs(
             break;
         }
         case 'agent': {
-            // @agent copilot: "message" → $capture
+            // @agent copilot: "message" → $capture  [max_retries:3] [backoff_ms:1000]
             const agentMatch = raw.match(/^@agent\s+(\w+):\s*"([^"]*)"(?:\s*(?:→|->|>)\s*\$(\w+))?/);
             if (agentMatch) {
                 args['agent'] = agentMatch[1];
                 args['message'] = agentMatch[2];
                 if (agentMatch[3]) args['capture'] = agentMatch[3];
             }
+            // Extract retry options from raw or attributes
+            const agentRetryMatch = raw.match(/max_retries:(\d+)/);
+            if (agentRetryMatch) args['max_retries'] = Number(agentRetryMatch[1]);
+            const agentBackoffMatch = raw.match(/backoff_ms:(\d+)/);
+            if (agentBackoffMatch) args['backoff_ms'] = Number(agentBackoffMatch[1]);
+            if (attributes['max_retries']) args['max_retries'] = Number(attributes['max_retries']);
+            if (attributes['backoff_ms']) args['backoff_ms'] = Number(attributes['backoff_ms']);
             break;
         }
         case 'handoff': {
-            // @handoff agent-name: "message" → $capture
+            // @handoff agent-name: "message" → $capture  [max_retries:3] [backoff_ms:1000]
             const handoffMatch = raw.match(/^@handoff\s+([\w-]+):\s*"([^"]*)"(?:\s*(?:→|->|>)\s*\$(\w+))?/);
             if (handoffMatch) {
                 args['target'] = handoffMatch[1];
                 args['message'] = handoffMatch[2];
                 if (handoffMatch[3]) args['capture'] = handoffMatch[3];
             }
+            const handoffRetryMatch = raw.match(/max_retries:(\d+)/);
+            if (handoffRetryMatch) args['max_retries'] = Number(handoffRetryMatch[1]);
+            const handoffBackoffMatch = raw.match(/backoff_ms:(\d+)/);
+            if (handoffBackoffMatch) args['backoff_ms'] = Number(handoffBackoffMatch[1]);
+            if (attributes['max_retries']) args['max_retries'] = Number(attributes['max_retries']);
+            if (attributes['backoff_ms']) args['backoff_ms'] = Number(attributes['backoff_ms']);
             break;
         }
         case 'workflow': {
@@ -227,6 +240,21 @@ function parseDirectiveArgs(
             if (workflowMatch) {
                 args['ref'] = workflowMatch[1];
             }
+            break;
+        }
+        case 'schema': {
+            // @schema $variable { "type": "object", ... }
+            const schemaMatch = raw.match(/^@schema\s+(\$[\w.]+)\s+(\{[\s\S]*\})\s*$/);
+            if (schemaMatch) {
+                args['variable'] = schemaMatch[1];
+                try {
+                    args['schema'] = JSON.parse(schemaMatch[2]!);
+                } catch {
+                    args['schema_raw'] = schemaMatch[2];
+                }
+            }
+            // Also accept attributes form: ::schema[$var]{type="object"}
+            if (attributes['variable']) args['variable'] = attributes['variable'];
             break;
         }
         default:

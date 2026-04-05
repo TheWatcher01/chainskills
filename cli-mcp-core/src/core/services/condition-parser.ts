@@ -30,6 +30,10 @@ const OPERATORS: readonly Operator[] = ['>=', '<=', '!=', '==', '>', '<'];
  * - `$var <= 100`
  * - `$var`             (truthy check)
  * - `!$var`            (falsy check)
+ * - `$a > 0 && $b == true`  (logical AND — short-circuit)
+ * - `$a > 0 || $b == true`  (logical OR — short-circuit)
+ *
+ * Operator precedence: `||` (lowest) < `&&` < comparison operators.
  *
  * Values can be:
  * - Numbers: `42`, `3.14`
@@ -51,6 +55,32 @@ export function evaluateCondition(
         return err(
             validationError('EMPTY_CONDITION', 'Condition expression is empty'),
         );
+    }
+
+    // Logical OR (lowest precedence) — split and short-circuit
+    if (trimmed.includes('||')) {
+        const parts = splitLogical(trimmed, '||');
+        if (parts.length > 1) {
+            for (const part of parts) {
+                const result = evaluateCondition(part.trim(), context);
+                if (!result.ok) return result;
+                if (result.value) return ok(true); // short-circuit
+            }
+            return ok(false);
+        }
+    }
+
+    // Logical AND (higher precedence than OR) — split and short-circuit
+    if (trimmed.includes('&&')) {
+        const parts = splitLogical(trimmed, '&&');
+        if (parts.length > 1) {
+            for (const part of parts) {
+                const result = evaluateCondition(part.trim(), context);
+                if (!result.ok) return result;
+                if (!result.value) return ok(false); // short-circuit
+            }
+            return ok(true);
+        }
     }
 
     // Negation: !$var → falsy check
@@ -79,6 +109,44 @@ export function evaluateCondition(
     // No operator found → truthy check: `$var`
     const value = resolveValue(trimmed, context);
     return ok(!!value);
+}
+
+/**
+ * Split an expression on a logical operator, respecting quoted strings.
+ * Returns the original array with 1 element if the operator is not found
+ * outside of quotes.
+ */
+function splitLogical(expr: string, op: string): string[] {
+    const parts: string[] = [];
+    let current = '';
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+
+    for (let i = 0; i < expr.length; i++) {
+        const ch = expr[i]!;
+
+        if (ch === "'" && !inDoubleQuote) {
+            inSingleQuote = !inSingleQuote;
+        } else if (ch === '"' && !inSingleQuote) {
+            inDoubleQuote = !inDoubleQuote;
+        }
+
+        if (
+            !inSingleQuote &&
+            !inDoubleQuote &&
+            expr.slice(i, i + op.length) === op
+        ) {
+            parts.push(current);
+            current = '';
+            i += op.length - 1; // skip rest of operator
+            continue;
+        }
+
+        current += ch;
+    }
+
+    parts.push(current);
+    return parts;
 }
 
 /**

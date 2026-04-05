@@ -18,6 +18,7 @@ import type { ExecutionEventEmitter } from '#core/ports/execution-events.port.js
 import type { AgentProvider } from '#core/ports/agent-provider.port.js';
 import { substituteVariables } from '#core/services/template-engine.js';
 import { evaluateCondition } from '#core/services/condition-parser.js';
+import { buildZodSchema, validateWithSchema } from '#adapters/validation/schema-builder.js';
 import type { Logger } from '#infra/logger.js';
 
 // ─── Handler Context ─────────────────────────────────────────────────────────
@@ -321,17 +322,17 @@ export async function handleTry(
     return { continue: false };
 }
 
-/** Handle @parallel directive — in SimpleExecutor, runs sequentially. */
+/** Handle @parallel directive — executes children concurrently via Promise.allSettled(). */
 export async function handleParallel(
     directive: Directive,
     step: Step,
     ctx: DirectiveHandlerContext,
     executeChildDirectives: (directives: readonly Directive[], ctx: DirectiveHandlerContext) => Promise<void>,
 ): Promise<DirectiveHandlerResult> {
-    ctx.logger?.info(`@parallel — executing children sequentially (SimpleExecutor)`);
-
     // Prefer directive.children from parser, fallback to step.children
     const parallelChildren = directive.children ?? step.children ?? [];
+
+    ctx.logger?.info(`@parallel — executing ${parallelChildren.length} children concurrently`);
 
     ctx.emitter?.emit({
         type: 'parallel:start',
@@ -343,15 +344,24 @@ export async function handleParallel(
     const results: Record<string, { success: boolean; error?: string }> = {};
 
     if (parallelChildren.length > 0) {
-        for (const child of parallelChildren) {
-            try {
+        const settled = await Promise.allSettled(
+            parallelChildren.map(async (child) => {
                 await executeChildDirectives(child.directives, {
                     ...ctx,
                     stepId: child.id,
                 });
-                results[child.id] = { success: true };
-            } catch (error) {
-                results[child.id] = {
+                return child.id;
+            }),
+        );
+
+        for (let i = 0; i < settled.length; i++) {
+            const outcome = settled[i]!;
+            const childId = parallelChildren[i]!.id;
+            if (outcome.status === 'fulfilled') {
+                results[childId] = { success: true };
+            } else {
+                const error = outcome.reason;
+                results[childId] = {
                     success: false,
                     error: error instanceof Error ? error.message : String(error),
                 };
@@ -522,6 +532,7 @@ export function handleUse(
  * Handle `@agent` and `@handoff` directives — delegate tasks to an AI agent.
  *
  * - `@agent copilot: "Fix the bug in auth.ts"` → invoke agent, capture response
+ * - `@agent copilot: "Fix the bug" max_retries:3 backoff_ms:1000` → with retry
  * - `@handoff reviewer: "Review these changes"` → invoke agent as handoff
  *
  * The response is stored in `$agent_response` (or a custom capture variable).
@@ -533,6 +544,12 @@ export async function handleAgentOrHandoff(
     const agentName = String(directive.args['agent'] ?? directive.args['name'] ?? 'copilot');
     const prompt = String(directive.args['prompt'] ?? directive.args['message'] ?? '');
     const capture = String(directive.args['capture'] ?? 'agent_response');
+    const maxRetries = typeof directive.args['max_retries'] === 'number'
+        ? directive.args['max_retries']
+        : 0;
+    const backoffMs = typeof directive.args['backoff_ms'] === 'number'
+        ? directive.args['backoff_ms']
+        : 1000;
 
     if (!prompt) {
         return { continue: false, error: `@${directive.type}: no prompt provided` };
@@ -559,29 +576,104 @@ export async function handleAgentOrHandoff(
     const vars = ctx.store.getAll();
     const resolvedPrompt = substituteVariables(prompt, vars);
 
-    // Invoke the agent
-    const result = await ctx.agent.invoke({
-        agent: agentName,
-        prompt: resolvedPrompt,
-        variables: vars,
-    });
+    // Invoke with retry + exponential backoff
+    let lastError = '';
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (attempt > 0) {
+            const delay = backoffMs * Math.pow(2, attempt - 1);
+            ctx.logger?.info(`@${directive.type} ${agentName}: retry ${attempt}/${maxRetries} after ${delay}ms`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+        }
 
-    if (!result.ok) {
-        return {
-            continue: false,
-            error: `@${directive.type} ${agentName} failed: ${result.error.message}`,
-        };
+        const result = await ctx.agent.invoke({
+            agent: agentName,
+            prompt: resolvedPrompt,
+            variables: vars,
+        });
+
+        if (result.ok) {
+            ctx.store.set(capture, result.value.content);
+            ctx.logger?.info(`@${directive.type} ${agentName}: response received`, {
+                model: result.value.model,
+                tokens: result.value.usage?.totalTokens,
+                capturedAs: `$${capture}`,
+                attempt: attempt + 1,
+            });
+            return { continue: true, output: result.value.content };
+        }
+
+        lastError = result.error.message;
+        ctx.logger?.warn(`@${directive.type} ${agentName}: attempt ${attempt + 1} failed: ${lastError}`);
     }
 
-    // Store response in state
-    ctx.store.set(capture, result.value.content);
-    ctx.logger?.info(`@${directive.type} ${agentName}: response received`, {
-        model: result.value.model,
-        tokens: result.value.usage?.totalTokens,
-        capturedAs: `$${capture}`,
-    });
+    return {
+        continue: false,
+        error: `@${directive.type} ${agentName} failed after ${maxRetries + 1} attempts: ${lastError}`,
+    };
+}
 
-    return { continue: true, output: result.value.content };
+/**
+ * Handle @schema directive — validate a variable against a JSON Schema using Zod.
+ *
+ * If the variable contains a string, attempts JSON.parse first.
+ * Retries up to 3 times if validation fails and an agent is available.
+ *
+ * @example
+ * ```md
+ * @agent copilot: "Generate a user record" → $user
+ * @schema $user { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] }
+ * ```
+ */
+export async function handleSchema(
+    directive: Directive,
+    ctx: DirectiveHandlerContext,
+): Promise<DirectiveHandlerResult> {
+    const variableRef = String(directive.args['variable'] ?? '');
+    const schemaJson = directive.args['schema'] as Record<string, unknown> | undefined;
+
+    if (!variableRef || !schemaJson) {
+        return { continue: false, error: '@schema: missing variable or schema definition' };
+    }
+
+    const varName = variableRef.startsWith('$') ? variableRef.slice(1) : variableRef;
+
+    // Build Zod schema from JSON Schema
+    const schemaResult = buildZodSchema(schemaJson);
+    if (!schemaResult.ok) {
+        return { continue: false, error: `@schema: ${schemaResult.error.message}` };
+    }
+
+    const zodSchema = schemaResult.value;
+    const maxRetries = 3;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const value = ctx.store.get(varName);
+        const validation = validateWithSchema(zodSchema, value);
+
+        if (validation.ok) {
+            // Store the validated (possibly parsed) value back
+            ctx.store.set(varName, validation.value);
+            ctx.logger?.debug(`@schema ${variableRef} — validation passed (attempt ${attempt + 1})`);
+            return { continue: true, output: validation.value };
+        }
+
+        ctx.logger?.warn(`@schema ${variableRef} — validation failed (attempt ${attempt + 1}/${maxRetries}): ${validation.error.message}`);
+
+        // If we have an agent and more retries, ask the agent to fix
+        if (attempt < maxRetries - 1 && ctx.agent && !ctx.dryRun) {
+            const fixPrompt = `The previous output failed schema validation: ${validation.error.message}. Please regenerate a valid JSON output matching this schema: ${JSON.stringify(schemaJson)}. Output ONLY valid JSON, nothing else.`;
+            const fixResult = await ctx.agent.invoke({
+                agent: 'copilot',
+                prompt: fixPrompt,
+                variables: ctx.store.getAll(),
+            });
+            if (fixResult.ok) {
+                ctx.store.set(varName, fixResult.value.content);
+            }
+        }
+    }
+
+    return { continue: false, error: `@schema ${variableRef} — validation failed after ${maxRetries} attempts` };
 }
 
 // ─── Main Dispatcher ─────────────────────────────────────────────────────────
@@ -668,6 +760,10 @@ export async function executeDirective(
         case 'agent':
         case 'handoff':
             result = await handleAgentOrHandoff(directive, ctx);
+            break;
+
+        case 'schema':
+            result = await handleSchema(directive, ctx);
             break;
 
         case 'else':

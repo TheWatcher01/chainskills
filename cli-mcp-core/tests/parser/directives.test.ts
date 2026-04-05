@@ -27,10 +27,11 @@ describe('DirectiveType', () => {
         'env',
         'agent',
         'handoff',
+        'schema',
     ];
 
-    it('should contain all 16 directive types', () => {
-        expect(DIRECTIVE_TYPES.size).toBe(16);
+    it('should contain all 17 directive types', () => {
+        expect(DIRECTIVE_TYPES.size).toBe(17);
     });
 
     it.each(ALL_TYPES)('should recognize "%s" as a valid directive type', (type) => {

@@ -460,6 +460,80 @@ function registerTools(
             };
         },
     );
+
+    // ── chainskills_traces ──────────────────────────────────────────
+    server.registerTool(
+        'chainskills_traces',
+        {
+            title: 'Query Execution Traces',
+            description:
+                'Query recorded execution traces with optional filters. ' +
+                'Returns traces from CRAG/KG or local JSONL store.',
+            inputSchema: {
+                workflow_name: z.string().optional().describe('Filter by workflow name'),
+                status: z.enum(['ok', 'error', 'skip']).optional().describe('Filter by status'),
+                run_id: z.string().optional().describe('Filter by run ID'),
+                limit: z.number().optional().describe('Max results (default 20)'),
+            },
+            annotations: {
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: false,
+            },
+        },
+        async ({ workflow_name, status, run_id, limit }) => {
+            const traces = await container.traceStore.query({
+                workflow_name: workflow_name ?? undefined,
+                status: status ?? undefined,
+                run_id: run_id ?? undefined,
+                limit: limit ?? 20,
+            });
+
+            return {
+                content: [
+                    {
+                        type: 'text' as const,
+                        text: JSON.stringify(
+                            { count: traces.length, traces },
+                            null,
+                            2,
+                        ),
+                    },
+                ],
+            };
+        },
+    );
+
+    // ── chainskills_trace_stats ─────────────────────────────────────
+    server.registerTool(
+        'chainskills_trace_stats',
+        {
+            title: 'Trace Statistics',
+            description:
+                'Get aggregate statistics about execution traces: ' +
+                'total runs, by status, by directive, average duration.',
+            inputSchema: {},
+            annotations: {
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: false,
+            },
+        },
+        async () => {
+            const stats = await container.traceStore.stats();
+
+            return {
+                content: [
+                    {
+                        type: 'text' as const,
+                        text: JSON.stringify(stats, null, 2),
+                    },
+                ],
+            };
+        },
+    );
 }
 
 // ─── Resources ───────────────────────────────────────────────────────────────

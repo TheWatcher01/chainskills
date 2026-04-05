@@ -38,6 +38,8 @@ import {
 } from './directive-handlers.js';
 import type { Logger } from '#infra/logger.js';
 import type { AgentProvider } from '#core/ports/agent-provider.port.js';
+import type { TraceStore } from '#core/ports/trace-store.port.js';
+import { TraceRecorder } from './trace-recorder.js';
 
 /**
  * Simple implementation of ExecutionController.
@@ -131,6 +133,7 @@ export interface SimpleExecutorDeps {
     readonly resolver?: SkillResolver;
     readonly parser?: WorkflowParser;
     readonly agent?: AgentProvider;
+    readonly traceStore?: TraceStore;
 }
 
 /**
@@ -142,7 +145,7 @@ export interface SimpleExecutorDeps {
 export function createSimpleExecutor(
     deps: SimpleExecutorDeps,
 ): WorkflowExecutor {
-    const { store, tools, logger, emitter, resolver, parser, agent } = deps;
+    const { store, tools, logger, emitter, resolver, parser, agent, traceStore } = deps;
 
     return {
         async execute(
@@ -152,6 +155,14 @@ export function createSimpleExecutor(
         ): Promise<Result<ExecutionResult, ExecutionError>> {
             const startTime = Date.now();
             const dryRun = options?.dryRun ?? false;
+
+            // Wire trace recorder if traceStore available and not dry-run
+            const recorder = traceStore && !dryRun
+                ? new TraceRecorder(traceStore, crypto.randomUUID(), workflow.name)
+                : null;
+            if (recorder && emitter) {
+                emitter.on(recorder.listener);
+            }
             const stepResults: StepResult[] = [];
             const controller = new SimpleExecutionController();
 
@@ -232,6 +243,12 @@ export function createSimpleExecutor(
                         duration: Date.now() - startTime,
                     });
 
+                    // Finalize traces even on failure
+                    if (recorder) {
+                        if (emitter) emitter.off(recorder.listener);
+                        await recorder.finalize();
+                    }
+
                     return err(
                         executionError(
                             'STEP_FAILED',
@@ -259,6 +276,12 @@ export function createSimpleExecutor(
                 duration,
                 outputs,
             });
+
+            // Finalize trace recording
+            if (recorder) {
+                if (emitter) emitter.off(recorder.listener);
+                await recorder.finalize();
+            }
 
             return ok({
                 outputs,
