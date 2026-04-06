@@ -40,6 +40,8 @@ export class TraceRecorder {
                 const start = this.pendingStarts.get(key);
                 this.pendingStarts.delete(key);
 
+                const endEvent = event as import('#core/ports/execution-events.port.js').DirectiveEndEvent;
+
                 const trace = createTrace({
                     run_id: this.runId,
                     workflow_name: this.workflowName,
@@ -55,6 +57,11 @@ export class TraceRecorder {
                             ? event.result
                             : JSON.stringify(event.result)
                         : '',
+                    model: endEvent.model,
+                    tokens: endEvent.tokens
+                        ? { prompt: endEvent.tokens.promptTokens, completion: endEvent.tokens.completionTokens, total: endEvent.tokens.promptTokens + endEvent.tokens.completionTokens }
+                        : undefined,
+                    confidence_score: endEvent.confidence_score,
                 });
 
                 this.traces.push(trace);

@@ -48,6 +48,12 @@ export interface DirectiveHandlerResult {
     readonly output?: unknown;
     /** Error message — set instead of throwing. Propagated by the dispatcher. */
     readonly error?: string;
+    /** LLM model used (for @agent/@handoff). */
+    readonly model?: string;
+    /** Token usage (for @agent/@handoff). */
+    readonly tokens?: { readonly promptTokens: number; readonly completionTokens: number };
+    /** Confidence score 0.0-1.0 (for @agent/@schema). */
+    readonly confidence_score?: number;
 }
 
 // ─── Individual Handlers ─────────────────────────────────────────────────────
@@ -593,13 +599,28 @@ export async function handleAgentOrHandoff(
 
         if (result.ok) {
             ctx.store.set(capture, result.value.content);
+
+            // Heuristic confidence score
+            const content = result.value.content;
+            const confidence = content.length > 50 ? 0.8 : content.length > 0 ? 0.4 : 0.0;
+            ctx.store.set(`${agentName}_confidence`, confidence);
+
             ctx.logger?.info(`@${directive.type} ${agentName}: response received`, {
                 model: result.value.model,
                 tokens: result.value.usage?.totalTokens,
+                confidence,
                 capturedAs: `$${capture}`,
                 attempt: attempt + 1,
             });
-            return { continue: true, output: result.value.content };
+            return {
+                continue: true,
+                output: result.value.content,
+                model: result.value.model,
+                tokens: result.value.usage
+                    ? { promptTokens: result.value.usage.promptTokens, completionTokens: result.value.usage.completionTokens }
+                    : undefined,
+                confidence_score: confidence,
+            };
         }
 
         lastError = result.error.message;
@@ -674,6 +695,60 @@ export async function handleSchema(
     }
 
     return { continue: false, error: `@schema ${variableRef} — validation failed after ${maxRetries} attempts` };
+}
+
+/**
+ * Handle @gate directive — conditional gate with fallback.
+ *
+ * Evaluates a condition (typically on confidence_score). If true, continue.
+ * If false, execute the else block (child directives or _elseChildren).
+ *
+ * @example
+ * ```md
+ * :::gate[$analyst_confidence > 0.8]
+ *   (continues normally)
+ * :::else
+ *   @call mcp.manual_review($input) → $result
+ * :::
+ * ```
+ */
+export async function handleGate(
+    directive: Directive,
+    _step: Step,
+    ctx: DirectiveHandlerContext,
+    executeChildDirectives: (directives: readonly Directive[], ctx: DirectiveHandlerContext) => Promise<void>,
+): Promise<DirectiveHandlerResult> {
+    const context = ctx.store.getAll();
+    const condition = String(directive.args['condition'] ?? '');
+    const resolvedCondition = substituteVariables(condition, context);
+    const evalResult = evaluateCondition(resolvedCondition, context);
+
+    if (!evalResult.ok) {
+        return { continue: false, error: `@gate condition error: ${evalResult.error.message}` };
+    }
+
+    ctx.logger?.info(`@gate ${condition} → ${evalResult.value}`);
+
+    if (evalResult.value) {
+        // Gate passes — continue with main children if any
+        const mainChildren = directive.children ?? [];
+        if (mainChildren.length > 0) {
+            for (const child of mainChildren) {
+                await executeChildDirectives(child.directives, { ...ctx, stepId: child.id });
+            }
+        }
+        return { continue: true, conditionResult: true };
+    }
+
+    // Gate fails — execute else children (fallback)
+    const elseChildren = directive.args['_elseChildren'] as Step[] | undefined;
+    if (elseChildren && elseChildren.length > 0) {
+        ctx.logger?.info(`@gate fallback — executing ${elseChildren.length} else directives`);
+        const elseDirectives = elseChildren.flatMap((c) => c.directives);
+        await executeChildDirectives(elseDirectives, ctx);
+    }
+
+    return { continue: false, conditionResult: false };
 }
 
 // ─── Main Dispatcher ─────────────────────────────────────────────────────────
@@ -766,6 +841,10 @@ export async function executeDirective(
             result = await handleSchema(directive, ctx);
             break;
 
+        case 'gate':
+            result = await handleGate(directive, step, ctx, helpers.executeChildDirectives);
+            break;
+
         case 'else':
         case 'on-error':
             // These are handled by their parent (@if, @try) — skip standalone
@@ -785,6 +864,10 @@ export async function executeDirective(
         stepId: ctx.stepId,
         directiveType: directive.type,
         success: !result.error,
+        result: result.output,
+        model: result.model,
+        tokens: result.tokens,
+        confidence_score: result.confidence_score,
     });
 
     // Propagate handler errors as exceptions for backward compatibility

@@ -96,6 +96,7 @@ function applyFilter(traces: ExecutionTrace[], filter?: TraceFilter): ExecutionT
     if (filter.workflow_name) result = result.filter((t) => t.workflow_name === filter.workflow_name);
     if (filter.status) result = result.filter((t) => t.status === filter.status);
     if (filter.directive_type) result = result.filter((t) => t.directive_type === filter.directive_type);
+    if (filter.model) result = result.filter((t) => t.model === filter.model);
     if (filter.min_confidence !== undefined) result = result.filter((t) => (t.confidence_score ?? 0) >= filter.min_confidence!);
     if (filter.since) {
         const sinceDate = new Date(filter.since).getTime();

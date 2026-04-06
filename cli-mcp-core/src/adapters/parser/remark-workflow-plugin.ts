@@ -54,6 +54,7 @@ const BLOCK_DIRECTIVE_TYPES = new Set<string>([
     'repeat',
     'try',
     'workflow',
+    'gate',
 ]);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -240,6 +241,12 @@ function parseDirectiveArgs(
             if (workflowMatch) {
                 args['ref'] = workflowMatch[1];
             }
+            break;
+        }
+        case 'gate': {
+            // @gate $confidence > 0.8 else: ... (or :::gate[$confidence > 0.8])
+            const condition = raw.replace(/^@gate\s+/, '').replace(/:$/, '').trim();
+            args['condition'] = condition;
             break;
         }
         case 'schema': {

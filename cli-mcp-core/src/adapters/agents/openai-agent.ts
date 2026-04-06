@@ -157,15 +157,16 @@ export function createOpenAIAgent(
             // Add the main prompt
             apiMessages.push({ role: 'user', content: prompt });
 
+            const effectiveModel = options.model ?? cfg.model;
             const body: ChatCompletionRequest = {
-                model: cfg.model,
+                model: effectiveModel,
                 messages: apiMessages,
                 max_tokens: maxTokens ?? cfg.maxTokens,
                 temperature: temperature ?? cfg.temperature,
             };
 
             logger?.debug(`@agent ${agent}: calling ${cfg.baseUrl}`, {
-                model: cfg.model,
+                model: effectiveModel,
                 promptLength: prompt.length,
             });
 
