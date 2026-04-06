@@ -50,6 +50,10 @@ export interface ExecutionTrace {
     readonly tier?: string;
     /** Snapshot of workflow variables at execution time. */
     readonly variables_snapshot?: Record<string, unknown>;
+    /** Parent run ID if this execution was triggered by another workflow. */
+    readonly parent_run_id?: string;
+    /** Model/tool that generated this workflow (for auto-generated variants). */
+    readonly generated_by?: string;
 }
 
 /** Create an ExecutionTrace with current timestamp. */
