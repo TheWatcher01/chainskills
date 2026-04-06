@@ -38,5 +38,5 @@ if grep -qE "await fetch|const (response|res|data) = await" "$FILE"; then
 fi
 
 echo "SCORE: $SCORE/$TOTAL"
-echo "{\"score\":$SCORE,\"total\":$TOTAL}" > /tmp/replay-test/result.json
+echo "{\"score\":$SCORE,\"total\":$TOTAL}" > "$WORKSPACE/result.json"
 [ $SCORE -ge 60 ] && exit 0 || exit 1

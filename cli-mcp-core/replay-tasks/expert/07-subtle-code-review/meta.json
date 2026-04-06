@@ -1,1 +1,1 @@
-{"taskType":"subtle-review","category":"review","difficulty":"hard","expectedTools":["Read","Edit"],"expectedFiles":["/tmp/replay-test/src/processor.ts"],"complexityScore":9}
+{"taskType":"subtle-review","category":"review","difficulty":"hard","expectedTools":["Read","Edit"],"expectedFiles":["src/processor.ts"],"complexityScore":9}

@@ -1,1 +1,1 @@
-{"taskType":"add-feature","category":"coding","difficulty":"medium","expectedTools":["Read","Write"],"expectedFiles":["/tmp/replay-test/logger.ts"],"complexityScore":5}
+{"taskType":"add-feature","category":"coding","difficulty":"medium","expectedTools":["Read","Write"],"expectedFiles":["logger.ts"],"complexityScore":5}
