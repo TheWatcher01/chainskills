@@ -36,7 +36,7 @@
             "patterns": [
                 {
                     "name": "meta.directive.workflow",
-                    "match": "(@)(use|call|if|else|for|repeat|parallel|try|on-error|assert|breakpoint|output|workflow|env|agent|handoff)\\b",
+                    "match": "(@)(use|call|if|else|for|repeat|parallel|try|on-error|assert|breakpoint|output|workflow|env|agent|handoff|schema|gate)\\b",
                     "captures": {
                         "1": {
                             "name": "punctuation.definition.directive.workflow"

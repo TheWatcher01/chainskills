@@ -83,7 +83,8 @@ export interface WorkflowBlock {
 export const DIRECTIVES = [
     'use', 'call', 'if', 'else', 'for', 'repeat',
     'parallel', 'try', 'on-error', 'assert', 'output',
-    'workflow', 'env', 'agent', 'handoff', 'breakpoint'
+    'workflow', 'env', 'agent', 'handoff', 'breakpoint',
+    'schema', 'gate'
 ] as const;
 
 export type DirectiveName = typeof DIRECTIVES[number];
@@ -105,6 +106,8 @@ export const DIRECTIVE_DOCS: Record<DirectiveName, string> = {
     agent: 'Delegate to an AI agent\n\n`@agent copilot: "Fix this bug"`',
     handoff: 'Transfer control to another agent\n\n`@handoff review-agent: "Review the changes"`',
     breakpoint: 'Conditional breakpoint\n\n`@breakpoint $count > 5`',
+    schema: 'Validate LLM output against JSON Schema\n\n`@schema $var { "type": "object", "properties": { "name": { "type": "string" } } }`',
+    gate: 'Confidence gate with fallback\n\n`@gate $confidence > 0.8 else: @call mcp.manual_review($input)`',
 };
 
 // ─── Regex patterns ───────────────────────────────────────────────────────────

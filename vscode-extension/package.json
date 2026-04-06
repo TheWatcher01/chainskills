@@ -110,6 +110,36 @@
                 "title": "Refresh Workflows",
                 "category": "chainskills",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "chainskills.replayWorkflow",
+                "title": "Replay Workflow",
+                "category": "chainskills",
+                "icon": "$(history)"
+            },
+            {
+                "command": "chainskills.benchWorkflow",
+                "title": "Benchmark Workflow",
+                "category": "chainskills",
+                "icon": "$(graph)"
+            },
+            {
+                "command": "chainskills.distillTraces",
+                "title": "Distill Traces",
+                "category": "chainskills",
+                "icon": "$(beaker)"
+            },
+            {
+                "command": "chainskills.arenaWorkflow",
+                "title": "Arena — Blind Model Comparison",
+                "category": "chainskills",
+                "icon": "$(trophy)"
+            },
+            {
+                "command": "chainskills.generateVariants",
+                "title": "Generate Workflow Variants",
+                "category": "chainskills",
+                "icon": "$(sparkle)"
             }
         ],
         "views": {

@@ -67,7 +67,7 @@ export interface WorkflowBlock {
     /** 0-based line of the closing ::: token */
     endLine: number;
 }
-export declare const DIRECTIVES: readonly ["use", "call", "if", "else", "for", "repeat", "parallel", "try", "on-error", "assert", "output", "workflow", "env", "agent", "handoff", "breakpoint"];
+export declare const DIRECTIVES: readonly ["use", "call", "if", "else", "for", "repeat", "parallel", "try", "on-error", "assert", "output", "workflow", "env", "agent", "handoff", "breakpoint", "schema", "gate"];
 export type DirectiveName = typeof DIRECTIVES[number];
 export declare const DIRECTIVE_DOCS: Record<DirectiveName, string>;
 export declare function parseWorkflowDocument(document: vscode.TextDocument): ParsedWorkflow;

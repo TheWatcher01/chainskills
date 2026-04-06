@@ -100,6 +100,75 @@ export function registerCommands(
             treeProvider.refresh();
         })
     );
+
+    // Replay workflow with different model
+    context.subscriptions.push(
+        vscode.commands.registerCommand('chainskills.replayWorkflow', async () => {
+            const model = await vscode.window.showInputBox({ prompt: 'Model for replay (e.g., ollama/qwen3.5:9b)', placeHolder: 'gpt-4o-mini' });
+            if (!model) { return; }
+            const traceFile = await vscode.window.showOpenDialog({ filters: { 'JSONL Traces': ['jsonl'] }, canSelectMany: false });
+            if (!traceFile || traceFile.length === 0) { return; }
+            await runCliCommand(`replay "${traceFile[0].fsPath}" --model ${model} --json`);
+        })
+    );
+
+    // Bench workflow across models
+    context.subscriptions.push(
+        vscode.commands.registerCommand('chainskills.benchWorkflow', async (uri?: vscode.Uri) => {
+            const workflowUri = uri || await getActiveWorkflowUri();
+            if (!workflowUri) { return; }
+            const models = await vscode.window.showInputBox({ prompt: 'Models (comma-separated)', placeHolder: 'opus,sonnet,haiku' });
+            if (!models) { return; }
+            await runCliCommand(`bench "${workflowUri.fsPath}" --models ${models} --runs 3 --json`);
+        })
+    );
+
+    // Distill traces to fine-tuning data
+    context.subscriptions.push(
+        vscode.commands.registerCommand('chainskills.distillTraces', async () => {
+            const traceFile = await vscode.window.showOpenDialog({ filters: { 'JSONL Traces': ['jsonl'] }, canSelectMany: false });
+            if (!traceFile || traceFile.length === 0) { return; }
+            await runCliCommand(`distill "${traceFile[0].fsPath}" --json`);
+        })
+    );
+
+    // Arena — blind model comparison
+    context.subscriptions.push(
+        vscode.commands.registerCommand('chainskills.arenaWorkflow', async (uri?: vscode.Uri) => {
+            const workflowUri = uri || await getActiveWorkflowUri();
+            if (!workflowUri) { return; }
+            const models = await vscode.window.showInputBox({ prompt: 'Models for arena (comma-separated, min 2)', placeHolder: 'opus,sonnet' });
+            if (!models) { return; }
+            await runCliCommand(`arena "${workflowUri.fsPath}" --models ${models} --rounds 3`);
+        })
+    );
+
+    // Generate workflow variants
+    context.subscriptions.push(
+        vscode.commands.registerCommand('chainskills.generateVariants', async (uri?: vscode.Uri) => {
+            const workflowUri = uri || await getActiveWorkflowUri();
+            if (!workflowUri) { return; }
+            await runCliCommand(`generate --template "${workflowUri.fsPath}" --variations 3 --json`);
+        })
+    );
+}
+
+async function runCliCommand(cliArgs: string) {
+    const config = vscode.workspace.getConfiguration('chainskills');
+    const cliPath = config.get<string>('cliPath', 'chainskills');
+    const outputChannel = vscode.window.createOutputChannel('chainskills');
+    outputChannel.show();
+    outputChannel.appendLine(`Running: ${cliPath} ${cliArgs}`);
+
+    try {
+        const { stdout, stderr } = await execAsync(`${cliPath} ${cliArgs}`);
+        if (stdout) { outputChannel.append(stdout); }
+        if (stderr) { outputChannel.append(stderr); }
+        vscode.window.showInformationMessage('Command completed');
+    } catch (error: any) {
+        outputChannel.appendLine(`Error: ${error.message}`);
+        vscode.window.showErrorMessage(`Command failed: ${error.message}`);
+    }
 }
 
 async function getActiveWorkflowUri(): Promise<vscode.Uri | undefined> {
