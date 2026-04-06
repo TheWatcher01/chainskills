@@ -42,6 +42,10 @@ export interface AppConfig {
     readonly tracesDir: string;
     /** Enable trace recording by default. */
     readonly recordTraces: boolean;
+    /** Enable trace-informed agent feedback loop. */
+    readonly agentFeedbackEnabled: boolean;
+    /** Minimum confidence for feedback examples. */
+    readonly agentFeedbackMinConfidence: number;
 }
 
 /** Default config for local development. */
@@ -59,4 +63,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     shellTimeout: 30_000,
     tracesDir: './traces',
     recordTraces: true,
+    agentFeedbackEnabled: false,
+    agentFeedbackMinConfidence: 0.8,
 };

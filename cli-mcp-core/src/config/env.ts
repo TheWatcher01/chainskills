@@ -89,5 +89,7 @@ export function loadEnvConfig(): AppConfig {
         shellTimeout: env.CHAINSKILLS_SHELL_TIMEOUT,
         tracesDir: process.env['TRACES_DIR'] ?? './traces',
         recordTraces: true,
+        agentFeedbackEnabled: process.env['AGENT_FEEDBACK_ENABLED'] === 'true',
+        agentFeedbackMinConfidence: 0.8,
     };
 }
