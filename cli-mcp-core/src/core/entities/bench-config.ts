@@ -41,6 +41,12 @@ export interface BenchRunResult {
     readonly goldenPass?: boolean;
     /** Golden file failures. */
     readonly goldenFailures?: readonly string[];
+    /** Estimated cost in USD for this run. */
+    readonly cost_usd?: number;
+    /** Number of directive steps executed. */
+    readonly reasoning_steps?: number;
+    /** Number of steps that produced non-empty output. */
+    readonly useful_steps?: number;
 }
 
 /** Aggregated benchmark report. */
