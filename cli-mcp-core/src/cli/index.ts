@@ -23,11 +23,13 @@ import { generateCommand } from './generate.js';
 import { benchSuiteCommand } from './bench-suite.js';
 import { leaderboardCommand } from './leaderboard.js';
 import { exportHfCommand } from './export-hf.js';
+import { importSessionCommand } from './import-session.js';
+import { compareCommand } from './compare.js';
 
 const main = defineCommand({
     meta: {
         name: 'chainskills',
-        version: '1.0.0',
+        version: '1.1.0',
         description:
             'Compose, share, and run AI agent workflows written in natural language',
     },
@@ -48,6 +50,8 @@ const main = defineCommand({
         'bench-suite': benchSuiteCommand,
         leaderboard: leaderboardCommand,
         'export-hf': exportHfCommand,
+        'import-session': importSessionCommand,
+        compare: compareCommand,
     },
 });
 
