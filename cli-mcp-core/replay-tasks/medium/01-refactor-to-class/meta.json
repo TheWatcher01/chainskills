@@ -1,0 +1,1 @@
+{"taskType":"refactor","category":"coding","difficulty":"medium","expectedTools":["Read","Write"],"expectedFiles":["/tmp/replay-test/todo.ts","/tmp/replay-test/todo.test.ts"],"complexityScore":4}

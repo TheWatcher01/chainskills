@@ -17,17 +17,24 @@ export interface ModelPricing {
     readonly output_per_mtok: number;
 }
 
-/** Known model pricing table (April 2026). */
+/** Known model pricing table (April 2026, aligned with Claude Code modelCost.ts). */
 const PRICING_TABLE: Record<string, ModelPricing> = {
-    // Anthropic
+    // Anthropic — exact prices from Claude Code source
     'claude-opus-4-6': { input_per_mtok: 15, output_per_mtok: 75 },
+    'claude-opus-4-5': { input_per_mtok: 5, output_per_mtok: 25 },
+    'claude-opus-4-1': { input_per_mtok: 15, output_per_mtok: 75 },
     'claude-sonnet-4-6': { input_per_mtok: 3, output_per_mtok: 15 },
-    'claude-haiku-4-5-20251001': { input_per_mtok: 0.8, output_per_mtok: 4 },
+    'claude-sonnet-4-5': { input_per_mtok: 3, output_per_mtok: 15 },
     'claude-sonnet-4-20250514': { input_per_mtok: 3, output_per_mtok: 15 },
-    // Aliases
-    'claude-opus': { input_per_mtok: 15, output_per_mtok: 75 },
-    'claude-sonnet': { input_per_mtok: 3, output_per_mtok: 15 },
-    'claude-haiku': { input_per_mtok: 0.8, output_per_mtok: 4 },
+    'claude-3-7-sonnet': { input_per_mtok: 3, output_per_mtok: 15 },
+    'claude-3-5-sonnet': { input_per_mtok: 3, output_per_mtok: 15 },
+    'claude-haiku-4-5': { input_per_mtok: 1, output_per_mtok: 5 },
+    'claude-haiku-4-5-20251001': { input_per_mtok: 1, output_per_mtok: 5 },
+    'claude-3-5-haiku': { input_per_mtok: 0.8, output_per_mtok: 4 },
+    // Aliases (Claude Code model aliases)
+    'opus': { input_per_mtok: 15, output_per_mtok: 75 },
+    'sonnet': { input_per_mtok: 3, output_per_mtok: 15 },
+    'haiku': { input_per_mtok: 1, output_per_mtok: 5 },
 
     // OpenAI
     'gpt-4o': { input_per_mtok: 2.5, output_per_mtok: 10 },

@@ -1,0 +1,10 @@
+[
+  {"taskType":"create-function","difficulty":"easy","model":"opus","pass":true,"duration_ms":3000,"tokens":5000,"cost_usd":0.00038,"toolCalls":2},
+  {"taskType":"fix-bug","difficulty":"easy","model":"opus","pass":true,"duration_ms":4000,"tokens":6000,"cost_usd":0.00045,"toolCalls":3},
+  {"taskType":"write-test","difficulty":"easy","model":"opus","pass":true,"duration_ms":5000,"tokens":8000,"cost_usd":0.00060,"toolCalls":3},
+  {"taskType":"refactor","difficulty":"medium","model":"opus","pass":true,"duration_ms":12000,"tokens":15000,"cost_usd":0.00113,"toolCalls":5},
+  {"taskType":"add-feature","difficulty":"medium","model":"opus","pass":true,"duration_ms":10000,"tokens":12000,"cost_usd":0.00090,"toolCalls":4},
+  {"taskType":"debug","difficulty":"medium","model":"opus","pass":true,"duration_ms":15000,"tokens":18000,"cost_usd":0.00135,"toolCalls":6},
+  {"taskType":"multi-file","difficulty":"hard","model":"opus","pass":true,"duration_ms":25000,"tokens":30000,"cost_usd":0.00225,"toolCalls":10},
+  {"taskType":"audit","difficulty":"hard","model":"opus","pass":true,"duration_ms":22000,"tokens":25000,"cost_usd":0.00188,"toolCalls":6}
+]

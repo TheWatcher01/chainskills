@@ -1,0 +1,1 @@
+{"taskType":"multi-file","category":"architecture","difficulty":"hard","expectedTools":["Read","Write"],"expectedFiles":["/tmp/replay-test/src/core/projection.port.ts","/tmp/replay-test/src/adapters/memory-projection-store.ts","/tmp/replay-test/src/cli/project.ts","/tmp/replay-test/src/core/projection.test.ts"],"complexityScore":7}

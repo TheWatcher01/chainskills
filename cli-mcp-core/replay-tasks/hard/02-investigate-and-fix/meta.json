@@ -1,0 +1,1 @@
+{"taskType":"audit","category":"security","difficulty":"hard","expectedTools":["Read","Write"],"expectedFiles":["/tmp/replay-test/server.ts","/tmp/replay-test/AUDIT.md"],"complexityScore":8}

@@ -1,0 +1,1 @@
+{"taskType":"fix-bug","category":"coding","difficulty":"easy","expectedTools":["Read","Edit"],"expectedFiles":["/tmp/replay-test/calculator.ts"],"complexityScore":2}
