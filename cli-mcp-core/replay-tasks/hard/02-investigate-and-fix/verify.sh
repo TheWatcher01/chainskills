@@ -1,7 +1,8 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-FILE="/tmp/replay-test/server.ts"
-AUDIT="/tmp/replay-test/AUDIT.md"
+FILE="$WORKSPACE/server.ts"
+AUDIT="$WORKSPACE/AUDIT.md"
 
 [ -f "$FILE" ] || { echo "FAIL: server.ts manquant"; exit 1; }
 [ -f "$AUDIT" ] || { echo "FAIL: AUDIT.md manquant"; exit 1; }

@@ -1,6 +1,7 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-FILE="/tmp/replay-test/calculator.ts"
+FILE="$WORKSPACE/calculator.ts"
 [ -f "$FILE" ] || { echo "FAIL: fichier manquant"; exit 1; }
 
 # add doit utiliser + pas -

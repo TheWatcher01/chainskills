@@ -1,7 +1,8 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test
-cat > /tmp/replay-test/calculator.ts << 'TSEOF'
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE"
+cat > "$WORKSPACE/calculator.ts" << 'TSEOF'
 export function add(a: number, b: number): number {
     return a - b; // BUG: should be a + b
 }

@@ -1,6 +1,7 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-FILE="/tmp/replay-test/logger.ts"
+FILE="$WORKSPACE/logger.ts"
 [ -f "$FILE" ] || { echo "FAIL: logger.ts manquant"; exit 1; }
 
 # Parametre data optionnel

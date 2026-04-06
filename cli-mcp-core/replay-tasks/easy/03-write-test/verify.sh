@@ -1,6 +1,7 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-FILE="/tmp/replay-test/utils.test.ts"
+FILE="$WORKSPACE/utils.test.ts"
 [ -f "$FILE" ] || { echo "FAIL: fichier test manquant"; exit 1; }
 
 # Teste les 3 fonctions

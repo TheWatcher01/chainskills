@@ -195,7 +195,7 @@ export const exploreCommand = defineCommand({
         if (jsonMode) {
             console.log(JSON.stringify(tree, null, 2));
         } else {
-            console.log(pc.dim('\n═'.repeat(60)));
+            console.log(pc.dim('\n' + '═'.repeat(60)));
             console.log(pc.cyan('  Summary'));
             console.log(`  ${summarizeTree(tree)}`);
             console.log(pc.dim('═'.repeat(60)));

@@ -1,12 +1,13 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test
-cat > /tmp/replay-test/server.ts << 'TSEOF'
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE"
+cat > "$WORKSPACE/server.ts" << 'TSEOF'
 import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-const DATA_DIR = '/tmp/replay-test/data';
+const DATA_DIR = join(process.env.WORKSPACE ?? '/tmp/replay-test', 'data');
 if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 
 interface User { id: string; name: string; email: string; createdAt: string; }

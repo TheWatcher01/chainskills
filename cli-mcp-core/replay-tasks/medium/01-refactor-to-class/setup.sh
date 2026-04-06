@@ -1,7 +1,8 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test
-cat > /tmp/replay-test/todo.ts << 'TSEOF'
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE"
+cat > "$WORKSPACE/todo.ts" << 'TSEOF'
 // Procedural todo manager — refactor to class
 interface Todo { id: number; title: string; done: boolean; }
 

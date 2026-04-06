@@ -1,7 +1,8 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test
-cat > /tmp/replay-test/utils.ts << 'TSEOF'
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE"
+cat > "$WORKSPACE/utils.ts" << 'TSEOF'
 export function capitalize(str: string): string {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);

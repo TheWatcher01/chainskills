@@ -1,7 +1,8 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test
-cat > /tmp/replay-test/logger.ts << 'TSEOF'
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE"
+cat > "$WORKSPACE/logger.ts" << 'TSEOF'
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const LEVEL_PRIORITY: Record<LogLevel, number> = {

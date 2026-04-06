@@ -1,7 +1,8 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-FILE="/tmp/replay-test/todo.ts"
-TEST="/tmp/replay-test/todo.test.ts"
+FILE="$WORKSPACE/todo.ts"
+TEST="$WORKSPACE/todo.test.ts"
 
 [ -f "$FILE" ] || { echo "FAIL: todo.ts manquant"; exit 1; }
 [ -f "$TEST" ] || { echo "FAIL: todo.test.ts manquant"; exit 1; }

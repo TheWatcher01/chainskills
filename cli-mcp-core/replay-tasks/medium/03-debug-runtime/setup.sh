@@ -1,7 +1,8 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test
-cat > /tmp/replay-test/cache.ts << 'TSEOF'
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE"
+cat > "$WORKSPACE/cache.ts" << 'TSEOF'
 // Bug: this cache has a memory leak and a race condition
 export class Cache<T> {
     private store = new Map<string, { value: T; expiresAt: number }>();

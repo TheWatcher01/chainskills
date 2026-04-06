@@ -200,3 +200,6 @@ export { getCached, setCached, invalidate } from './cache/store.js';
 export { validateToken } from './middleware/auth.js';
 export { checkRateLimit } from './middleware/rateLimit.js';
 EOF
+
+# Save hash of cache/store.ts for verify.sh comparison
+sha256sum "$WORKSPACE/src/cache/store.ts" | cut -d' ' -f1 > "$WORKSPACE/.cache-store-hash"

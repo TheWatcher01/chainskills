@@ -1,7 +1,8 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-FILE="/tmp/replay-test/cache.ts"
-TEST="/tmp/replay-test/cache.test.ts"
+FILE="$WORKSPACE/cache.ts"
+TEST="$WORKSPACE/cache.test.ts"
 
 [ -f "$FILE" ] || { echo "FAIL: cache.ts manquant"; exit 1; }
 [ -f "$TEST" ] || { echo "FAIL: cache.test.ts manquant"; exit 1; }

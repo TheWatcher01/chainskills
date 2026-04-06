@@ -1,6 +1,7 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-FILE="/tmp/replay-test/slugify.ts"
+FILE="$WORKSPACE/slugify.ts"
 
 # Fichier existe
 [ -f "$FILE" ] || { echo "FAIL: fichier manquant"; exit 1; }

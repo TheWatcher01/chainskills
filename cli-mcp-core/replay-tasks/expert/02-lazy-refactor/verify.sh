@@ -1,19 +1,20 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
 SCORE=0
 TOTAL=100
-SRC="/tmp/replay-test/src"
+SRC="$WORKSPACE/src"
 
 # Check 1 (35pts): Email validation extracted to shared util
 EMAIL_DUP=$(grep -rh "email.*includes.*@" "$SRC" 2>/dev/null | wc -l)
-BEFORE=$(cat /tmp/replay-test/.dup-before-email 2>/dev/null || echo 3)
+BEFORE=$(cat "$WORKSPACE/.dup-before-email" 2>/dev/null || echo 3)
 if [ "$EMAIL_DUP" -lt "$BEFORE" ]; then
     SCORE=$((SCORE + 35))
 fi
 
 # Check 2 (35pts): Date formatting extracted to shared util
 DATE_DUP=$(grep -rh "getFullYear.*getMonth\|getMonth.*getDate" "$SRC" 2>/dev/null | wc -l)
-BEFORE_DATE=$(cat /tmp/replay-test/.dup-before-date 2>/dev/null || echo 3)
+BEFORE_DATE=$(cat "$WORKSPACE/.dup-before-date" 2>/dev/null || echo 3)
 if [ "$DATE_DUP" -lt "$BEFORE_DATE" ]; then
     SCORE=$((SCORE + 35))
 fi
@@ -28,5 +29,5 @@ EXPORTS=$(grep -rh "export.*function" "$SRC/orders/" "$SRC/payments/" "$SRC/ship
 [ "$EXPORTS" -ge 3 ] && SCORE=$((SCORE + 15))
 
 echo "SCORE: $SCORE/$TOTAL"
-echo "{\"score\":$SCORE,\"total\":$TOTAL}" > /tmp/replay-test/result.json
+echo "{\"score\":$SCORE,\"total\":$TOTAL}" > "$WORKSPACE/result.json"
 [ $SCORE -ge 35 ] && exit 0 || exit 1

@@ -1,14 +1,15 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test/src/{api,db,models,utils,middleware,services,config}
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE/src/api" "$WORKSPACE/src/db" "$WORKSPACE/src/models" "$WORKSPACE/src/utils" "$WORKSPACE/src/middleware" "$WORKSPACE/src/services" "$WORKSPACE/src/config"
 
-cat > /tmp/replay-test/src/config/app.ts << 'EOF'
+cat > "$WORKSPACE/src/config/app.ts" << 'EOF'
 export const PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 export const DEFAULT_SORT = 'created_at';
 EOF
 
-cat > /tmp/replay-test/src/models/item.ts << 'EOF'
+cat > "$WORKSPACE/src/models/item.ts" << 'EOF'
 export interface Item {
     id: string;
     name: string;
@@ -19,7 +20,7 @@ export interface Item {
 }
 EOF
 
-cat > /tmp/replay-test/src/utils/sanitize.ts << 'EOF'
+cat > "$WORKSPACE/src/utils/sanitize.ts" << 'EOF'
 export function sanitizeString(s: string): string {
     return s.replace(/[<>"'&]/g, '');
 }
@@ -29,14 +30,14 @@ export function sanitizeNumber(n: unknown): number {
 }
 EOF
 
-cat > /tmp/replay-test/src/utils/sort.ts << 'EOF'
+cat > "$WORKSPACE/src/utils/sort.ts" << 'EOF'
 const ALLOWED_SORTS = ['name', 'price', 'created_at', 'updated_at'];
 export function validateSort(field: string): string {
     return ALLOWED_SORTS.includes(field) ? field : 'created_at';
 }
 EOF
 
-cat > /tmp/replay-test/src/middleware/validate.ts << 'EOF'
+cat > "$WORKSPACE/src/middleware/validate.ts" << 'EOF'
 export function validatePagination(page: unknown, size: unknown): { page: number; size: number } {
     const p = Math.max(1, Number(page) || 1);
     const s = Math.min(100, Math.max(1, Number(size) || 20));
@@ -44,14 +45,14 @@ export function validatePagination(page: unknown, size: unknown): { page: number
 }
 EOF
 
-cat > /tmp/replay-test/src/db/connection.ts << 'EOF'
+cat > "$WORKSPACE/src/db/connection.ts" << 'EOF'
 export async function query(sql: string, params: unknown[] = []): Promise<{ rows: unknown[] }> {
     return { rows: [] };
 }
 EOF
 
 # THE BUG IS HERE: off-by-one in offset calculation
-cat > /tmp/replay-test/src/db/items.ts << 'EOF'
+cat > "$WORKSPACE/src/db/items.ts" << 'EOF'
 import { query } from './connection.js';
 import type { Item } from '../models/item.js';
 
@@ -89,7 +90,7 @@ export async function findItems(
 }
 EOF
 
-cat > /tmp/replay-test/src/services/itemService.ts << 'EOF'
+cat > "$WORKSPACE/src/services/itemService.ts" << 'EOF'
 import { findItems } from '../db/items.js';
 import { validateSort } from '../utils/sort.js';
 import type { Item } from '../models/item.js';
@@ -109,7 +110,7 @@ export async function getItems(
 }
 EOF
 
-cat > /tmp/replay-test/src/api/items.ts << 'EOF'
+cat > "$WORKSPACE/src/api/items.ts" << 'EOF'
 import { getItems } from '../services/itemService.js';
 import { validatePagination } from '../middleware/validate.js';
 import { sanitizeString } from '../utils/sanitize.js';
@@ -140,7 +141,7 @@ export async function handleListItems(query: {
 }
 EOF
 
-cat > /tmp/replay-test/src/index.ts << 'EOF'
+cat > "$WORKSPACE/src/index.ts" << 'EOF'
 export { handleListItems } from './api/items.js';
 export { getItems } from './services/itemService.js';
 export { findItems } from './db/items.js';

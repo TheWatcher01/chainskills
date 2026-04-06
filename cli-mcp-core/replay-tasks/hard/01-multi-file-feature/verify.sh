@@ -1,6 +1,7 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
-BASE="/tmp/replay-test/src"
+BASE="$WORKSPACE/src"
 
 # 4 fichiers existent
 [ -f "$BASE/core/projection.port.ts" ] || { echo "FAIL: projection.port.ts manquant"; exit 1; }
@@ -8,7 +9,7 @@ BASE="/tmp/replay-test/src"
 [ -f "$BASE/cli/project.ts" ] || { echo "FAIL: project.ts manquant"; exit 1; }
 
 # Test existe (dans core ou a la racine)
-TEST=$(find /tmp/replay-test -name "*projection*test*" -o -name "*test*projection*" 2>/dev/null | head -1)
+TEST=$(find "$WORKSPACE" -name "*projection*test*" -o -name "*test*projection*" 2>/dev/null | head -1)
 [ -n "$TEST" ] || { echo "FAIL: fichier test manquant"; exit 1; }
 
 # Architecture hexagonale : core ne depend pas d'adapters

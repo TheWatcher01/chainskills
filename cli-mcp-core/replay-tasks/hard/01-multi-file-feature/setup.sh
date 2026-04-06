@@ -1,8 +1,9 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test/src/{core,adapters,cli}
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE/src/core" "$WORKSPACE/src/adapters" "$WORKSPACE/src/cli"
 
-cat > /tmp/replay-test/src/core/event.ts << 'TSEOF'
+cat > "$WORKSPACE/src/core/event.ts" << 'TSEOF'
 export interface Event {
     readonly id: string;
     readonly type: string;
@@ -11,7 +12,7 @@ export interface Event {
 }
 TSEOF
 
-cat > /tmp/replay-test/src/core/event-store.port.ts << 'TSEOF'
+cat > "$WORKSPACE/src/core/event-store.port.ts" << 'TSEOF'
 import type { Event } from './event.js';
 
 export interface EventStore {
@@ -21,7 +22,7 @@ export interface EventStore {
 }
 TSEOF
 
-cat > /tmp/replay-test/src/adapters/memory-event-store.ts << 'TSEOF'
+cat > "$WORKSPACE/src/adapters/memory-event-store.ts" << 'TSEOF'
 import type { EventStore } from '../core/event-store.port.js';
 import type { Event } from '../core/event.js';
 
