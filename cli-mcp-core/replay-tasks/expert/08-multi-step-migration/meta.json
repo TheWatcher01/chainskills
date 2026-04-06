@@ -1,0 +1,10 @@
+{
+    "taskType": "framework-migration",
+    "category": "coding",
+    "difficulty": "expert",
+    "expectedTools": ["Read", "Edit", "Write"],
+    "expectedFiles": ["src/app.ts", "src/routes/users.ts", "src/routes/health.ts", "src/middleware/auth.ts", "src/middleware/logger.ts", "src/types.ts"],
+    "complexityScore": 10,
+    "discriminant": true,
+    "description": "Full Express→Fastify migration across 6 files — API changes, middleware→hooks, req/res shape differences"
+}

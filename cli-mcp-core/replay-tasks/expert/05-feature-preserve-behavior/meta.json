@@ -1,0 +1,10 @@
+{
+    "taskType": "add-feature-safe",
+    "category": "coding",
+    "difficulty": "expert",
+    "expectedTools": ["Read", "Edit", "Write"],
+    "expectedFiles": ["src/formatter.ts"],
+    "complexityScore": 8,
+    "discriminant": true,
+    "description": "Add CSV format to existing module — must not break 12 existing JSON tests"
+}

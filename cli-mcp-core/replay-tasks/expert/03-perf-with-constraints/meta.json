@@ -1,0 +1,10 @@
+{
+    "taskType": "optimize-endpoint",
+    "category": "coding",
+    "difficulty": "expert",
+    "expectedTools": ["Read", "Edit"],
+    "expectedFiles": ["src/api/reports.ts", "src/services/reportBuilder.ts"],
+    "complexityScore": 9,
+    "discriminant": true,
+    "description": "Performance optimization with hidden constraints in tests and comments (no cache, no new deps, SLA < 200ms)"
+}

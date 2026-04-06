@@ -1,0 +1,10 @@
+{
+    "taskType": "fix-circular-import",
+    "category": "coding",
+    "difficulty": "expert",
+    "expectedTools": ["Read", "Edit"],
+    "expectedFiles": ["src/index.ts"],
+    "complexityScore": 9,
+    "discriminant": true,
+    "description": "Circular dependency hidden across 8 files — must trace import chain and break the cycle"
+}
