@@ -21,6 +21,8 @@ import { addCommand } from './add.js';
 import { arenaCommand } from './arena.js';
 import { generateCommand } from './generate.js';
 import { benchSuiteCommand } from './bench-suite.js';
+import { leaderboardCommand } from './leaderboard.js';
+import { exportHfCommand } from './export-hf.js';
 
 const main = defineCommand({
     meta: {
@@ -44,6 +46,8 @@ const main = defineCommand({
         arena: arenaCommand,
         generate: generateCommand,
         'bench-suite': benchSuiteCommand,
+        leaderboard: leaderboardCommand,
+        'export-hf': exportHfCommand,
     },
 });
 
