@@ -1,9 +1,10 @@
 #!/bin/bash
+WORKSPACE="${1:-/tmp/replay-test}"
 set -e
 SCORE=0
 TOTAL=100
 
-FILE="/tmp/replay-test/src/processor.ts"
+FILE="$WORKSPACE/src/processor.ts"
 [ -f "$FILE" ] || { echo "SCORE: 0/$TOTAL"; exit 1; }
 
 # Bug 1 (20pts): == null/undefined replaced with === or stricter check

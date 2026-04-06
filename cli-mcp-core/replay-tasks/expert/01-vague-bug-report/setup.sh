@@ -1,9 +1,10 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test/src/{api,db,cache,auth,config,middleware,utils}
+WORKSPACE="${1:-$WORKSPACE}"
+rm -rf $WORKSPACE
+mkdir -p $WORKSPACE/src/{api,db,cache,auth,config,middleware,utils}
 
 # Config
-cat > /tmp/replay-test/src/config/database.ts << 'EOF'
+cat > $WORKSPACE/src/config/database.ts << 'EOF'
 export const DB_CONFIG = {
     host: 'localhost',
     port: 5432,
@@ -13,13 +14,13 @@ export const DB_CONFIG = {
 EOF
 
 # Utils
-cat > /tmp/replay-test/src/utils/logger.ts << 'EOF'
+cat > $WORKSPACE/src/utils/logger.ts << 'EOF'
 export function log(level: string, msg: string, data?: unknown): void {
     console.log(`[${level}] ${msg}`, data ?? '');
 }
 EOF
 
-cat > /tmp/replay-test/src/utils/hash.ts << 'EOF'
+cat > $WORKSPACE/src/utils/hash.ts << 'EOF'
 export function hashId(id: string): string {
     let h = 0;
     for (let i = 0; i < id.length; i++) {
@@ -31,7 +32,7 @@ export function hashId(id: string): string {
 EOF
 
 # Auth middleware
-cat > /tmp/replay-test/src/middleware/auth.ts << 'EOF'
+cat > $WORKSPACE/src/middleware/auth.ts << 'EOF'
 import { log } from '../utils/logger.js';
 
 export function validateToken(token: string): { valid: boolean; userId?: string } {
@@ -41,7 +42,7 @@ export function validateToken(token: string): { valid: boolean; userId?: string 
 }
 EOF
 
-cat > /tmp/replay-test/src/middleware/rateLimit.ts << 'EOF'
+cat > $WORKSPACE/src/middleware/rateLimit.ts << 'EOF'
 const requests = new Map<string, number[]>();
 
 export function checkRateLimit(ip: string): boolean {
@@ -55,7 +56,7 @@ export function checkRateLimit(ip: string): boolean {
 EOF
 
 # Database layer
-cat > /tmp/replay-test/src/db/connection.ts << 'EOF'
+cat > $WORKSPACE/src/db/connection.ts << 'EOF'
 import { DB_CONFIG } from '../config/database.js';
 
 let connectionCount = 0;
@@ -76,7 +77,7 @@ export async function releaseConnection(conn: { id: number }): Promise<void> {
 }
 EOF
 
-cat > /tmp/replay-test/src/db/users.ts << 'EOF'
+cat > $WORKSPACE/src/db/users.ts << 'EOF'
 import { getConnection, releaseConnection } from './connection.js';
 import { log } from '../utils/logger.js';
 
@@ -100,7 +101,7 @@ export async function findUserById(id: string): Promise<User | null> {
 EOF
 
 # THE BUG IS HERE: Cache with race condition
-cat > /tmp/replay-test/src/cache/store.ts << 'EOF'
+cat > $WORKSPACE/src/cache/store.ts << 'EOF'
 import { log } from '../utils/logger.js';
 import { hashId } from '../utils/hash.js';
 
@@ -143,7 +144,7 @@ export function invalidate(key: string): void {
 EOF
 
 # API handler
-cat > /tmp/replay-test/src/api/users.ts << 'EOF'
+cat > $WORKSPACE/src/api/users.ts << 'EOF'
 import { findUserById } from '../db/users.js';
 import { getCached, setCached } from '../cache/store.js';
 import { validateToken } from '../middleware/auth.js';
@@ -192,7 +193,7 @@ export async function handleGetUser(
 EOF
 
 # Entry point
-cat > /tmp/replay-test/src/index.ts << 'EOF'
+cat > $WORKSPACE/src/index.ts << 'EOF'
 export { handleGetUser } from './api/users.js';
 export { findUserById } from './db/users.js';
 export { getCached, setCached, invalidate } from './cache/store.js';

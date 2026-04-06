@@ -1,0 +1,24 @@
+{
+  "taskId": "01-vague-bug-report",
+  "hypotheses": [
+    {
+      "id": "4645ab01-2d6e-4dc3-a10d-ee978b25baaa",
+      "taskId": "01-vague-bug-report",
+      "model": "haiku",
+      "effort": "low",
+      "description": "Attempt with haiku/low",
+      "actions": [],
+      "filesModified": [],
+      "result": "pass",
+      "score": 70,
+      "reflection": "Succeeded with haiku/low (score 70)",
+      "timestamp": "2026-04-06T15:03:55.029Z",
+      "tokens": 0,
+      "duration_ms": 0
+    }
+  ],
+  "bestScore": 70,
+  "bestModelEffort": "haiku/low",
+  "explored": 1,
+  "unexploredAreas": []
+}

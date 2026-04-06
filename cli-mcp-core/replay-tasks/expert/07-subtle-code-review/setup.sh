@@ -1,8 +1,9 @@
 #!/bin/bash
-rm -rf /tmp/replay-test
-mkdir -p /tmp/replay-test/src
+WORKSPACE="${1:-/tmp/replay-test}"
+rm -rf "$WORKSPACE"
+mkdir -p "$WORKSPACE/src"
 
-cat > /tmp/replay-test/src/processor.ts << 'EOF'
+cat > "$WORKSPACE/src/processor.ts" << 'EOF'
 // Data processor — process incoming events and aggregate results
 
 interface Event {

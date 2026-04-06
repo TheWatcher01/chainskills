@@ -1,9 +1,10 @@
 #!/bin/bash
+WORKSPACE="${1:-$WORKSPACE}"
 set -e
 SCORE=0
 TOTAL=100
 
-CACHE="/tmp/replay-test/src/cache/store.ts"
+CACHE="$WORKSPACE/src/cache/store.ts"
 [ -f "$CACHE" ] || { echo "SCORE: 0/$TOTAL"; exit 1; }
 
 # Check 1 (40pts): Le fix est dans cache/store.ts (le bon fichier)
@@ -23,11 +24,11 @@ if ! grep -q "isRefreshing = true" "$CACHE"; then
 fi
 
 # Check 4 (15pts): No SQL injection in db/users.ts (bonus — secondary finding)
-USERS="/tmp/replay-test/src/db/users.ts"
+USERS="$WORKSPACE/src/db/users.ts"
 if grep -qE "parameterized|\\\$1|prepared|placeholder" "$USERS" 2>/dev/null || ! grep -q "'\${id}'" "$USERS" 2>/dev/null; then
     SCORE=$((SCORE + 15))
 fi
 
 echo "SCORE: $SCORE/$TOTAL"
-echo "{\"score\":$SCORE,\"total\":$TOTAL}" > /tmp/replay-test/result.json
+echo "{\"score\":$SCORE,\"total\":$TOTAL}" > $WORKSPACE/result.json
 [ $SCORE -ge 40 ] && exit 0 || exit 1
