@@ -100,3 +100,40 @@ export function estimateCost(
 export function listKnownModels(): string[] {
     return Object.keys(PRICING_TABLE);
 }
+
+// ─── Effort Multipliers ──────────────────────────────────────────────────────
+
+/** Effort level cost multipliers (aligned with Claude Code effort parameter). */
+const EFFORT_MULTIPLIER: Record<string, number> = {
+    low: 0.4,     // ~60% less thinking tokens
+    medium: 0.7,  // ~30% less thinking tokens
+    high: 1.0,    // baseline
+    max: 1.3,     // ~30% more thinking tokens
+};
+
+/**
+ * Estimate cost with effort level adjustment.
+ *
+ * @param model - Model identifier.
+ * @param inputTokens - Number of input tokens.
+ * @param outputTokens - Number of output tokens.
+ * @param effort - Effort level (low/medium/high/max).
+ * @returns Estimated cost in USD.
+ */
+export function estimateCostWithEffort(
+    model: string,
+    inputTokens: number,
+    outputTokens: number,
+    effort: string = 'high',
+): number {
+    const base = estimateCost(model, inputTokens, outputTokens);
+    const multiplier = EFFORT_MULTIPLIER[effort] ?? 1.0;
+    return base * multiplier;
+}
+
+/**
+ * Get the effort multiplier for a given level.
+ */
+export function getEffortMultiplier(effort: string): number {
+    return EFFORT_MULTIPLIER[effort] ?? 1.0;
+}

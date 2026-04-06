@@ -28,11 +28,12 @@ import { compareCommand } from './compare.js';
 import { scorecardCommand } from './scorecard.js';
 import { routeCommand } from './route.js';
 import { deepCompareCommand } from './deep-compare.js';
+import { exploreCommand } from './explore.js';
 
 const main = defineCommand({
     meta: {
         name: 'chainskills',
-        version: '1.2.0',
+        version: '2.0.0',
         description:
             'Compose, share, and run AI agent workflows written in natural language',
     },
@@ -58,6 +59,7 @@ const main = defineCommand({
         scorecard: scorecardCommand,
         route: routeCommand,
         'deep-compare': deepCompareCommand,
+        explore: exploreCommand,
     },
 });
 

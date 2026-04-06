@@ -8,7 +8,19 @@
 
 import type { BenchDifficulty } from './benchmark-suite.js';
 
-/** Metrics collected per (taskType, model) pair. */
+/** Effort levels aligned with Claude Code's effort parameter. */
+export type EffortLevel = 'low' | 'medium' | 'high' | 'max';
+
+/** All known effort levels. */
+export const EFFORT_LEVELS: readonly EffortLevel[] = ['low', 'medium', 'high', 'max'];
+
+/** Model + effort combination for cascade routing. */
+export interface ModelEffort {
+    readonly model: string;
+    readonly effort: EffortLevel;
+}
+
+/** Metrics collected per (taskType, model, effort) triple. */
 export interface TaskModelMetrics {
     /** Task type identifier (e.g., 'create-function', 'refactor'). */
     readonly taskType: string;
@@ -16,6 +28,8 @@ export interface TaskModelMetrics {
     readonly difficulty: BenchDifficulty;
     /** Model name (e.g., 'haiku', 'sonnet', 'opus'). */
     readonly model: string;
+    /** Effort level used. */
+    readonly effort: EffortLevel;
     /** Total number of runs. */
     readonly runs: number;
     /** Number of passes (verify.sh exit 0). */
@@ -58,12 +72,14 @@ export interface RouteRecommendation {
     readonly taskType: string;
     /** Recommended model. */
     readonly model: string;
+    /** Recommended effort level. */
+    readonly effort: EffortLevel;
     /** Confidence in recommendation (0-1). */
     readonly confidence: number;
     /** Human-readable reason. */
     readonly reason: string;
     /** Fallback chain if recommended model fails. */
-    readonly fallbackChain: readonly string[];
+    readonly fallbackChain: readonly ModelEffort[];
     /** Estimated savings vs always using the most expensive model (%). */
     readonly savingsVsExpensive: number;
 }
@@ -76,16 +92,23 @@ export interface RouterConfig {
     readonly minRuns: number;
     /** Prefer cheaper models when quality is equal (default true). */
     readonly preferCheaper: boolean;
-    /** Model cascade order, cheapest first (default: haiku → sonnet → opus). */
-    readonly cascade: readonly string[];
+    /** Model+effort cascade order, cheapest first. */
+    readonly cascade: readonly ModelEffort[];
 }
 
-/** Default router configuration. */
+/** Default router configuration — 2D cascade cheapest to most expensive. */
 export const DEFAULT_ROUTER_CONFIG: RouterConfig = {
     minPassRate: 0.9,
     minRuns: 3,
     preferCheaper: true,
-    cascade: ['haiku', 'sonnet', 'opus'],
+    cascade: [
+        { model: 'haiku', effort: 'low' },
+        { model: 'haiku', effort: 'high' },
+        { model: 'sonnet', effort: 'medium' },
+        { model: 'sonnet', effort: 'high' },
+        { model: 'opus', effort: 'medium' },
+        { model: 'opus', effort: 'high' },
+    ],
 };
 
 /** Replay task metadata (from meta.json). */

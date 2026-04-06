@@ -14,6 +14,7 @@ import type {
     ModelScorecard,
     RouteRecommendation,
     RouterConfig,
+    EffortLevel,
 } from '../entities/model-router.js';
 import { DEFAULT_ROUTER_CONFIG } from '../entities/model-router.js';
 
@@ -31,10 +32,10 @@ export function buildScorecard(
 ): ModelScorecard {
     const cfg = { ...DEFAULT_ROUTER_CONFIG, ...config };
 
-    // Group by (taskType, model)
+    // Group by (taskType, model, effort)
     const groups = new Map<string, ScorecardEntry[]>();
     for (const e of entries) {
-        const key = `${e.taskType}::${e.model}`;
+        const key = `${e.taskType}::${e.model}::${e.effort ?? 'high'}`;
         const group = groups.get(key) ?? [];
         group.push(e);
         groups.set(key, group);
@@ -43,7 +44,7 @@ export function buildScorecard(
     // Compute per-group metrics
     const metrics: TaskModelMetrics[] = [];
     for (const [key, group] of groups) {
-        const [taskType, model] = key.split('::') as [string, string];
+        const [taskType, model, effort] = key.split('::') as [string, string, string];
         const runs = group.length;
         const passCount = group.filter((e) => e.pass).length;
         const passRate = passCount / runs;
@@ -63,6 +64,7 @@ export function buildScorecard(
             taskType,
             difficulty: group[0]?.difficulty ?? 'medium',
             model,
+            effort: (effort ?? 'high') as EffortLevel,
             runs,
             passCount,
             passRate: round3(passRate),
@@ -111,54 +113,66 @@ export function recommend(
     const taskMetrics = metrics.filter((m) => m.taskType === taskType);
 
     if (taskMetrics.length === 0) {
-        // Pas assez de donnees — recommander le plus gros modele
-        const fallback = cfg.cascade[cfg.cascade.length - 1] ?? 'opus';
+        const fallback = cfg.cascade[cfg.cascade.length - 1] ?? { model: 'opus', effort: 'high' as EffortLevel };
+        const fb = typeof fallback === 'string' ? { model: fallback, effort: 'high' as EffortLevel } : fallback;
         return {
             taskType,
-            model: fallback,
+            model: fb.model,
+            effort: fb.effort,
             confidence: 0,
             reason: 'No data available — defaulting to most capable model',
-            fallbackChain: [...cfg.cascade],
+            fallbackChain: cfg.cascade.map((c) => typeof c === 'string' ? { model: c, effort: 'high' as EffortLevel } : c),
             savingsVsExpensive: 0,
         };
     }
 
-    // Trier la cascade par cout croissant
-    const expensiveModel = cfg.cascade[cfg.cascade.length - 1] ?? 'opus';
-    const expensiveMetrics = taskMetrics.find((m) => m.model === expensiveModel);
+    // Le plus cher = dernier de la cascade
+    const expensiveEntry = cfg.cascade[cfg.cascade.length - 1]!;
+    const expensive = typeof expensiveEntry === 'string'
+        ? { model: expensiveEntry, effort: 'high' as EffortLevel }
+        : expensiveEntry;
+    const expensiveMetrics = taskMetrics.find((m) => m.model === expensive.model && m.effort === expensive.effort);
     const expensiveCost = expensiveMetrics?.avgCost_usd ?? 0;
 
-    // Parcourir la cascade du moins cher au plus cher
-    for (const model of cfg.cascade) {
-        const m = taskMetrics.find((tm) => tm.model === model);
+    // Parcourir la cascade 2D du moins cher au plus cher
+    for (const entry of cfg.cascade) {
+        const { model, effort } = typeof entry === 'string'
+            ? { model: entry, effort: 'high' as EffortLevel }
+            : entry;
+        const m = taskMetrics.find((tm) => tm.model === model && tm.effort === effort);
         if (!m) continue;
         if (m.runs < cfg.minRuns) continue;
 
         if (m.passRate >= cfg.minPassRate) {
-            // Calcul de confiance : augmente avec le nombre de runs
             const confidence = Math.min(1, m.passRate * (1 - 1 / Math.sqrt(m.runs + 1)));
             const savings = expensiveCost > 0
                 ? Math.round((1 - m.avgCost_usd / expensiveCost) * 100)
                 : 0;
 
+            const idx = cfg.cascade.indexOf(entry);
+            const remaining = cfg.cascade.slice(idx).map((c) =>
+                typeof c === 'string' ? { model: c, effort: 'high' as EffortLevel } : c,
+            );
+
             return {
                 taskType,
                 model,
+                effort,
                 confidence: round3(confidence),
-                reason: buildReason(m, expensiveModel, savings),
-                fallbackChain: cfg.cascade.slice(cfg.cascade.indexOf(model)),
+                reason: buildReason(m, `${expensive.model}/${expensive.effort}`, savings),
+                fallbackChain: remaining,
                 savingsVsExpensive: Math.max(0, savings),
             };
         }
     }
 
-    // Aucun modele cheap ne passe le seuil — recommander le plus cher
     return {
         taskType,
-        model: expensiveModel,
+        model: expensive.model,
+        effort: expensive.effort,
         confidence: 1,
-        reason: `Only ${expensiveModel} meets ${Math.round(cfg.minPassRate * 100)}% pass rate threshold`,
-        fallbackChain: [expensiveModel],
+        reason: `Only ${expensive.model}/${expensive.effort} meets ${Math.round(cfg.minPassRate * 100)}% pass rate threshold`,
+        fallbackChain: [expensive],
         savingsVsExpensive: 0,
     };
 }
@@ -204,6 +218,7 @@ export interface ScorecardEntry {
     readonly taskType: string;
     readonly difficulty: 'easy' | 'medium' | 'hard';
     readonly model: string;
+    readonly effort?: string;
     readonly pass: boolean;
     readonly duration_ms: number;
     readonly tokens: number;
@@ -227,8 +242,10 @@ function computeEstimatedSavings(
     _metrics: readonly TaskModelMetrics[],
     cfg: RouterConfig,
 ): number {
-    const expensiveModel = cfg.cascade[cfg.cascade.length - 1] ?? 'opus';
-    const routable = recommendations.filter((r) => r.model !== expensiveModel);
+    const expensive = cfg.cascade[cfg.cascade.length - 1];
+    const expModel = typeof expensive === 'string' ? expensive : expensive?.model ?? 'opus';
+    const expEffort = typeof expensive === 'string' ? 'high' : expensive?.effort ?? 'high';
+    const routable = recommendations.filter((r) => r.model !== expModel || r.effort !== expEffort);
     if (recommendations.length === 0) return 0;
     return Math.round((routable.length / recommendations.length) * 100);
 }
