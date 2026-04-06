@@ -27,6 +27,7 @@ import { importSessionCommand } from './import-session.js';
 import { compareCommand } from './compare.js';
 import { scorecardCommand } from './scorecard.js';
 import { routeCommand } from './route.js';
+import { deepCompareCommand } from './deep-compare.js';
 
 const main = defineCommand({
     meta: {
@@ -56,6 +57,7 @@ const main = defineCommand({
         compare: compareCommand,
         scorecard: scorecardCommand,
         route: routeCommand,
+        'deep-compare': deepCompareCommand,
     },
 });
 
