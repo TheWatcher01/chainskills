@@ -1,6 +1,6 @@
 {
   "name": "chainskills",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "description": "Compose, share, and run AI agent workflows written in natural language",
   "type": "module",
   "bin": {

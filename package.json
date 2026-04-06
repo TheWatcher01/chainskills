@@ -1,6 +1,6 @@
 {
     "name": "chainskills",
-    "version": "0.6.0",
+    "version": "1.0.0",
     "private": true,
     "description": "Monorepo: TypeScript CLI + VS Code extension for composing and running AI agent workflows",
     "type": "module",

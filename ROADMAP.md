@@ -6,20 +6,21 @@
 
 ## Versions planifiées
 
-| Version  | Phase        | Contenu                                                           | Statut      |
-| -------- | ------------ | ----------------------------------------------------------------- | ----------- | ---------- |
-| v0.1.0   | MVP          | Parse + Run séquentiel + Shell tools + CLI                        | ✅ Complété |
-| v0.2.0   | DAG          | Orchestration DAG (Mastra), full control flow, inspect, streaming | ✅ Complété |
-| v0.2.1   | Security     | Hardening sécurité, Result monad utilities, architecture fixes    | ✅ Complété |
-| v0.3.0-α | MCP          | MCP server, SDK API, `--json` mode, `serve` command               | ✅ Complété |
-| v0.3.0   | MCP+Agent    | MCP client, `@agent` LLM, composite tools                         | ✅ Complété |
-| v0.4.0   | VS Code Ext  | Extension skeleton, core enhancements, syntax highlighting        | ✅ Complété |
-| v0.5.0   | IDE Features | Language Features (CodeLens, Completion, Hover, Diagnostics)      | ✅ Complété | 2026-02-19 |
-| v0.6.0   | Copilot AI   | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | 🔄 En cours | Q2 2026    |
-| v0.7.0   | Traces+Hooks | Trace recording (JSONL), ExecutionHook pipeline, cost tracking    | ⏳ Planifié |
-| v0.8.0   | Registry+Route| Skill registry git, model routing cascade, replay mode           | ⏳ Planifié |
-| v0.9.0   | Factory+Eval | Pattern detection, TWB export, eval framework, DAP debug          | ⏳ Planifié |
-| v1.0.0   | Production   | SQLite, dataset gen, autoresearch, marketplace publish             | ⏳ Planifié |
+| Version  | Phase           | Contenu                                                           | Statut       |
+| -------- | --------------- | ----------------------------------------------------------------- | ------------ |
+| v0.1.0   | MVP             | Parse + Run sequentiel + Shell tools + CLI                        | ✅ Complete  |
+| v0.2.0   | DAG             | Orchestration DAG (Mastra), full control flow, inspect, streaming | ✅ Complete  |
+| v0.2.1   | Security        | Hardening securite, Result monad utilities, architecture fixes    | ✅ Complete  |
+| v0.3.0   | MCP+Agent       | MCP server/client, `@agent` LLM, composite tools, SDK API        | ✅ Complete  |
+| v0.4.0   | VS Code Ext     | Extension skeleton, core enhancements, syntax highlighting        | ✅ Complete  |
+| v0.5.0   | IDE Features    | CodeLens, Completion, Hover, Diagnostics                          | ✅ Complete  |
+| v0.6.0   | Copilot AI      | Chat Participant `@chainskills`, Agent Mode tools, DAG Webview    | ✅ Complete  |
+| v0.7.0   | Traces+Hooks    | Trace recording (JSONL/CRAG), @schema, @gate, cost tracking      | ✅ Complete  |
+| v0.8.0   | Registry+Replay | Skill registry git, model routing, replay mode, publish/add      | ✅ Complete  |
+| v0.9.0   | Flywheel        | Arena Elo, distill JSONL, generate variants, feedback loop        | ✅ Complete  |
+| **v1.0.0** | **Agent Arena** | **100 benchmarks, Anthropic provider, leaderboard, HF export, GitHub Action** | **✅ Current** |
+| v1.1.0   | Live            | Live leaderboard (HF Spaces), community benchmarks, SQLite traces | ⏳ Planned   |
+| v1.2.0   | Scale           | Streaming bench, DAP debug, multi-agent workflows                 | ⏳ Planned   |
 
 > Voir aussi : [AGENTS.md](AGENTS.md) — architecture agentique complète, structure projet, stack technique.
 

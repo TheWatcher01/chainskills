@@ -1,233 +1,234 @@
 # chainskills
 
-> The "shadcn/ui of AI workflows" — compose, share, and run AI agent workflows written in natural language.
+> **The Chatbot Arena for AI agents** — benchmark, compare, and rank LLMs on real multi-step workflows.
 
+[![CI](https://github.com/TheWatcher01/chainskills/actions/workflows/ci.yml/badge.svg)](https://github.com/TheWatcher01/chainskills/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](cli-mcp-core/LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](cli-mcp-core/package.json)
+[![Tests](https://img.shields.io/badge/tests-388%20passing-brightgreen.svg)](cli-mcp-core/tests)
 [![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-green.svg)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org)
-[![Tests](https://img.shields.io/badge/Tests-197%2F197%20passing-brightgreen.svg)](cli-mcp-core/tests)
 [![MCP](https://img.shields.io/badge/MCP-compatible-purple.svg)](https://modelcontextprotocol.io)
 
-**chainskills** is an open source TypeScript CLI that lets you define, compose, share, and execute AI agent workflows written in natural language (`.workflow.md`). It combines the distribution model of [skills.sh](https://skills.sh) (npm-like registry), the DAG orchestration engine of [Mastra](https://mastra.ai), and a Markdown workflow format enriched with 17 lightweight directives.
-
-```markdown
----
-name: code-review-pipeline
-inputs: { repo_path: string, branch: string }
 ---
 
-@use eslint-analyzer
-@use security-scanner
-
-# Step 1 — Get changed files
-
-@call git.diff($repo_path, "main", $branch) → $changed_files
-
-# Step 2 — Check everything in parallel
-
-@parallel:
-
-## Lint
-
-@call eslint-analyzer.check($changed_files) → $lint
-
-## Security
-
-@call security-scanner.scan($changed_files) → $security
-
-# Step 3 — Evaluate
-
-@if $security.critical_count > 0:
-$passed = false
-@else:
-$passed = $lint.error_count == 0
-
-@output: $passed
-```
-
----
-
-## Monorepo Structure
-
-```
-chainskills/
-├── cli-mcp-core/        # TypeScript CLI + runtime engine (Node.js ≥ 20)
-└── vscode-extension/    # VS Code extension for .workflow.md IDE support
-```
-
-| Package                                 | Description                                              | Tech                               |
-| --------------------------------------- | -------------------------------------------------------- | ---------------------------------- |
-| [`cli-mcp-core`](cli-mcp-core/)         | CLI, DAG engine, MCP server/client, `@agent` integration | TypeScript, Citty, Mastra, MCP SDK |
-| [`vscode-extension`](vscode-extension/) | Syntax highlighting, Workflow Explorer, 10 commands      | VS Code API, Webpack               |
-
----
-
-## Quick Start
+## Install
 
 ```bash
-git clone https://github.com/TheWatcher01/chainskills.git
-cd chainskills/cli-mcp-core
-pnpm install && pnpm build
+npm install -g chainskills
+```
 
-# Run a workflow
-pnpm exec tsx src/cli/index.ts run templates/dev/code-review.workflow.md
+## Quick Start (5 commands)
 
-# Validate syntax
-pnpm exec tsx src/cli/index.ts validate my-workflow.workflow.md
+```bash
+# 1. Create a workflow
+chainskills init my-review
 
-# Visualize the DAG
-pnpm exec tsx src/cli/index.ts inspect my-workflow.workflow.md
+# 2. Run it
+chainskills run my-review.workflow.md
 
-# Scaffold a new workflow
-pnpm exec tsx src/cli/index.ts init my-workflow
+# 3. Benchmark across models
+chainskills bench-suite --models claude-sonnet,gpt-4o-mini,qwen3:8b --suite benchmarks/
 
-# Expose as MCP server (Copilot-compatible)
-pnpm exec tsx src/cli/index.ts serve --port 3001
+# 4. Compare models head-to-head
+chainskills arena my-review.workflow.md --models claude-sonnet,gpt-4o-mini
+
+# 5. Generate a public leaderboard
+chainskills leaderboard --input bench-results/ --output site/
 ```
 
 ---
 
-## Directives
+## Why chainskills?
 
-17 `@` directives let you express any workflow logic in plain Markdown:
+**No tool evaluates AI agents on real multi-step workflows across domains.** SWE-bench tests code only. Chatbot Arena tests chat only. chainskills is the first cross-domain agent evaluation framework.
 
-| Directive                    | Purpose                                     |
-| ---------------------------- | ------------------------------------------- |
-| `@use`                       | Import a skill, tool, or sub-workflow       |
-| `@call expr → $var`          | Call a tool and capture the result          |
-| `@if` / `@else`              | Conditional branching                       |
-| `@for $item in $list:`       | Bounded iteration                           |
-| `@repeat max:N until $cond:` | Loop with stop condition                    |
-| `@parallel:`                 | Execute sibling steps in parallel           |
-| `@try:` / `@on-error:`       | Error handling                              |
-| `@assert $expr`              | Inline validation checkpoint                |
-| `@output: $a, $b`            | Declare workflow outputs                    |
-| `@env VAR_NAME`              | Reference an environment variable           |
-| `@workflow name:`            | Inline sub-workflow                         |
-| `@agent copilot: "task"`     | Delegate to an AI agent (OpenAI-compatible) |
-| `@handoff review-agent:`     | Transfer control to another agent           |
-| `@breakpoint $condition`     | Conditional debugging breakpoint            |
+| | chainskills | SWE-bench | Chatbot Arena | AgentBench |
+|---|---|---|---|---|
+| Multi-step workflows | **Yes** | No | No | Partial |
+| Cross-domain (6 domains) | **Yes** | Code only | Chat only | 8 envs |
+| Cost-aware leaderboard | **Yes** | No | No | No |
+| Trace → Replay → Distill | **Yes** | No | No | No |
+| MCP/Copilot integration | **Yes** | No | No | No |
+| Open source | **MIT** | MIT | Apache 2.0 | MIT |
 
 ---
 
 ## Features
 
+### Agent Arena (Benchmark + Evaluate)
+- **100 benchmark workflows** across 6 domains (coding, data, security, writing, reasoning, tool-use)
+- **3 difficulty levels** (easy, medium, hard) with golden file validation
+- **Elo rating** with blind A/B arena comparison
+- **Cost-aware leaderboard** — Pareto frontier (quality vs cost)
+- **HuggingFace export** — `chainskills export-hf` for dataset publication
+
+### Flywheel (Trace + Improve)
+- **Trace recording** — every workflow execution produces structured traces (JSONL/CRAG)
+- **Replay** — re-run traces with different models (`chainskills replay`)
+- **Distillation** — extract fine-tuning JSONL from high-quality traces
+- **Few-shot feedback** — trace-informed agent auto-injects best examples
+- **Variant generation** — LLM generates workflow variants from templates
+
+### Multi-Provider
+- **Anthropic** — native Messages API (Claude Opus, Sonnet, Haiku)
+- **OpenAI** — Chat Completions API (GPT-4o, o3-mini)
+- **Ollama** — local models (Qwen, Llama, Mistral, DeepSeek)
+- Auto-detection from API keys, per-invocation model override
+
 ### Engine
-
-- **DAG Orchestration** — Auto-parallelization by variable dependency analysis via [Mastra](https://mastra.ai)
-- **Dual Executor** — `SimpleExecutor` (sequential) or `MastraExecutor` (DAG) — swap via `CHAINSKILLS_EXECUTOR`
-- **Execution Control** — `pause()`, `resume()`, `cancel()`, `step()` with typed event system (11 events)
-- **Hexagonal Architecture** — Pure domain core, 8 abstract ports, zero external dependencies in `core/`
-- **Result<T,E> Monad** — `map`, `flatMap`, `mapErr`, `unwrapOr`, `match` utilities
-
-### AI & Interoperability
-
-- **MCP Server** — `chainskills serve` exposes 5 tools + 2 prompts + dynamic resources (stdio + HTTP)
-- **MCP Client** — `@call mcp.tool_name()` invokes tools on any external MCP server
-- **`@agent` / `@handoff`** — Delegate tasks to any OpenAI-compatible LLM (OpenAI, Claude, Ollama, Groq)
-- **Copilot-ready** — `.vscode/mcp.json` auto-discovery for GitHub Copilot
+- **19 directives** — `@agent`, `@parallel`, `@schema`, `@gate`, `@try`, `@if`, `@for`...
+- **DAG orchestration** — auto-parallelization by variable dependency
+- **MCP server** — 7 tools + 2 prompts, stdio/HTTP transport
+- **Hexagonal architecture** — pure domain core, zero external deps
 
 ### VS Code Extension
+- Syntax highlighting for 19 directives
+- Workflow Explorer, CodeLens, Diagnostics
+- 15+ commands (run, bench, arena, distill, generate...)
+- Copilot Chat participant `@chainskills`
 
-- **Syntax Highlighting** — TextMate grammar covering all 17 directives, `$variables`, `:::blocks`
-- **Workflow Explorer** — TreeView with frontmatter metadata
-- **10 Commands** — Run, Validate, Inspect, Pause, Resume, Stop, Step, Dry Run, Templates, Refresh
-- **Auto-validate on Save** — Configurable background validation
+---
 
-### Templates
+## CLI Commands (17)
 
-Pre-built workflows in [`cli-mcp-core/templates/`](cli-mcp-core/templates/):
+| Command | Description |
+|---------|-------------|
+| `run` | Execute a workflow |
+| `validate` | Check workflow syntax |
+| `inspect` | Visualize DAG structure |
+| `init` | Scaffold a new workflow |
+| `list` | List available workflows |
+| `serve` | Start MCP server |
+| `replay` | Re-run traces with different model |
+| `bench` | Benchmark one workflow across models |
+| `bench-suite` | Run full benchmark suite |
+| `arena` | Blind A/B model comparison with Elo |
+| `distill` | Extract fine-tuning JSONL from traces |
+| `generate` | Generate workflow variants via LLM |
+| `publish` | Publish workflow to registry |
+| `add` | Install workflow from registry |
+| `leaderboard` | Generate static leaderboard site |
+| `export-hf` | Export results as HuggingFace dataset |
 
-| Category    | Workflows                                        |
-| ----------- | ------------------------------------------------ |
-| `dev/`      | `code-review`, `tdd-cycle`, `nextjs-app-builder` |
-| `cybersec/` | `recon-target`, `vuln-scan`                      |
-| `osint/`    | `domain-recon`                                   |
-| `ess/`      | `grant-application`                              |
+---
+
+## Benchmark Suite
+
+100 standardized workflows across 6 domains:
+
+```
+benchmarks/
+  coding/      (17 workflows)  — fizzbuzz to LRU cache to event emitter
+  data/        (16 workflows)  — CSV parse to streaming aggregation
+  security/    (16 workflows)  — input validation to OAuth2 PKCE
+  writing/     (17 workflows)  — commit messages to technical RFCs
+  reasoning/   (17 workflows)  — bug finding to system design
+  tool-use/    (17 workflows)  — file search to multi-step pipelines
+```
+
+```bash
+# Run the full suite
+chainskills bench-suite --models claude-sonnet-4-6,gpt-4o-mini --suite benchmarks/
+
+# Filter by domain
+chainskills bench-suite --models claude-sonnet-4-6 --domain security
+
+# Dry-run (discover workflows without LLM calls)
+chainskills bench-suite --models noop --dry-run
+```
 
 ---
 
 ## Architecture
 
 ```
-VS Code Extension
-       │ import as library
-  CLI (Citty)
-       │
-  Core (pure domain — zero dependencies)
-  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-  │ Entities │ │Use Cases │ │ Services │ │  Ports   │
-  └──────────┘ └──────────┘ └──────────┘ └──────────┘
-       │ Ports & Adapters
-  Adapters: Parser(Remark) · Executor(Mastra) · Tools(MCP) · Skills · State
+CLI (17 commands, Citty)
+  │
+Config (DI container, provider registry)
+  │
+Adapters (parser, executor, agents, trace-store, site-gen, HF-export)
+  │
+Core (entities, ports, services, use-cases) ← ZERO external deps
 ```
+
+**Hexagonal**: dependencies point inward only. Core never imports adapters.
+
+---
+
+## Monorepo
+
+| Package | Path | Purpose |
+|---------|------|---------|
+| **cli-mcp-core** | `cli-mcp-core/` | CLI + core library + MCP server |
+| **vscode-extension** | `vscode-extension/` | VS Code extension |
 
 ---
 
 ## Development
 
 ```bash
-# CLI + engine
+git clone https://github.com/TheWatcher01/chainskills.git
+cd chainskills && pnpm install
+
+# CLI
 cd cli-mcp-core
-pnpm install
-pnpm test          # 197 tests, Vitest
-pnpm dev           # watch mode
-pnpm build         # obuild (Rolldown)
-pnpm lint          # prettier --check
+pnpm test          # 388 tests (Vitest)
+pnpm typecheck     # tsc --noEmit
+pnpm build         # obuild → 1.35 MB
 
 # VS Code extension
 cd vscode-extension
-npm install
-npm run compile
-# Press F5 in VS Code → Extension Development Host
+pnpm compile       # webpack → 23KB
 ```
 
 ### Environment
 
 ```bash
-cp cli-mcp-core/.env.example cli-mcp-core/.env
-# PRODUCTION: replace secrets with Infisical / Doppler / Vault
+# Provider selection (auto-detects from API keys if unset)
+export AGENT_PROVIDER=anthropic    # anthropic | openai | ollama | noop
+export ANTHROPIC_API_KEY=sk-...
+export AGENT_MODEL=claude-sonnet-4-6
 ```
 
-Key variables: `CHAINSKILLS_EXECUTOR`, `OPENAI_API_KEY`, `MCP_SERVER_PORT`, `CHAINSKILLS_LOG_LEVEL`.  
-See [`.env.example`](cli-mcp-core/.env.example) for the full list.
+---
+
+## GitHub Action
+
+```yaml
+- uses: chainskills/bench-action@v1
+  with:
+    models: claude-sonnet-4-6,gpt-4o-mini
+    provider: anthropic
+    api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+    suite: benchmarks/
+```
 
 ---
 
 ## Roadmap
 
-Canonical portfolio roadmap: [ROADMAP.md](ROADMAP.md)
-
-| Phase | Version | Highlights                                            | Status |
-| ----- | ------- | ----------------------------------------------------- | ------ |
-| 1     | v0.1.0  | MVP — Parse + sequential run + CLI                    | ✅     |
-| 2     | v0.2.0  | DAG (Mastra), full control flow, event system         | ✅     |
-| 3     | v0.3.0  | MCP server/client, `@agent` LLM                       | ✅     |
-| 4     | v0.4.0  | VS Code extension, ExecutionController, `@breakpoint` | ✅     |
-| 5     | v0.5.0  | CodeLens, Diagnostics, Autocomplete, Hover            | ✅     |
-| 6     | v0.6.0  | Copilot Chat `@chainskills`, Agent Mode, DAG Webview  | 🔄     |
-| 7     | v0.7.0  | Trace recording (JSONL), ExecutionHook pipeline       | ⏳     |
-| 8     | v0.8.0  | Skill registry git, model routing, replay mode        | ⏳     |
-| 9     | v0.9.0  | Pattern detection, eval framework, TWB export         | ⏳     |
-| 10    | v1.0.0  | Production, autoresearch, LLM local integration       | ⏳     |
+| Version | Highlights | Status |
+|---------|-----------|--------|
+| v0.1–v0.5 | MVP, DAG, MCP, VS Code extension, IDE features | Done |
+| v0.6–v0.8 | Copilot AI, traces, replay, registry | Done |
+| v0.9 | Flywheel: bench, arena, distill, generate, @schema, @gate | Done |
+| **v1.0** | **Agent Arena: 100 benchmarks, Anthropic provider, leaderboard, HF export, GitHub Action** | **Current** |
+| v1.1 | Live leaderboard, community benchmarks, SQLite traces | Planned |
+| v1.2 | HuggingFace Spaces integration, streaming bench | Planned |
 
 ---
 
-## Stack
+## Contributing
 
-| Layer             | Package                                                         |
-| ----------------- | --------------------------------------------------------------- |
-| CLI               | `citty`                                                         |
-| Parser            | `unified` + `remark-parse` + `remark-directive` + `gray-matter` |
-| DAG orchestration | `@mastra/core`                                                  |
-| MCP interop       | `@modelcontextprotocol/sdk`                                     |
-| Validation        | `zod`                                                           |
-| Build             | `obuild` (Rolldown)                                             |
-| Tests             | `vitest`                                                        |
-| Package manager   | `pnpm`                                                          |
+See [CONTRIBUTING.md](CONTRIBUTING.md). TL;DR:
+
+```bash
+git clone && cd chainskills && pnpm install && pnpm test
+```
 
 ---
 
 ## License
 
-[MIT](cli-mcp-core/LICENSE) © [TheWatcher01](https://github.com/TheWatcher01)
+[MIT](cli-mcp-core/LICENSE) — [TheWatcher01](https://github.com/TheWatcher01)
