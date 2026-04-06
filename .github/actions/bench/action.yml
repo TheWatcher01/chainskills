@@ -1,0 +1,76 @@
+name: chainskills-bench
+description: Run chainskills benchmark suite on your agent
+branding:
+  icon: bar-chart-2
+  color: blue
+
+inputs:
+  models:
+    description: 'Comma-separated model identifiers'
+    required: true
+  provider:
+    description: 'Agent provider (anthropic, openai, ollama)'
+    default: 'anthropic'
+  api-key:
+    description: 'API key for the provider'
+    required: true
+  suite:
+    description: 'Path to benchmark suite directory'
+    default: './benchmarks'
+  runs:
+    description: 'Number of runs per model per workflow'
+    default: '1'
+  domain:
+    description: 'Filter by domain (optional)'
+    required: false
+  output:
+    description: 'Output directory for results'
+    default: './bench-results'
+
+outputs:
+  results-path:
+    description: 'Path to the results directory'
+    value: ${{ inputs.output }}
+  summary:
+    description: 'JSON summary of results'
+    value: ${{ steps.bench.outputs.summary }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install chainskills
+      shell: bash
+      run: npm install -g chainskills
+
+    - name: Run benchmark suite
+      id: bench
+      shell: bash
+      run: |
+        DOMAIN_FLAG=""
+        if [ -n "${{ inputs.domain }}" ]; then
+          DOMAIN_FLAG="--domain ${{ inputs.domain }}"
+        fi
+        chainskills bench-suite \
+          --suite "${{ inputs.suite }}" \
+          --models "${{ inputs.models }}" \
+          --runs "${{ inputs.runs }}" \
+          --output "${{ inputs.output }}" \
+          $DOMAIN_FLAG \
+          --json > "${{ inputs.output }}/summary.json" 2>&1 || true
+        echo "summary=$(cat ${{ inputs.output }}/summary.json | head -1)" >> $GITHUB_OUTPUT
+      env:
+        AGENT_PROVIDER: ${{ inputs.provider }}
+        ANTHROPIC_API_KEY: ${{ inputs.api-key }}
+        OPENAI_API_KEY: ${{ inputs.api-key }}
+        AGENT_API_KEY: ${{ inputs.api-key }}
+
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: chainskills-bench-results
+        path: ${{ inputs.output }}/
