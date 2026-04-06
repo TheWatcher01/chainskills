@@ -19,6 +19,8 @@ export interface TraceFilter {
     readonly min_confidence?: number;
     /** Filter by directive type. */
     readonly directive_type?: string;
+    /** Filter by LLM model used. */
+    readonly model?: string;
     /** Only traces after this date (ISO 8601). */
     readonly since?: string;
     /** Filter by run ID. */

@@ -88,6 +88,12 @@ export interface DirectiveEndEvent extends BaseEvent {
     readonly directiveType: string;
     readonly success: boolean;
     readonly result?: unknown;
+    /** LLM model used (for @agent/@handoff directives). */
+    readonly model?: string;
+    /** Token usage (for @agent/@handoff directives). */
+    readonly tokens?: { readonly promptTokens: number; readonly completionTokens: number };
+    /** Confidence score 0.0-1.0 (for @agent/@schema directives). */
+    readonly confidence_score?: number;
 }
 
 /** Emitted when parallel execution starts. */

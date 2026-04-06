@@ -37,6 +37,8 @@ export interface AgentInvokeOptions {
     readonly maxTokens?: number;
     /** Temperature for generation (0-2). */
     readonly temperature?: number;
+    /** Override model for this invocation (e.g., for replay/bench). */
+    readonly model?: string;
     /** Workflow variables available for context. */
     readonly variables?: Record<string, unknown>;
 }
