@@ -21,6 +21,7 @@ import type { McpClientConfig } from '#adapters/tools/mcp-client.js';
 import { createLocalResolver } from '#adapters/skills/local-resolver.js';
 import { createEventEmitter } from '#infra/event-emitter.js';
 import { createNoopAgent, createOpenAIAgent } from '#adapters/agents/openai-agent.js';
+import { createTraceInformedAgent } from '#adapters/agents/trace-informed-agent.js';
 import type { WorkflowParser } from '#core/ports/workflow-parser.port.js';
 import type { WorkflowExecutor } from '#core/ports/workflow-executor.port.js';
 import type { StateStore } from '#core/ports/state-store.port.js';
@@ -113,6 +114,9 @@ export async function createContainer(
         }, logger)
         : createNoopAgent();
 
+    // Wrap agent with trace-informed feedback if enabled
+    const feedbackEnabled = (process.env['AGENT_FEEDBACK_ENABLED'] === 'true') || config.agentFeedbackEnabled;
+
     // Trace store — auto-detect CRAG/KG or fallback to JSONL (must be before executor)
     const recordTraces = config.recordTraces ?? true;
     const tracesDir = process.env['TRACES_DIR'] ?? config.tracesDir ?? './traces';
@@ -122,6 +126,14 @@ export async function createContainer(
         tracesDir,
         logger,
     });
+
+    // Wrap agent with trace-informed feedback loop if enabled
+    const finalAgent = feedbackEnabled
+        ? createTraceInformedAgent(agent, traceStore, {
+            enabled: true,
+            minConfidence: config.agentFeedbackMinConfidence ?? 0.8,
+        }, logger)
+        : agent;
 
     // Only pass traceStore to executor if recording is enabled
     const executorTraceStore = recordTraces ? traceStore : undefined;
@@ -138,10 +150,10 @@ export async function createContainer(
         } catch {
             // Fallback to simple executor if Mastra is not available
             logger.warn('MastraExecutor not available, falling back to SimpleExecutor');
-            executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent, traceStore: executorTraceStore });
+            executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent: finalAgent, traceStore: executorTraceStore });
         }
     } else {
-        executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent, traceStore: executorTraceStore });
+        executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent: finalAgent, traceStore: executorTraceStore });
     }
 
     // Observability
@@ -156,7 +168,7 @@ export async function createContainer(
         tools,
         resolver,
         emitter,
-        agent,
+        agent: finalAgent,
         observability,
         traceStore,
     };
