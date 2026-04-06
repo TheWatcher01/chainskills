@@ -1,0 +1,1 @@
+{"outputs":{"architecture":"*","review":"*"},"assertions":{"patterns":{"architecture":"(database|API|endpoint|schema)","review":"(bottleneck|security|scale|failure)"}}}

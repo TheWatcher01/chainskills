@@ -1,0 +1,1 @@
+{"outputs":{"audit":"*"},"assertions":{"patterns":{"audit":"(CSP|HSTS|X-Frame|Server|disclosure)"}}}

@@ -1,0 +1,1 @@
+{"outputs":{"content":"*","analysis":"*","result":"*"},"assertions":{"patterns":{"content":"(fallback|not found)","result":"(Success|Retry)"}}}

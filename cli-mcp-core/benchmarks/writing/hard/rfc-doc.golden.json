@@ -1,0 +1,1 @@
+{"outputs":{"rfc":"*"},"assertions":{"patterns":{"rfc":"(RFC|Motivation|Design|Alternative|Migration)"}}}

@@ -1,0 +1,1 @@
+{"outputs":{"lineage":"*"},"assertions":{"patterns":{"lineage":"(raw_logs|clean_logs|enriched|metrics)"}}}

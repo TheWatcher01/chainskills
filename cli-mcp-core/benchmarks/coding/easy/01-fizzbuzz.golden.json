@@ -1,0 +1,8 @@
+{
+  "outputs": {},
+  "assertions": {
+    "patterns": {
+      "solution": "FizzBuzz"
+    }
+  }
+}

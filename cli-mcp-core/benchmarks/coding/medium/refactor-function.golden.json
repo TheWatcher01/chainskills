@@ -1,0 +1,1 @@
+{"outputs":{"refactored":"*","validation":"*"},"assertions":{"patterns":{"refactored":"(const|let|=>|function)","validation":"(YES|yes|Yes)"}}}

@@ -1,0 +1,1 @@
+{"outputs":{"post":"*"},"assertions":{"patterns":{"post":"(benchmark|agent|evaluation|model)"}}}

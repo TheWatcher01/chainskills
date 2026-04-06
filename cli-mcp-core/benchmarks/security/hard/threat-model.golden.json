@@ -1,0 +1,1 @@
+{"outputs":{"model":"*"},"assertions":{"patterns":{"model":"(Spoofing|Tampering|Repudiation|Disclosure|Denial|Elevation)"}}}

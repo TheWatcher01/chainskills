@@ -1,0 +1,1 @@
+{"outputs":{"classified":"*"},"assertions":{"patterns":{"classified":"(Bug|Feature|Support|Infrastructure)"}}}

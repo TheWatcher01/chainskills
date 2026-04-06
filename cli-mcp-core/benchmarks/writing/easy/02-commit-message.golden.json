@@ -1,0 +1,8 @@
+{
+  "outputs": {},
+  "assertions": {
+    "patterns": {
+      "message": "(feat|fix|chore|refactor|docs|test|ci)\\("
+    }
+  }
+}

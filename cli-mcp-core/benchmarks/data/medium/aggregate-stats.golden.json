@@ -1,0 +1,1 @@
+{"outputs":{"stats":"*"},"assertions":{"patterns":{"stats":"(total|average|product)"}}}

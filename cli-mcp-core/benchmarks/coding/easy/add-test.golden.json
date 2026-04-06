@@ -1,0 +1,1 @@
+{"outputs":{"test":"*"},"assertions":{"patterns":{"test":"(test|it|describe)"}}}

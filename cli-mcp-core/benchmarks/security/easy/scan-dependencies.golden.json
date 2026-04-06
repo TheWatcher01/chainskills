@@ -1,0 +1,1 @@
+{"outputs":{"report":"*"},"assertions":{"patterns":{"report":"(CVE|vulnerability|upgrade|severity)"}}}

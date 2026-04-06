@@ -1,0 +1,1 @@
+{"outputs":{"rca":"*"},"assertions":{"patterns":{"rca":"(root cause|Why|deploy|database|connection pool)"}}}

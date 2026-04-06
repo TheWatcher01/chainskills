@@ -1,0 +1,1 @@
+{"outputs":{"swot":"*","moat":"*"},"assertions":{"patterns":{"swot":"(Strength|Weakness|Opportunity|Threat)","moat":"(moat|network|switching|ecosystem)"}}}

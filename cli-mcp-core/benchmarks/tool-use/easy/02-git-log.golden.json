@@ -1,0 +1,8 @@
+{
+  "outputs": {},
+  "assertions": {
+    "types": {
+      "log": "string"
+    }
+  }
+}

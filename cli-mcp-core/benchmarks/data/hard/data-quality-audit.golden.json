@@ -1,0 +1,1 @@
+{"outputs":{"audit":"*"},"assertions":{"patterns":{"audit":"(completeness|accuracy|consistency|uniqueness)"}}}

@@ -1,0 +1,1 @@
+{"outputs":{"changelog":"*"},"assertions":{"patterns":{"changelog":"(Feature|Bug Fix|Added|Fixed|Changed)"}}}

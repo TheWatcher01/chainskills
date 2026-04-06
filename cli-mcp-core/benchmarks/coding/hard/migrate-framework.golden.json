@@ -1,0 +1,1 @@
+{"outputs":{"plan":"*"},"assertions":{"patterns":{"plan":"(phase|rollback|middleware|hook|route)"}}}

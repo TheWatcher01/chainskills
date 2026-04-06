@@ -1,0 +1,1 @@
+{"outputs":{"plan":"*","test_code":"*","review":"*"},"assertions":{"patterns":{"plan":"(unit|integration|e2e)","test_code":"(describe|it|expect)","review":"(score|improv)"}}}

@@ -1,0 +1,1 @@
+{"outputs":{"analysis":"*"},"assertions":{"patterns":{"analysis":"(AWS|GCP|Azure|Hetzner|score|weight|matrix)"}}}

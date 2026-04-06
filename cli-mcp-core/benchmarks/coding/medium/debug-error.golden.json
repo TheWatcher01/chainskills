@@ -1,0 +1,1 @@
+{"outputs":{"fix":"*"},"assertions":{"patterns":{"fix":"(return 0|n <= 0|=== 0)"}}}

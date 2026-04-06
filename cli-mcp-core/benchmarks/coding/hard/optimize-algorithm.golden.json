@@ -1,0 +1,1 @@
+{"outputs":{"optimized":"*","analysis":"*"},"assertions":{"patterns":{"optimized":"(Set|Map|Object|has)","analysis":"O(n)"}}}
