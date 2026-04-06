@@ -156,8 +156,8 @@ export function createSimpleExecutor(
             const startTime = Date.now();
             const dryRun = options?.dryRun ?? false;
 
-            // Wire trace recorder if traceStore available and not dry-run
-            const recorder = traceStore && !dryRun
+            // Wire trace recorder if traceStore available (records even in dry-run)
+            const recorder = traceStore
                 ? new TraceRecorder(traceStore, crypto.randomUUID(), workflow.name)
                 : null;
             if (recorder && emitter) {

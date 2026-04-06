@@ -52,7 +52,7 @@ export interface AppConfig {
 export const DEFAULT_CONFIG: AppConfig = {
     logLevel: 'debug',
     stateBackend: 'memory',
-    executor: 'mastra',
+    executor: 'simple',
     workflowsDir: './workflows',
     globalDir: '~/.chainskills',
     mcpPort: 3001,
