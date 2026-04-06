@@ -30,7 +30,12 @@ export const replayCommand = defineCommand({
         model: {
             type: 'string',
             description: 'Model to use for replay (e.g., ollama/qwen3.5:9b)',
-            required: true,
+            required: false,
+        },
+        workflow: {
+            type: 'string',
+            description: 'Path to .workflow.md file (auto-detected from traces if omitted)',
+            required: false,
         },
         compare: {
             type: 'boolean',
@@ -96,30 +101,36 @@ export const replayCommand = defineCommand({
             logLevel: verbose ? 'debug' : 'warn',
         });
 
-        const searchDirs = [
-            resolve('./templates'),
-            resolve(container.config.workflowsDir),
-            resolve('.'),
-        ];
+        let workflowPath: string | null = args.workflow ? resolve(args.workflow) : null;
 
-        let workflowPath: string | null = null;
-        for (const dir of searchDirs) {
-            const candidates = [
-                resolve(dir, `${workflowName}.workflow.md`),
-                resolve(dir, `**/${workflowName}.workflow.md`),
+        if (!workflowPath) {
+            // Auto-detect: search in trace dir, templates, workflowsDir, cwd
+            const traceDir = absPath.endsWith('.jsonl') ? resolve(absPath, '..') : resolve('.');
+            const searchDirs = [
+                traceDir,
+                resolve('./templates'),
+                resolve(container.config.workflowsDir),
+                resolve('.'),
             ];
-            for (const candidate of candidates) {
-                if (existsSync(candidate)) {
-                    workflowPath = candidate;
-                    break;
+
+            for (const dir of searchDirs) {
+                const candidates = [
+                    resolve(dir, `${workflowName}.workflow.md`),
+                    resolve(dir, `**/${workflowName}.workflow.md`),
+                ];
+                for (const candidate of candidates) {
+                    if (existsSync(candidate)) {
+                        workflowPath = candidate;
+                        break;
+                    }
                 }
+                if (workflowPath) break;
             }
-            if (workflowPath) break;
         }
 
         if (!workflowPath) {
             console.error(pc.red(`Cannot find workflow file for "${workflowName}"`));
-            console.error(pc.dim(`Searched in: ${searchDirs.join(', ')}`));
+            console.error(pc.dim(`Use --workflow <path> to specify the workflow file`));
             process.exit(1);
         }
 

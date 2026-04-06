@@ -25,6 +25,7 @@ describe('MCP Server Tools E2E', () => {
         const container = await createContainer({
             logLevel: 'warn',
             executor: 'simple',
+            tracesDir: '/tmp/cs-test-query-' + Date.now(),
         });
 
         // Query should return empty array (no traces yet)

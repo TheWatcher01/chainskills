@@ -40,6 +40,7 @@ describe('MCP Trace Tools', () => {
         const container = await createContainer({
             logLevel: 'warn',
             executor: 'simple',
+            tracesDir: '/tmp/cs-test-empty-traces-' + Date.now(),
         });
 
         const traces = await container.traceStore.query();
@@ -49,6 +50,7 @@ describe('MCP Trace Tools', () => {
     it('should return zero stats from fresh store', async () => {
         const container = await createContainer({
             logLevel: 'warn',
+            tracesDir: '/tmp/cs-test-empty-stats-' + Date.now(),
             executor: 'simple',
         });
 
