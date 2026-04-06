@@ -11,6 +11,9 @@ import type { LogLevel } from '#infra/logger.js';
 /** Supported executor backends. */
 export type ExecutorBackend = 'simple' | 'mastra';
 
+/** Supported agent providers. */
+export type AgentProviderBackend = 'openai' | 'anthropic' | 'ollama' | 'noop';
+
 /** Supported MCP transports. */
 export type McpTransport = 'stdio' | 'http';
 
@@ -46,6 +49,8 @@ export interface AppConfig {
     readonly agentFeedbackEnabled: boolean;
     /** Minimum confidence for feedback examples. */
     readonly agentFeedbackMinConfidence: number;
+    /** Agent provider backend (openai, anthropic, ollama, noop). */
+    readonly agentProvider: AgentProviderBackend;
 }
 
 /** Default config for local development. */
@@ -65,4 +70,5 @@ export const DEFAULT_CONFIG: AppConfig = {
     recordTraces: true,
     agentFeedbackEnabled: false,
     agentFeedbackMinConfidence: 0.8,
+    agentProvider: 'noop',
 };

@@ -75,6 +75,9 @@ export function loadEnvConfig(): AppConfig {
 
     const env = result.data;
 
+    // Auto-detect agent provider from environment
+    const agentProvider = (process.env['AGENT_PROVIDER'] ?? 'noop') as import('./defaults.js').AgentProviderBackend;
+
     return {
         logLevel: env.CHAINSKILLS_LOG_LEVEL,
         stateBackend: env.CHAINSKILLS_STATE_BACKEND,
@@ -91,5 +94,6 @@ export function loadEnvConfig(): AppConfig {
         recordTraces: true,
         agentFeedbackEnabled: process.env['AGENT_FEEDBACK_ENABLED'] === 'true',
         agentFeedbackMinConfidence: 0.8,
+        agentProvider,
     };
 }

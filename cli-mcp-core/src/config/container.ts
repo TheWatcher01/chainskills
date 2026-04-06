@@ -21,6 +21,7 @@ import type { McpClientConfig } from '#adapters/tools/mcp-client.js';
 import { createLocalResolver } from '#adapters/skills/local-resolver.js';
 import { createEventEmitter } from '#infra/event-emitter.js';
 import { createNoopAgent, createOpenAIAgent } from '#adapters/agents/openai-agent.js';
+import { createAnthropicAgent } from '#adapters/agents/anthropic-agent.js';
 import { createTraceInformedAgent } from '#adapters/agents/trace-informed-agent.js';
 import type { WorkflowParser } from '#core/ports/workflow-parser.port.js';
 import type { WorkflowExecutor } from '#core/ports/workflow-executor.port.js';
@@ -104,15 +105,74 @@ export async function createContainer(
     // Skill resolver
     const resolver = createLocalResolver(config.workflowsDir);
 
-    // Agent provider — use OpenAI-compatible if API key is set, otherwise noop
-    const agentApiKey = process.env['AGENT_API_KEY'] ?? '';
-    const agent = agentApiKey
-        ? createOpenAIAgent({
-            apiKey: agentApiKey,
-            baseUrl: process.env['AGENT_BASE_URL'] ?? 'https://api.openai.com/v1',
-            model: process.env['AGENT_MODEL'] ?? 'gpt-4o-mini',
-        }, logger)
-        : createNoopAgent();
+    // Agent provider — resolve from AGENT_PROVIDER env or auto-detect from API keys
+    const providerBackend = config.agentProvider
+        ?? (process.env['AGENT_PROVIDER'] as import('./defaults.js').AgentProviderBackend | undefined)
+        ?? 'noop';
+
+    let agent: AgentProvider;
+    const agentModel = process.env['AGENT_MODEL'];
+
+    switch (providerBackend) {
+        case 'anthropic': {
+            const apiKey = process.env['ANTHROPIC_API_KEY'] ?? '';
+            agent = apiKey
+                ? createAnthropicAgent({
+                    apiKey,
+                    baseUrl: process.env['ANTHROPIC_BASE_URL'] ?? 'https://api.anthropic.com',
+                    model: agentModel ?? 'claude-sonnet-4-6',
+                }, logger)
+                : createNoopAgent();
+            logger.debug('Agent provider: anthropic', { hasKey: !!apiKey });
+            break;
+        }
+        case 'openai': {
+            const apiKey = process.env['AGENT_API_KEY'] ?? process.env['OPENAI_API_KEY'] ?? '';
+            agent = apiKey
+                ? createOpenAIAgent({
+                    apiKey,
+                    baseUrl: process.env['AGENT_BASE_URL'] ?? 'https://api.openai.com/v1',
+                    model: agentModel ?? 'gpt-4o-mini',
+                }, logger)
+                : createNoopAgent();
+            logger.debug('Agent provider: openai', { hasKey: !!apiKey });
+            break;
+        }
+        case 'ollama': {
+            // Ollama uses OpenAI-compatible API, no key needed
+            agent = createOpenAIAgent({
+                apiKey: 'ollama',
+                baseUrl: process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434/v1',
+                model: agentModel ?? 'qwen3:8b',
+            }, logger);
+            logger.debug('Agent provider: ollama');
+            break;
+        }
+        default: {
+            // Auto-detect: check for API keys in order of preference
+            const anthropicKey = process.env['ANTHROPIC_API_KEY'] ?? '';
+            const openaiKey = process.env['AGENT_API_KEY'] ?? process.env['OPENAI_API_KEY'] ?? '';
+
+            if (anthropicKey) {
+                agent = createAnthropicAgent({
+                    apiKey: anthropicKey,
+                    model: agentModel ?? 'claude-sonnet-4-6',
+                }, logger);
+                logger.debug('Agent provider: auto-detected anthropic');
+            } else if (openaiKey) {
+                agent = createOpenAIAgent({
+                    apiKey: openaiKey,
+                    baseUrl: process.env['AGENT_BASE_URL'] ?? 'https://api.openai.com/v1',
+                    model: agentModel ?? 'gpt-4o-mini',
+                }, logger);
+                logger.debug('Agent provider: auto-detected openai');
+            } else {
+                agent = createNoopAgent();
+                logger.debug('Agent provider: noop (no API keys found)');
+            }
+            break;
+        }
+    }
 
     // Wrap agent with trace-informed feedback if enabled
     const feedbackEnabled = (process.env['AGENT_FEEDBACK_ENABLED'] === 'true') || config.agentFeedbackEnabled;

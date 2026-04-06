@@ -20,11 +20,12 @@ import { publishCommand } from './publish.js';
 import { addCommand } from './add.js';
 import { arenaCommand } from './arena.js';
 import { generateCommand } from './generate.js';
+import { benchSuiteCommand } from './bench-suite.js';
 
 const main = defineCommand({
     meta: {
         name: 'chainskills',
-        version: '0.9.0',
+        version: '1.0.0',
         description:
             'Compose, share, and run AI agent workflows written in natural language',
     },
@@ -42,6 +43,7 @@ const main = defineCommand({
         add: addCommand,
         arena: arenaCommand,
         generate: generateCommand,
+        'bench-suite': benchSuiteCommand,
     },
 });
 
