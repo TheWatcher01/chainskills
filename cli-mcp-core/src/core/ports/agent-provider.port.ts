@@ -39,6 +39,8 @@ export interface AgentInvokeOptions {
     readonly temperature?: number;
     /** Override model for this invocation (e.g., for replay/bench). */
     readonly model?: string;
+    /** Effort level — controls thinking budget (low/medium/high/max). */
+    readonly effort?: 'low' | 'medium' | 'high' | 'max';
     /** Workflow variables available for context. */
     readonly variables?: Record<string, unknown>;
 }

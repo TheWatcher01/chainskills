@@ -71,6 +71,10 @@ interface AnthropicRequest {
     system?: string;
     messages: AnthropicMessage[];
     temperature?: number;
+    thinking?: {
+        type: 'enabled';
+        budget_tokens: number;
+    };
 }
 
 interface AnthropicResponse {
@@ -184,6 +188,18 @@ export function createAnthropicAgent(
                 temperature: temperature ?? cfg.temperature,
             };
 
+            // Effort → thinking budget (aligned with Claude Code's effort parameter)
+            if (options.effort) {
+                const EFFORT_BUDGET: Record<string, number> = {
+                    low: 1024,
+                    medium: 4096,
+                    high: 10000,
+                    max: 32000,
+                };
+                const budgetTokens = EFFORT_BUDGET[options.effort] ?? 10000;
+                body.thinking = { type: 'enabled', budget_tokens: budgetTokens };
+            }
+
             logger?.debug(`@agent ${agent}: calling Anthropic API`, {
                 model: effectiveModel,
                 promptLength: prompt.length,
@@ -196,15 +212,20 @@ export function createAnthropicAgent(
                     cfg.timeout,
                 );
 
+                const headers: Record<string, string> = {
+                    'Content-Type': 'application/json',
+                    'x-api-key': cfg.apiKey,
+                    'anthropic-version': cfg.apiVersion,
+                };
+                if (body.thinking) {
+                    headers['anthropic-beta'] = 'interleaved-thinking-2025-05-14';
+                }
+
                 const response = await fetch(
                     `${cfg.baseUrl}/v1/messages`,
                     {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-api-key': cfg.apiKey,
-                            'anthropic-version': cfg.apiVersion,
-                        },
+                        headers,
                         body: JSON.stringify(body),
                         signal: controller.signal,
                     },
