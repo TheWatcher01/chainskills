@@ -14,7 +14,7 @@ TypeScript monorepo for AI workflow orchestration in Markdown (.workflow.md).
 ```bash
 pnpm install                           # Dependencies (pnpm only, never npm/yarn)
 cd cli-mcp-core && pnpm build          # obuild — 6 bundles
-cd cli-mcp-core && pnpm test           # Vitest — 201 tests
+cd cli-mcp-core && pnpm test           # Vitest — 363 tests
 cd cli-mcp-core && pnpm typecheck      # tsc --noEmit
 cd vscode-extension && pnpm compile    # webpack — 23KB bundle
 ```
@@ -24,7 +24,7 @@ cd vscode-extension && pnpm compile    # webpack — 23KB bundle
 ```
 CLI / Config / Infrastructure
          ↓
-Adapters (parser, executor, tools, skills, state, agents, validation, observability)
+Adapters (parser, executor, tools, skills, state, agents, validation, observability, trace-store, registry, golden)
          ↓
 Core (entities, ports, services, use-cases) ← ZERO external deps
 ```
@@ -39,9 +39,15 @@ Subpath imports: `#core/*`, `#adapters/*`, `#cli/*`, `#config/*`, `#infra/*`.
 
 TypeScript strict, ESM, kebab-case files, PascalCase classes, `Result<T,E>` for errors, no `any`, Zod in adapters.
 
-## CLI: `run`, `validate`, `inspect`, `init`, `list`, `serve`
+## CLI (14 commands)
 
-17 directives: `@use @call @if @else @for @repeat @parallel @try @on-error @assert @output @env @workflow @agent @handoff @breakpoint`
+`run`, `validate`, `inspect`, `init`, `list`, `serve`, `replay`, `bench`, `distill`, `publish`, `add`, `arena`, `generate`
 
-MCP server: 5 tools, 2 prompts, stdio or HTTP (port 3001).
+19 directives: `@use @call @if @else @for @repeat @parallel @try @on-error @assert @output @env @workflow @agent @handoff @breakpoint @schema @gate`
+
+MCP server: 7 tools (run, validate, describe, list, inspect, traces, trace_stats), 2 prompts, stdio or HTTP.
+
+## Flywheel
+
+execute → trace (CRAG/KG) → replay (model switch) → bench (multi-model) → arena (Elo vote) → distill (fine-tuning JSONL) → feedback (few-shot injection) → generate (workflow variants) → improve
 
