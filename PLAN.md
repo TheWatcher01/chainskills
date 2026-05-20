@@ -53,7 +53,7 @@ chainskills est parfaitement aligne avec la direction de l'industrie.
 - MasRouter (ACL 2025) : routing LLM dans systemes multi-agents sous contraintes economiques
 
 **Constrained Decoding :**
-- XGrammar (CMU/MLC) : 100x speedup, ~50us/token, default vLLM
+- XGrammar (CMU/MLC) : 100x speedup, ~50us/token, Ollama-compatible via JSON schema
 - llguidance : 50us/token, negligible startup, CFG arbitraire
 - MCP 2025-06-18 : tools avec output schema + structuredContent
 
@@ -686,7 +686,7 @@ GitHub a valide Markdown comme DSL standard (Agentic Workflows, fev 2026).
 
 ### Constrained Decoding
 - [XGrammar (CMU/MLC)](https://github.com/mlc-ai/xgrammar) — 100x speedup
-- [vLLM Structured Decoding](https://blog.vllm.ai/2025/01/14/struct-decode-intro.html)
+- Ollama JSON Schema constraints — structured generation via API
 - [DSPy](https://dspy.ai/) — Declarative LM programming
 
 ### Autoresearch & Fine-tuning

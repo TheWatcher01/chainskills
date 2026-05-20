@@ -1,0 +1,67 @@
+date: 2026-05-20
+author: RD-Orchestra session-start
+build_status: passing
+test_count: 454
+test_files: 50
+typecheck_errors: []
+
+# ── Adapters existants ──────────────────────────────────────────────────────
+implemented:
+  jsonl-trace-store:       true   # cli-mcp-core/src/adapters/trace-store/jsonl-trace-store.ts (139L)
+  crag-trace-store:        true   # cli-mcp-core/src/adapters/trace-store/crag-trace-store.ts
+  console-tracer:          true   # cli-mcp-core/src/adapters/observability/console-tracer.ts
+  trace-recorder:          partial # 85L — finalize() + traceCount() mais PAS startStep/endStep
+  model-router:            true   # core/services + core/entities + cli/route + cli/scorecard
+  anthropic-agent:         true   # src/adapters/agents/anthropic-agent.ts
+  trace-informed-agent:    true   # src/adapters/agents/trace-informed-agent.ts
+  session-parser:          true   # src/adapters/capture/session-parser.ts
+  claude-cost-reader:      true   # src/adapters/capture/claude-cost-reader.ts
+  execution-hook-pipeline: false  # src/core/ports/execution-hook.port.ts ABSENT + src/adapters/hooks/ ABSENT
+  langfuse-adapter:        false  # src/adapters/observability/langfuse-tracer.ts ABSENT
+  trace-hook:              false  # src/adapters/hooks/trace-hook.ts ABSENT
+
+# ── Gaps critiques pour RD-Orchestra ────────────────────────────────────────
+missing_for_rd_orchestra:
+  - item: execution-hook-pipeline
+    detail: "Port ExecutionHook inexistant. Simple-executor n'invoque aucun hook. Priorité P0 — sans hooks, 0 observabilité."
+  - item: langfuse-adapter
+    detail: "Aucun adapter langfuse. Console-tracer seulement. Requis pour traces vers Langfuse VPS (localhost:3000)."
+  - item: trace-hook
+    detail: "trace-recorder.ts existe (finalize()) mais n'est pas connecté au pipeline hooks — startStep/endStep manquants."
+  - item: templates/rd-orchestra/
+    detail: "Répertoire inexistant. 8+ workflows à créer : session-init, discovery-*, strategy-layer."
+  - item: cost-tracker-hook
+    detail: "Accumulation token/coût par step absente."
+  - item: guardrail-hook
+    detail: "Validation pre/post step absente."
+
+# ── Templates existants ──────────────────────────────────────────────────────
+existing_templates:
+  - path: templates/cybersec/recon-target.workflow.md
+  - path: templates/cybersec/vuln-scan.workflow.md
+  - path: templates/data/verify-data.workflow.md
+  - path: templates/datalake/add-api-route.workflow.md
+  - path: templates/datalake/add-crawler.workflow.md
+  - path: templates/datalake/add-data-import.workflow.md
+  - path: templates/datalake/cross-ref-source.workflow.md
+  - path: templates/datalake/fix-type-errors.workflow.md
+  - path: templates/datalake/msi-recovery.workflow.md
+  - path: templates/dev/code-review.workflow.md
+  - path: templates/dev/nextjs-app-builder.workflow.md
+  - path: templates/dev/tdd-cycle.workflow.md
+  - path: templates/dev/upgrade-fork-zero-casse.workflow.md
+  - path: templates/ess/grant-application.workflow.md
+  - path: templates/meta/agent-factory.workflow.md
+  - path: templates/meta/research-domain.workflow.md
+  - path: templates/meta/search-research-plan.workflow.md
+  - path: templates/osint/domain-recon.workflow.md
+
+# ── Résumé ───────────────────────────────────────────────────────────────────
+summary:
+  total_templates: 18
+  rd_orchestra_templates: 0
+  hooks_status: NOT_IMPLEMENTED
+  trace_pipeline_status: PARTIAL   # store+recorder existent, pas de hooks intégrés
+  model_router_status: IMPLEMENTED
+  langfuse_status: NOT_IMPLEMENTED
+  verdict: "Fondation solide (454 tests, build clean). Gaps bloquants : ExecutionHook pipeline + Langfuse adapter + workflows rd-orchestra."
