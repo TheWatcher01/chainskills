@@ -33,7 +33,11 @@ import type { AgentProvider } from '#core/ports/agent-provider.port.js';
 import type { ObservabilityPort } from '#core/ports/observability.port.js';
 import type { TraceStore } from '#core/ports/trace-store.port.js';
 import { createConsoleTracer } from '#adapters/observability/console-tracer.js';
+import { createLangfuseTracerFromEnv } from '#adapters/observability/langfuse-tracer.js';
 import { createTraceStore } from '#adapters/trace-store/index.js';
+import { createTraceHook } from '#adapters/hooks/trace-hook.js';
+import { createCostTrackerHook } from '#adapters/hooks/cost-tracker-hook.js';
+import type { ExecutionHook } from '#core/ports/execution-hook.port.js';
 
 /** Container exposing all wired services. */
 export interface Container {
@@ -198,6 +202,18 @@ export async function createContainer(
     // Only pass traceStore to executor if recording is enabled
     const executorTraceStore = recordTraces ? traceStore : undefined;
 
+    // Observability — Langfuse if keys present, else console
+    const langfuseTracer = createLangfuseTracerFromEnv();
+    const observability = langfuseTracer ?? createConsoleTracer(logger);
+
+    // Hooks pipeline — trace-hook + cost-tracker always active when tracing enabled
+    const activeHooks: ExecutionHook[] = [];
+    if (executorTraceStore) {
+        const runId = crypto.randomUUID();
+        activeHooks.push(createTraceHook({ store: executorTraceStore, runId, priority: 10 }));
+    }
+    activeHooks.push(createCostTrackerHook({ logger, priority: 20 }));
+
     // Executor — strategy pattern via config
     let executor: WorkflowExecutor;
     if (config.executor === 'mastra') {
@@ -210,14 +226,11 @@ export async function createContainer(
         } catch {
             // Fallback to simple executor if Mastra is not available
             logger.warn('MastraExecutor not available, falling back to SimpleExecutor');
-            executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent: finalAgent, traceStore: executorTraceStore });
+            executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent: finalAgent, traceStore: executorTraceStore, hooks: activeHooks });
         }
     } else {
-        executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent: finalAgent, traceStore: executorTraceStore });
+        executor = createSimpleExecutor({ store, tools, logger, emitter, resolver, parser, agent: finalAgent, traceStore: executorTraceStore, hooks: activeHooks });
     }
-
-    // Observability
-    const observability = createConsoleTracer(logger);
 
     return {
         config,

@@ -40,6 +40,8 @@ import type { Logger } from '#infra/logger.js';
 import type { AgentProvider } from '#core/ports/agent-provider.port.js';
 import type { TraceStore } from '#core/ports/trace-store.port.js';
 import { TraceRecorder } from './trace-recorder.js';
+import type { ExecutionHook, ExecutionContext } from '#core/ports/execution-hook.port.js';
+import { dispatchHooks } from '#core/ports/execution-hook.port.js';
 
 /**
  * Simple implementation of ExecutionController.
@@ -134,6 +136,7 @@ export interface SimpleExecutorDeps {
     readonly parser?: WorkflowParser;
     readonly agent?: AgentProvider;
     readonly traceStore?: TraceStore;
+    readonly hooks?: readonly ExecutionHook[];
 }
 
 /**
@@ -145,7 +148,8 @@ export interface SimpleExecutorDeps {
 export function createSimpleExecutor(
     deps: SimpleExecutorDeps,
 ): WorkflowExecutor {
-    const { store, tools, logger, emitter, resolver, parser, agent, traceStore } = deps;
+    const { store, tools, logger, emitter, resolver, parser, agent, traceStore, hooks } = deps;
+    const sortedHooks = hooks ? [...hooks].sort((a, b) => a.priority - b.priority) : [];
 
     return {
         async execute(
@@ -155,6 +159,11 @@ export function createSimpleExecutor(
         ): Promise<Result<ExecutionResult, ExecutionError>> {
             const startTime = Date.now();
             const dryRun = options?.dryRun ?? false;
+            const buildCtx = (): ExecutionContext => ({
+                workflowName: workflow.name,
+                dryRun,
+                variables: store.getAll(),
+            });
 
             // Wire trace recorder if traceStore available (records even in dry-run)
             const recorder = traceStore
@@ -184,6 +193,16 @@ export function createSimpleExecutor(
                 dryRun,
             });
 
+            // Run beforeWorkflow hooks
+            if (sortedHooks.length > 0) {
+                const hr = await dispatchHooks(sortedHooks, (h) => h.beforeWorkflow?.(workflow, buildCtx()));
+                if (hr.action === 'abort') {
+                    emitter?.emit({ type: 'workflow:end', timestamp: Date.now(), workflowName: workflow.name, success: false, duration: Date.now() - startTime });
+                    if (recorder) { if (emitter) emitter.off(recorder.listener); await recorder.finalize(); }
+                    return err(executionError('HOOK_ABORT', hr.reason));
+                }
+            }
+
             // Execute each step sequentially
             for (let i = 0; i < workflow.steps.length; i++) {
                 // Check for cancellation
@@ -211,6 +230,21 @@ export function createSimpleExecutor(
                 }
 
                 const step = workflow.steps[i]!;
+
+                // Run beforeStep hooks
+                if (sortedHooks.length > 0) {
+                    const hr = await dispatchHooks(sortedHooks, (h) => h.beforeStep?.(step, buildCtx()));
+                    if (hr.action === 'abort') {
+                        emitter?.emit({ type: 'workflow:end', timestamp: Date.now(), workflowName: workflow.name, success: false, duration: Date.now() - startTime });
+                        if (recorder) { if (emitter) emitter.off(recorder.listener); await recorder.finalize(); }
+                        return err(executionError('HOOK_ABORT', hr.reason, step.id));
+                    }
+                    if (hr.action === 'skip') {
+                        stepResults.push({ stepId: step.id, status: 'skipped', duration: 0 });
+                        continue;
+                    }
+                }
+
                 const stepResult = await executeStep(
                     step,
                     i,
@@ -226,11 +260,24 @@ export function createSimpleExecutor(
                 );
                 stepResults.push(stepResult);
 
+                // Run afterStep hooks
+                if (sortedHooks.length > 0) {
+                    const hr = await dispatchHooks(sortedHooks, (h) => h.afterStep?.(step, stepResult, buildCtx()));
+                    if (hr.action === 'abort') {
+                        emitter?.emit({ type: 'workflow:end', timestamp: Date.now(), workflowName: workflow.name, success: false, duration: Date.now() - startTime });
+                        if (recorder) { if (emitter) emitter.off(recorder.listener); await recorder.finalize(); }
+                        return err(executionError('HOOK_ABORT', hr.reason, step.id));
+                    }
+                }
+
                 // Pause after step for step mode
                 controller.shouldPauseAfterStep();
 
                 // Abort on failure (unless step is in a @try block)
                 if (stepResult.status === 'failure') {
+                    if (sortedHooks.length > 0) {
+                        await dispatchHooks(sortedHooks, (h) => h.onError?.(step, stepResult.error ?? 'unknown', buildCtx()));
+                    }
                     logger?.error(`Step "${step.id}" failed`, {
                         error: stepResult.error,
                     });
@@ -283,12 +330,14 @@ export function createSimpleExecutor(
                 await recorder.finalize();
             }
 
-            return ok({
-                outputs,
-                steps: stepResults,
-                duration,
-                controller,
-            });
+            const finalResult: ExecutionResult = { outputs, steps: stepResults, duration, controller };
+
+            // Run afterWorkflow hooks
+            if (sortedHooks.length > 0) {
+                await dispatchHooks(sortedHooks, (h) => h.afterWorkflow?.(workflow, finalResult, buildCtx()));
+            }
+
+            return ok(finalResult);
         },
     };
 }
